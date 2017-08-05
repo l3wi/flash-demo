@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 import { seedGen } from "../libs/flash/iota";
+import { webRTC } from "../libs/flash"
 
 export default class extends React.Component {
   state = {

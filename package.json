@@ -12,6 +12,7 @@
     "next-routes": "^1.0.40",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
-    "styled-components": "^2.1.2"
+    "styled-components": "^2.1.2",
+    "webrtc-adapter": "^4.2.2"
   }
 }
