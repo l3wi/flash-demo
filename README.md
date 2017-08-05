@@ -98,3 +98,17 @@ Player 1 or 2 ends the session
 2. Multisig arrangements require collateral (or trust).
 
    - There needs to be an equal incentive for both users to work together, other wise one party can lock up the money forever.
+
+## Getting Started
+
+```
+git clone https://github.com/l3wi/flashDemo.git
+
+yarn
+
+yarn dev
+```
+
+
+
+lewi
