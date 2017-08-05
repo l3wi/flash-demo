@@ -9,14 +9,9 @@ export default class extends React.Component {
     two: { seed: seedGen(81), input: 50 },
     flash: {
       depth: 3,
-      counter: [0, 0, 0],
-      addressIndex: 0,
-      addresses: [
-        ["KJFJGFJHGJHG"],
-        ["JKGFJKGFJGFHJGFJFK", "JGFGFUKFUFUKTFJFJHGIUHI"],
-        ["TUKDYTDUTKDKTDKUTDUKYFYFYFFY", "QJGFQUFKAUSGVAVA"]
-      ],
-      bundles: [{ lvl: 1 }, { lvl: 2 }, { lvl: 3 }]
+      counter: [0, 0, 0, 0],
+      bundles: [],
+      genesis: "ehhel"
     }
   };
   render() {
