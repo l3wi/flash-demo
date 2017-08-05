@@ -1,4 +1,3 @@
-require('../adapter')
 import { isClient } from '../utils'
 
 export default class WebRTC {
