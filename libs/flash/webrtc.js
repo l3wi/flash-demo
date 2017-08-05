@@ -1,4 +1,5 @@
 import { isClient } from '../utils'
+const EventEmitter = require('eventemitter3')
 
 var Peer
 if(isClient) {
@@ -8,6 +9,7 @@ if(isClient) {
 export default class WebRTC {
   constructor() {
     this.connections = {}
+    this.events = new EventEmitter()
   }
 
   async getProbabilisticPeer(channel) {
@@ -41,13 +43,39 @@ export default class WebRTC {
     });
   }
 
+  // TODO: connect to other peers
+  async connectToPeers() {
+
+  }
+
+
   async initChannel(channel) {
     if(isClient) {
       this.peer = await this.getProbabilisticPeer(channel)
       this.peer.on('error', this.onError)
-      this.peer.on('open', this.onOpen)
+      this.peer.on('close', this.onClose)
+      this.peer.on('disconnected', this.onDisconnected)
+      this.peer.on('connection', this.onConnection)
       console.log('connected to signaling server as peer id ' + this.peer.id);
     }
+  }
+
+  onConnection(conn) {
+    this.connections[conn.id] = conn
+    conn.on('close', () => {
+      delete this.connections[conn.id]
+    })
+    var _this = this
+    conn.on('data', (data) => {
+      _this.events.emit('message', {
+        connection: conn,
+        data: data
+      })
+    })
+  }
+
+  onDisconnected() {
+    this.peer.reconnect()
   }
 
   onOpen(connection) {
