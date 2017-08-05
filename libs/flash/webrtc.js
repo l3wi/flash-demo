@@ -26,7 +26,7 @@ export default class WebRTC {
 
       peer.on('error', (e) => {
         console.error('getProbabilisticAdress', e)
-        if(e.type === 'unavailable-id') {
+        if(e.type === 'peer-unavailable') {
           peer.destroy()
           resolve(getCurrentId())
         }
@@ -47,6 +47,7 @@ export default class WebRTC {
       var peerId = await this.getProbabilisticAdress(channel)
       this.peer = new Peer(channel.roomId, WebRTC.signalingServer)
       this.peer.on('error', this.onError)
+      console.log('connected with peer id ' + peerId);
     }
   }
 
