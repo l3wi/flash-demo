@@ -10,7 +10,7 @@ export default class WebRTC {
     this.connections = {}
   }
 
-  async getProbabilisticAdress(channel) {
+  async getProbabilisticPeer(channel) {
     // Keep trying to connect to a peer id
     // consisting of <channel address> + <peer number>
     // Peer number will keep increasing by until we hit a nonexisting address
@@ -43,7 +43,7 @@ export default class WebRTC {
 
   async initChannel(channel) {
     if(isClient) {
-      this.peer = await this.getProbabilisticAdress(channel)
+      this.peer = await this.getProbabilisticPeer(channel)
       this.peer.on('error', this.onError)
       this.peer.on('open', this.onOpen)
       console.log('connected to signaling server as peer id ' + this.peer.id);
