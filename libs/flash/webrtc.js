@@ -12,23 +12,24 @@ export default class WebRTC {
     this.events = new EventEmitter()
   }
 
-  async getProbabilisticPeer(channel) {
+  async getProbabilisticPeer() {
     // Keep trying to connect to a peer id
     // consisting of <channel address> + <peer number>
     // Peer number will keep increasing by until we hit a nonexisting address
+    var _this = this
     return new Promise(function(resolve, reject) {
       var peerNumber = 0
       var getCurrentId = () => {
-        return `${channel.roomId}-${peerNumber}`
+        return `${_this.channel.roomId}-${peerNumber}`
       }
-      var tryConnect = () => {
+      var tryCreateId = () => {
         var tryId = getCurrentId()
         var peer = new Peer(tryId, WebRTC.signalingServer)
         var errorFn = (e) => {
           if(e.type === 'unavailable-id') {
             peer.destroy()
             peerNumber++
-            tryConnect()
+            tryCreateId()
           }
         }
         var openFn = () => {
@@ -39,19 +40,24 @@ export default class WebRTC {
         peer.on('error', errorFn)
         peer.on('open', openFn)
       }
-      tryConnect()
+      tryCreateId()
     });
   }
 
-  // TODO: connect to other peers
-  async connectToPeers() {
-
+  connectToPeers() {
+    for(var i = 0; i < 100; i++) {
+      var tryId = `${this.channel.roomId}-${i}`
+      if(tryId !== this.peer.id) {
+        this.peer.connect(tryId)
+      }
+    }
   }
-
 
   async initChannel(channel) {
     if(isClient) {
-      this.peer = await this.getProbabilisticPeer(channel)
+      this.channel = channel
+
+      this.peer = await this.getProbabilisticPeer()
       this.peer.on('error', this.onError)
       this.peer.on('close', this.onClose)
       this.peer.on('disconnected', this.onDisconnected)
@@ -61,9 +67,10 @@ export default class WebRTC {
   }
 
   onConnection(conn) {
-    this.connections[conn.id] = conn
+    console.log(`connected to ${conn.peer}`);
+    this.connections[conn.peer] = conn
     conn.on('close', () => {
-      delete this.connections[conn.id]
+      delete this.connections[conn.peer]
     })
     var _this = this
     conn.on('data', (data) => {

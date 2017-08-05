@@ -11,6 +11,7 @@ export default class extends React.Component {
         roomId: this.props.url.query.id
       })
       console.log('initChannel result', result);
+      webRTC.connectToPeers()
     })()
     return <div>Herro</div>;
   }
