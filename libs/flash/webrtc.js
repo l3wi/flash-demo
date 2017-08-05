@@ -7,6 +7,7 @@ if(isClient) {
 
 export default class WebRTC {
   constructor() {
+    this.connections = {}
   }
 
   async getProbabilisticAdress(channel) {
@@ -14,45 +15,43 @@ export default class WebRTC {
     // consisting of <channel address> + <peer number>
     // Peer number will keep increasing by until we hit a nonexisting address
     return new Promise(function(resolve, reject) {
-      var peer = new Peer(channel.address, WebRTC.signalingServer)
       var peerNumber = 0
       var getCurrentId = () => {
         return `${channel.roomId}-${peerNumber}`
       }
       var tryConnect = () => {
         var tryId = getCurrentId()
-        peer.connect(tryId)
-      }
-
-      peer.on('error', (e) => {
-        console.error('getProbabilisticAdress', e)
-        if(e.type === 'peer-unavailable') {
-          peer.destroy()
-          resolve(getCurrentId())
+        var peer = new Peer(tryId, WebRTC.signalingServer)
+        var errorFn = (e) => {
+          if(e.type === 'unavailable-id') {
+            peer.destroy()
+            peerNumber++
+            tryConnect()
+          }
         }
-      })
-
-      peer.on('connection', (e) => {
-        console.log('getProbabilisticAdress', 'connection, this address is occupied, so we make a new one.')
-        peerNumber++
-        tryConnect()
-      })
-
+        var openFn = () => {
+          peer.off('open', openFn)
+          peer.off('error', errorFn)
+          resolve(peer)
+        }
+        peer.on('error', errorFn)
+        peer.on('open', openFn)
+      }
       tryConnect()
     });
   }
 
   async initChannel(channel) {
     if(isClient) {
-      var peerId = await this.getProbabilisticAdress(channel)
-      this.peer = new Peer(channel.roomId, WebRTC.signalingServer)
+      this.peer = await this.getProbabilisticAdress(channel)
       this.peer.on('error', this.onError)
-      console.log('connected with peer id ' + peerId);
+      this.peer.on('open', this.onOpen)
+      console.log('connected to signaling server as peer id ' + this.peer.id);
     }
   }
 
-  onOpen() {
-
+  onOpen(connection) {
+    console.log(connection);
   }
 
   onClose() {
