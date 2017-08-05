@@ -45,7 +45,7 @@ export default class WebRTC {
   }
 
   connectToPeers() {
-    for(var i = 0; i < 100; i++) {
+    for(var i = 0; i < 5; i++) {
       var tryId = `${this.channel.roomId}-${i}`
       if(tryId !== this.peer.id) {
         this.peer.connect(tryId)
@@ -61,18 +61,24 @@ export default class WebRTC {
       this.peer.on('error', this.onError)
       this.peer.on('close', this.onClose)
       this.peer.on('disconnected', this.onDisconnected)
-      this.peer.on('connection', this.onConnection)
+      this.peer.on('connection', this.onConnection.bind(this))
       console.log('connected to signaling server as peer id ' + this.peer.id);
     }
   }
 
   onConnection(conn) {
-    console.log(`connected to ${conn.peer}`);
     this.connections[conn.peer] = conn
-    conn.on('close', () => {
-      delete this.connections[conn.peer]
+    console.log(`connected to ${conn.peer}`);
+    this.events.emit('peerJoined', {
+      connection: conn
     })
     var _this = this
+    conn.on('close', () => {
+      _this.events.emit('peerLeft', {
+        connection: conn
+      })
+      delete _this.connections[conn.peer]
+    })
     conn.on('data', (data) => {
       _this.events.emit('message', {
         connection: conn,
@@ -95,10 +101,6 @@ export default class WebRTC {
 
   onError(error) {
     console.error('WebRTC Error:', error)
-  }
-
-  onMessage() {
-
   }
 }
 
