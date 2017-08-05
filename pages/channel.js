@@ -11,6 +11,10 @@ export default class extends React.Component {
     messages: []
   }
 
+  componentWillUnmount() {
+    clearInterval(connectToPeersTimer)
+  }
+
   componentDidMount() {
     if(isClient) {
       (async() => {
@@ -18,7 +22,10 @@ export default class extends React.Component {
           roomId: this.props.url.query.id
         })
         console.log('initChannel result', result);
-        webRTC.connectToPeers()
+        // Keep trying to find new peers
+        this.connectToPeersTimer = setInterval(() => {
+          webRTC.connectToPeers()
+        }, 1000)
         var _this = this
         webRTC.events.on('message', (message) => {
           var messages = _this.state.messages
@@ -41,15 +48,25 @@ export default class extends React.Component {
 
   renderMessage(message) {
     return (
-      <div>{message.from}: {message.data}</div>
+      <div key={message.data}>{message.from}: {message.data}</div>
     )
+  }
+
+  msgKeyPress(e) {
+    if (e.key === 'Enter') {
+      webRTC.broadcastMessage({
+        data: e.currentTarget.value
+      })
+      e.currentTarget.value = ''
+    }
   }
 
   render() {
     return (
       <div>
         Herro! We are connected to { this.state.peers.length } peers!
-        <b>Latest messages:</b><br />
+        <br /><b>Latest messages:</b><br />
+        <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         { this.state.messages.map(this.renderMessage) }
       </div>
     )

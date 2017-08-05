@@ -47,8 +47,11 @@ export default class WebRTC {
   connectToPeers() {
     for(var i = 0; i < 5; i++) {
       var tryId = `${this.channel.roomId}-${i}`
-      if(tryId !== this.peer.id) {
-        this.peer.connect(tryId)
+      if(tryId !== this.peer.id && (typeof this.connections[tryId] === 'undefined')) {
+        var conn = this.peer.connect(tryId, {
+          reliable: true
+        })
+        this.onConnection(conn)
       }
     }
   }
@@ -66,13 +69,22 @@ export default class WebRTC {
     }
   }
 
+  broadcastMessage(message) {
+    for(var k in this.connections) {
+      var conn = this.connections[k]
+      conn.send(message.data)
+    }
+  }
+
   onConnection(conn) {
-    this.connections[conn.peer] = conn
-    console.log(`connected to ${conn.peer}`);
-    this.events.emit('peerJoined', {
-      connection: conn
-    })
     var _this = this
+    conn.on('open', () => {
+      _this.connections[conn.peer] = conn
+      console.log(`connected to ${conn.peer}`);
+      _this.events.emit('peerJoined', {
+        connection: conn
+      })
+    })
     conn.on('close', () => {
       _this.events.emit('peerLeft', {
         connection: conn
@@ -100,7 +112,7 @@ export default class WebRTC {
   }
 
   onError(error) {
-    console.error('WebRTC Error:', error)
+    console.error(`WebRTC Error (${error.type}):`, error)
   }
 }
 
