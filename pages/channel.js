@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 import { seedGen } from "../libs/flash/iota";
+import { webRTC } from "../libs/flash"
 
 export default class extends React.Component {
   state = {
@@ -15,6 +16,9 @@ export default class extends React.Component {
     }
   };
   render() {
+    webRTC.initChannel({
+      address: '#TODO'
+    })
     console.log(this.state);
     return <div>Herro</div>;
   }

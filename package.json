@@ -11,6 +11,7 @@
     "next": "^2.4.9",
     "next-routes": "^1.0.40",
     "peer": "^0.2.8",
+    "peerjs": "^0.3.14",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "styled-components": "^2.1.2",
