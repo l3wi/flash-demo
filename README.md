@@ -38,53 +38,53 @@ Very very rough way the Flash system will work
 
 Player 1 enters:
 
-- Say how many transactions
-- calculate the depth: `log(base3)x` & generate index counter
-- Initiate multisig address genny
-- Waits for other user to join
+- [ ] Say how many transactions
+- [x] calculate the depth: `log(base3)x` 
+- [x] Generate fresh Flash object w/ counter
+- [ ] Initiate multisig address genny
+- [ ] Waits for other user to join
 
 Player 2 enter:
 
-- Establish RTC connection
-- **Reconcile State** (Recieve state)
-- Complete mulitsig address 
-- **Reconcile State** (Return Address)
+- [ ] Establish RTC connection
+- [ ] **Reconcile State** (Recieve state)
+- [ ] Complete mulitsig address 
+- [ ] **Reconcile State** (Return Address)
 
 Player 1 & 2:
 
-- Send IOTA to the multisig address
-- They also enter their settlement addresses
+- [ ] Send IOTA to the multisig address
+- [ ] They also enter their settlement addresses
 
 #### Change State
 
 Player 1 wants to change state:
 
-- Initiate new address genneration for outputs
+- [ ] Initiate new address genneration for outputs
 
-  -**Two party address generation happens here**-
+-**Two party address generation happens here**-
 
-
-- Initiate the transaction request w/ outputs pointing to the new address
-- **Run the tree** to determine the terminating Root.
-- Check to see if the signature for each parent in the tree has been used 3 times.
-  - If so move on to the parent's sibling and generate a new bundle for that item.
-- Generate bundle root itself.
-- Send to Player 2
+- [ ] Initiate the transaction request w/ outputs pointing to the new address
+- [x] **Run the tree** to determine the terminating Root.
+- [x] Check to see if the signature for each parent in the tree has been used 3 times.
+- [ ] If so move on to the parent's sibling and generate a new bundle for that item.
+- [ ] Generate bundle root itself.
+- [ ] Send to Player 2
 
 Player 2:
 
-- Accept the proposed transaction and sign the bundles
-- Send bundle to Player 1
+- [ ] Accept the proposed transaction and sign the bundles
+- [ ] Send bundle to Player 1
 
 Player 1:
 
-- Verify signed bundles
+- [ ] Verify signed bundles
 
 #### End Channel
 
 Player 1 or 2 ends the session
 
-- Leaving user attaches the latest set of bundles to finalise the channel.
+- [ ] Leaving user attaches the latest set of bundles to finalise the channel.
 
 ## Limitations
 

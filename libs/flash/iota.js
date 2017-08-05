@@ -79,27 +79,20 @@ export const purchaseItem = async item => {
 ////// HELPERS
 
 // Get a new Address
-export const getAddress = async user => {
+export const initiateAddress = user => {
   // Create new digest
   var digest = iota.multisig.getDigest(user.seed, user.index + 1, 2);
-  // Send digest to server
-  const response = await Api("https://server.com/new-address", {
-    method: "POST",
-    body: JSON.stringify({ object: "goes here" })
-  });
-  // Check to see if response is valid
-  if (typeof response.address !== "string")
-    return alert(":( something went wrong");
-  // Save new address from the server
-  user.addresses.push(response.address);
-  // Add 1 to the index
-  user.index = user.index++;
-  // Save user
-  set("user", user);
+  // Add your digest to the trytes
+  return iota.multisig.addAddressDigest(digest);
+};
 
-  console.log(response);
-  // respond with the address
-  return response.address;
+export const finishAddress = (user, curlTrytes) => {
+  // Create new digest
+  var digest = iota.multisig.getDigest(user.seed, user.index + 1, 2);
+  // Add your digest to the trytes
+  var finalTrytes = iota.multisig.addAddressDigest(digest, curlTrytes);
+  // Squeeze out address
+  return iota.multisig.finalizeAddress(finalTrytes);
 };
 
 // Generate a random seed. Higher security needed
