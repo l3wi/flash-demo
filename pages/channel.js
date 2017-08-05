@@ -16,10 +16,12 @@ export default class extends React.Component {
     }
   };
   render() {
-    webRTC.initChannel({
-      address: '#TODO'
-    })
-    console.log(this.state);
+    (async() => {
+      var result = await webRTC.initChannel({
+        roomId: this.props.url.query.id
+      })
+      console.log('initChannel result', result);
+    })()
     return <div>Herro</div>;
   }
 }
