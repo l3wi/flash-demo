@@ -13,21 +13,28 @@ Player 2 enter:
 
 - Establish RTC connection
 - **Reconcile State** (Recieve state)
-- Complete mulitsig setup
+- Complete mulitsig address setup
 - Generate address
 - **Reconcile State** (Send state)
 
 Player 1 & 2:
 
 - Send IOTA to the multisig address
+- They also enter their settlement addresses
 
 ### Change State
 
 Player 1 wants to change state:
 
-- Initiate the transaction request
+- Initiate new address genneration for outputs
+- **Complete two party address generation**
+
+
+- Initiate the transaction request w/ outputs pointing to the new address
 - **Run the tree** to determine the terminating Root.
-- Generate bundles for Root's parents & the root itself.
+- Check to see if the signature for each parents in the tree has been used 3 times.
+  - If so move on to the parent's sibling and generate a new bundle for that item.
+- Generate bundle root itself.
 - **Reconcile State**
 
 Player 2:
@@ -53,7 +60,7 @@ Player 1 or 2 ends the session
    - This is to prevent double spends
 
 
-   - So the more transactions that occur the less tokens available left to send. 
+- So the more transactions that occur the less tokens available left to send. 
 
 2. Multisig arrangements require collateral (or trust).
 

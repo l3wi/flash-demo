@@ -1,6 +1,15 @@
 {
+  "name": "flash-demo",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js"
+  },
   "dependencies": {
+    "iota.lib.js": "git+https://github.com/l3wi/iota.lib.js.git",
     "next": "^2.4.9",
+    "next-routes": "^1.0.40",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "styled-components": "^2.1.2"
