@@ -86,10 +86,10 @@ export default class WebRTC {
       })
     })
     conn.on('close', () => {
+      delete _this.connections[conn.peer]
       _this.events.emit('peerLeft', {
         connection: conn
       })
-      delete _this.connections[conn.peer]
     })
     conn.on('data', (data) => {
       _this.events.emit('message', {

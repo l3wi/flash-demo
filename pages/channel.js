@@ -37,6 +37,13 @@ export default class extends React.Component {
             messages: messages
           })
         })
+        
+        webRTC.events.on('peerLeft', () => {
+          _this.setState({
+            peers: Object.values(webRTC.connections)
+          })
+        })
+
         webRTC.events.on('peerJoined', () => {
           _this.setState({
             peers: Object.values(webRTC.connections)
