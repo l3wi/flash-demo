@@ -19,8 +19,8 @@ class Master {
   // Handle the different contents of messages
   static handleMessage = message => {};
 
-  static initalise = (seed, number) => {
-    // Propmpt user for Depth.
+  static initalize = (seed, number) => {
+    // Prompt user for Depth.
     const depth = calculateDepth(number);
     // Then generate flash object.
     var flash = initialFlash(depth);

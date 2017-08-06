@@ -19,7 +19,7 @@ export default class extends React.Component {
       two: seedGen(81)
     };
     /// Act as Player 1
-    var flash = Flash.master.initalise(initial.one, 10);
+    var flash = Flash.master.initalize(initial.one, 10);
     // Act as player 2
     flash = Flash.slave.startup(initial.two, flash);
 
