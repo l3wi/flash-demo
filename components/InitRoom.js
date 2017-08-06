@@ -21,6 +21,7 @@ export default class extends React.Component {
     var mySeed = seedGen(81)
     var flashState = Flash.master.initalize(mySeed, maxTransactions)
     var roomData = {
+      isMaster: true, // The creator is always the master
       flashState,
       mySeed
     }

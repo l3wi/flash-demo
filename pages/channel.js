@@ -12,6 +12,7 @@ export default class extends React.Component {
     peers: [],
     messages: [],
     roomData: {
+      isMaster: null,
       mySeed: null,
       flashState: null
     }
@@ -35,10 +36,17 @@ export default class extends React.Component {
   }
 
   handleMessage(message) {
-    if(message.cmd === 'roomData') {
+    if(message.cmd === 'flashState') {
       // TODO: add better checks (is the state of the peer newer?)
       if(this.state.roomData.flashState === null) {
-        this.setState({ roomData: message.roomData })
+        var mySeed = seedGen(81)
+        this.setState({
+          roomData: {
+            flashState: message.flashState,
+            mySeed,
+            isMaster: false // the creator is always the master, so we are a slave
+          }
+        })
       }
     }
   }
@@ -66,7 +74,12 @@ export default class extends React.Component {
         messageJSON = JSON.parse(messageJSON)
 
         _this.handleMessage(messageJSON)
-        Flash.master.handleMessage(messageJSON)
+        if(_this.state.roomData.isMaster) {
+          Flash.master.handleMessage(messageJSON)
+        }
+        else {
+          Flash.slave.handleMessage(messageJSON)
+        }
       })
 
       webRTC.events.on('peerLeft', () => {
@@ -77,7 +90,13 @@ export default class extends React.Component {
 
       webRTC.events.once('peerJoined', ({ connection }) => {
         if(Object.values(webRTC.connections).length > 0) {
-          _this.setState({ status: 'peer-joined' })
+          _this.setState({
+            status: 'peer-joined',
+            peers: Object.values(webRTC.connections)
+          })
+          if(this.state.roomData.flashState !== null) {
+            _this.broadcastFlashState()
+          }
           _this.clearConnectTimer()
         }
       })
@@ -131,6 +150,9 @@ export default class extends React.Component {
       roomData,
       status: 'loaded'
     })
+
+    this.state.roomData = roomData // Workaround because setState doesn't update this.state until next render round.
+    this.broadcastFlashState()
   }
 
   renderInit() {
