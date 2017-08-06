@@ -71,8 +71,7 @@ export default class extends React.Component {
         _this.setState({
           messages: messages
         })
-        messageJSON = JSON.parse(messageJSON)
-
+        var messageJSON = JSON.parse(messageJSON)
         _this.handleMessage(messageJSON)
         if(_this.state.roomData.isMaster) {
           Flash.master.handleMessage(messageJSON)
