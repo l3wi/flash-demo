@@ -25,6 +25,11 @@ export default class extends React.Component {
     this.state.roomData = Object.assign(this.state.roomData, get(`room-${this.props.url.query.id}`))
   }
 
+  storeRoomDataLocally(roomData = this.state.roomData) {
+    console.log('store');
+    set(`room-${this.props.url.query.id}`, roomData)
+  }
+
   clearConnectTimer() {
     if(typeof this.connectToPeersTimer !== null) {
       clearInterval(this.connectToPeersTimer)
@@ -45,19 +50,22 @@ export default class extends React.Component {
         var newFlashState = Flash.slave.initalize(mySeed, message.flashState)
         // Now send the new state back to the other peer
         this.broadcastFlashState(newFlashState)
+        var roomData = {
+          flashState: newFlashState,
+          mySeed,
+          isMaster: false // the creator is always the master, so we are a slave
+        }
         this.setState({
-          roomData: {
-            flashState: newFlashState,
-            mySeed,
-            isMaster: false // the creator is always the master, so we are a slave
-          }
+          roomData
         })
+        this.storeRoomDataLocally(roomData)
       }
       else {
         this.state.roomData.flashState = message.flashState
         this.setState({
           roomData: this.state.roomData
         })
+        this.storeRoomDataLocally()
       }
     }
   }
