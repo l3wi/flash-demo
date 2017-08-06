@@ -11,8 +11,18 @@ export default class extends React.Component {
     messages: []
   }
 
+  connectToPeersTimer = null
+
+  clearConnectTimer() {
+    console.log('clearConnectTimer', this.connectToPeersTimer);
+    if(typeof this.connectToPeersTimer !== null) {
+      this.connectToPeersTimer = null
+      clearInterval(this.connectToPeersTimer)
+    }
+  }
+
   componentWillUnmount() {
-    clearInterval(connectToPeersTimer)
+    this.clearConnectTimer()
   }
 
   componentDidMount() {
@@ -37,7 +47,7 @@ export default class extends React.Component {
             messages: messages
           })
         })
-        
+
         webRTC.events.on('peerLeft', () => {
           _this.setState({
             peers: Object.values(webRTC.connections)
@@ -45,6 +55,9 @@ export default class extends React.Component {
         })
 
         webRTC.events.on('peerJoined', () => {
+          if(Object.values(webRTC.connections).length > 0) {
+            this.clearConnectTimer()
+          }
           _this.setState({
             peers: Object.values(webRTC.connections)
           })
