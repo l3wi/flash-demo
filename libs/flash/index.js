@@ -29,7 +29,7 @@ class Master {
     return flash;
   };
 
-  static startTransfer = (seed, flash) => {
+  static newAddress = (seed, flash) => {
     var { counter, reqBundles } = walkTree(flash.counter);
     console.log(reqBundles.length);
 
@@ -57,8 +57,8 @@ class Slave {
     return flash;
   };
 
-  static closeTransfer = (seed, flash, reqBundles) => {
-    var addresses = closeSingleAddress(seed, reqBundles, flash.addresses);
+  static closeAddress = (seed, flash) => {
+    var addresses = closeSingleAddress(seed, flash.reqBundles, flash.addresses);
     return { ...flash, addresses };
   };
 }
