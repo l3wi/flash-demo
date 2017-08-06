@@ -30,7 +30,7 @@ export default class extends React.Component {
 
     Flash.master.newTransaction(flash);
 
-    // Flash.master.closeTransaction(flash);
+    //Flash.master.closeTransaction(flash);
 
     this.setState({ flash, ...initial });
   };

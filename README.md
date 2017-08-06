@@ -10,19 +10,15 @@ Once the payment channel is initiated, they can start sending funds between each
 
 Once they are done, they can settle in real time and both users then see their respective balance in the browser and can withdraw it to their walelts.
 
-
-
 ### Approach
 
-The Flash payment system uses a tree topology reduce the number of transactions to be attached. Usually each transfer would have to be attached to the tangle, requiring a large amount of PoW. 
+The Flash payment system uses a tree topology reduce the number of transactions to be attached. Usually each transfer would have to be attached to the tangle, requiring a large amount of PoW.
 
 This approach takes advantage of the fact that a signature can be used upto 3 times while remaining reasonably secure. This lets us build a tree, where the terminating roots are the individual transactions that will occur in the Flash channel.
 
 ![Tree image](http://i.imgur.com/v90BcQ0.png)
 
-
-
-The number of transactions required to settle a Flash channel relates directly to the depth of the tree. The depth is determined by assesing the number of inidividual transactions that will occur offline within the Flash channel then applying `log(base3)x` to that number. 
+The number of transactions required to settle a Flash channel relates directly to the depth of the tree. The depth is determined by assesing the number of inidividual transactions that will occur offline within the Flash channel then applying `log(base3)x` to that number.
 
 For example: if you require a **60** transaction channel you'll require a tree with a depth **4**. As `log(base3)60 = 3.726` which we will round up to a depth of **4**.
 
@@ -34,45 +30,54 @@ The result of this approach is only needing to attach **4** transactions for upt
 
 Very very rough way the Flash system will work
 
-#### Establish State
+### Establish State
 
 Player 1 enters:
 
 - [ ] Say how many transactions
-- [x] calculate the depth: `log(base3)x` 
+- [x] calculate the depth: `log(base3)x`
 - [x] Generate fresh Flash object w/ counter
-- [x] Initiate multisig address genny
+- [x] Create a multisig wallet address
 - [x] Waits for other user to join
 
 Player 2 enter:
 
 - [x] Establish RTC connection
-- [ ] **Reconcile State** (Recieve state)
-- [x] Complete mulitsig address 
-- [ ] **Reconcile State** (Return Address)
+- [x] **Reconcile State** (Recieve state)
+- [x] Co-sign multisig wallet
+- [x] **Reconcile State** (Return Address)
 
 Player 1 & 2:
 
 - [ ] Send IOTA to the multisig address
+
+  - both peers send an equal amount, i.e 50 iota each = 100 iota in the wallet
+
 - [ ] They also enter their settlement addresses
 
-#### Change State
+  - this address is created outside the multisig wallet. It's made with a unique seed by each peer and kept secret from eachother.
+
+### Change State (make a transaction)
 
 Player 1 wants to change state:
 
-- [ ] Initiate the transaction request w/ outputs pointing to the new address
+- [ ] Initiate the transaction request w/ outputs
+
+  - The first output is the settlement address of the other user (here goes the amount of iota you want to send to the user, _times 2_).
+  - The second output is the remainder of the full balance, sent to the next address (from the tree, based on the multisig wallet)
+
 - [x] **Run the tree** to determine the terminating Root.
-- [x] Initiate new address genneration for outputs
+
+- [x] Initiate new address generation for outputs
 
 -**Two party address generation happens here**-
 
 - [x] Check to see if the signature for each parent in the tree has been used 3 times.
-- [ ] If so move on to the parent's sibling and generate a new bundle for that item.If so move on to the parent's sibling and generate a new bundle for that item.
+- [ ] If so move on to the parent's sibling and generate a new bundle for that item.
 - [ ] Generate bundle root itself.
 - [ ] Send to Player 2
 
 -**Two party address generation happens here**-
-
 
 Player 2:
 
@@ -83,24 +88,26 @@ Player 1:
 
 - [ ] Verify signed bundles
 
-#### End Channel
+### End Channel
 
 Player 1 or 2 ends the session
 
-- [ ] Leaving user attaches the latest set of bundles to finalise the channel.
+- [ ] Leaving user attaches the latest set of bundles to get all the money that has been spent.
+- [ ] 50% of the settlement address is sent to peer 1 and the other 50% is sent to peer 2
 
 ## Limitations
 
 1. Once tokens are spent you aren't allowed to reuse them
 
-   - This is to prevent double spends
+  - This is to prevent double spends
 
+2. So the more transactions that occur the less tokens available left to send.
 
-- So the more transactions that occur the less tokens available left to send. 
+3. Multisig arrangements require collateral (or trust).
 
-2. Multisig arrangements require collateral (or trust).
+  - There needs to be an equal incentive for both users to work together, other wise one party can lock up the money forever.
 
-   - There needs to be an equal incentive for both users to work together, other wise one party can lock up the money forever.
+  - Currently, we fix this by making sure users both deposit an equal amount of iota.
 
 ## Getting Started
 
@@ -111,7 +118,5 @@ yarn
 
 yarn dev
 ```
-
-
 
 lewi
