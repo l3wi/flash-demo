@@ -26,11 +26,11 @@ export default class extends React.Component {
     this.setState({ flash, ...initial });
   }
 
-  nedAddresses = (one, two, flash) => {
+  newAddresses = (one, two, flash) => {
     // New trany from Player 1
     flash = Flash.master.startTransfer(one, flash);
     // Confirm transaction as Player 2
-    flash = Flash.slave.closeTransfer(one, flash, flash.reqBundles);
+    flash = Flash.slave.closeTransfer(two, flash, flash.reqBundles);
     console.log(flash);
     this.setState({ flash });
   };
