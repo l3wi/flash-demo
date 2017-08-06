@@ -72,7 +72,7 @@ export default class WebRTC {
   broadcastMessage(message) {
     for(var k in this.connections) {
       var conn = this.connections[k]
-      conn.send(message.data)
+      conn.send(JSON.stringify(message))
     }
   }
 
@@ -112,7 +112,7 @@ export default class WebRTC {
   }
 
   onError(error) {
-    console.error(`WebRTC Error (${error.type}):`, error)    
+    console.error(`WebRTC Error (${error.type}):`, error)
   }
 }
 
