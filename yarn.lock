@@ -1947,9 +1947,9 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-"iota.lib.js@git+https://github.com/l3wi/iota.lib.js.git":
+"iota.lib.js@git+https://github.com/l3wi/iota.lib.js.git#master":
   version "0.2.7"
-  resolved "git+https://github.com/l3wi/iota.lib.js.git#c341cf5ea13ba9578af7b4196c4c8f560ba0d087"
+  resolved "git+https://github.com/l3wi/iota.lib.js.git#10b90a75c3321dcbf4566decf90dafee5d842f43"
   dependencies:
     async "^2.1.2"
     xmlhttprequest "^1.8.0"
