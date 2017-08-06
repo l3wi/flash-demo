@@ -22,11 +22,12 @@ export default class extends React.Component {
   connectToPeersTimer = null
 
   tryGetRoomData() {
-    this.state.roomData = Object.assign(this.state.roomData, get(`room-${this.props.url.query.id}`))
+    this.setState({
+      roomData: Object.assign(this.state.roomData, get(`room-${this.props.url.query.id}`))
+    })
   }
 
   storeRoomDataLocally(roomData = this.state.roomData) {
-    console.log('store');
     set(`room-${this.props.url.query.id}`, roomData)
   }
 
