@@ -42,11 +42,11 @@ Player 1 enters:
 - [x] calculate the depth: `log(base3)x` 
 - [x] Generate fresh Flash object w/ counter
 - [x] Initiate multisig address genny
-- [ ] Waits for other user to join
+- [x] Waits for other user to join
 
 Player 2 enter:
 
-- [ ] Establish RTC connection
+- [x] Establish RTC connection
 - [ ] **Reconcile State** (Recieve state)
 - [x] Complete mulitsig address 
 - [ ] **Reconcile State** (Return Address)
