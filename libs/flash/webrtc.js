@@ -112,7 +112,7 @@ export default class WebRTC {
   }
 
   onError(error) {
-    console.error(`WebRTC Error (${error.type}):`, error)
+    console.error(`WebRTC Error (${error.type}):`, error)    
   }
 }
 
