@@ -55,7 +55,7 @@ export default class extends React.Component {
           </p>
           {flash.addresses &&
             flash.addresses.map((level, index) =>
-              <div>
+              <div key={index}>
                 <strong>
                   Level: {index}
                 </strong>
