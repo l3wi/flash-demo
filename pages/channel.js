@@ -5,6 +5,7 @@ import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { webRTC } from "../libs/flash"
 import { isClient, get, set } from '../libs/utils'
 import InitRoom from '../components/InitRoom'
+import MakeTransaction from '../components/MakeTransaction'
 import Flash from "../libs/flash";
 
 export default class extends React.Component {
@@ -216,16 +217,25 @@ export default class extends React.Component {
     }
   }
 
+  renderCreateTransaction() {
+    if(this.state.status === 'make-transaction') {
+      return (<MakeTransaction></MakeTransaction>)
+    }
+  }
+
   render() {
     return (
       <div>
         Herro! We are connected to { this.state.peers.length } peers!
         <br /><b>Latest messages:</b><br />
         <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
+        <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
+        <br />
         { this.state.messages.map(this.renderMessage) }
         { this.renderStatus() }
         { this.renderWait() }
         { this.renderInit() }
+        { this.renderCreateTransaction() }
         { this.renderFlashObjectDebug() }
       </div>
     )
