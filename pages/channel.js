@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { webRTC } from "../libs/flash"
 import { isClient, get, set } from '../libs/utils'
+import InitRoom from '../components/InitRoom'
 
 export default class extends React.Component {
   state = {
@@ -106,25 +107,18 @@ export default class extends React.Component {
     return this.state.roomData.mySeed !== null
   }
 
-  initializeRoom(maxTransactions) {
-    var mySeed = seedGen(81)
-    var flashState = Flash.master.initalize(mySeed, maxTransactions)
-    var roomData = {
-      flashState,
-      mySeed
-    }
+  initializeRoomCallback(roomData) {
+    // We also move back to loaded-state
+    // This makes us wait for another peer again, which is fine now. We are the creator.
     this.setState({
-      roomData
+      roomData,
+      status: 'loaded'
     })
   }
 
   renderInit() {
-    if(isClient) {
-      if(this.state.status === 'init') {
-        return (<div>
-
-        </div>)
-      }
+    if(this.state.status === 'init') {
+      return (<InitRoom callback={ this.initializeRoomCallback.bind(this) }></InitRoom>)
     }
   }
 
@@ -140,6 +134,31 @@ export default class extends React.Component {
     }
   }
 
+  renderFlashObjectDebug() {
+    if(this.initialRoomMade()) {
+      var flash = this.state.roomData.flashState
+      return (
+        <div>
+          <h4>Flash Object</h4>
+          <p>
+            Depth: {flash.depth} Address Index: {flash.addressIndex}
+          </p>
+          {flash.addresses &&
+            flash.addresses.map((level, index) =>
+              <div key={index}>
+                <strong>
+                  Level: {index}
+                </strong>
+                <p>
+                  {level.address && level.address.substring(0, 10)} ...
+                </p>
+              </div>
+            )}
+        </div>
+      )
+    }
+  }
+
   render() {
     return (
       <div>
@@ -150,6 +169,7 @@ export default class extends React.Component {
         { this.renderStatus() }
         { this.renderWait() }
         { this.renderInit() }
+        { this.renderFlashObjectDebug() }
       </div>
     )
   }
