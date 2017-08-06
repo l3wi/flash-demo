@@ -91,6 +91,13 @@ export default class extends React.Component {
     }
   }
 
+  broadcastFlashState() {
+    webRTC.broadcastMessage({
+      cmd: 'flashState',
+      flashState: this.state.roomData.flashState
+    })
+  }
+
   renderMessage(message) {
     return (
       <div key={message.data}>{message.from}: {message.data}</div>
