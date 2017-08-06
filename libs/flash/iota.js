@@ -103,6 +103,10 @@ const initiateAddress = (seed, index) => {
   return iota.multisig.addAddressDigest(digest);
 };
 
+const getBalance = async (address) => {
+  // TODO: implement for verification stuff
+}
+
 const finishAddress = (seed, index, curlTrytes) => {
   // Create new digest
   var digest = iota.multisig.getDigest(seed, index + 1, 2);

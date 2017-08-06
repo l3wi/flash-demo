@@ -4,9 +4,10 @@ import styled from "styled-components";
 import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { webRTC } from "../libs/flash"
 import { isClient, get, set } from '../libs/utils'
+import Flash from "../libs/flash";
 import InitRoom from '../components/InitRoom'
 import MakeTransaction from '../components/MakeTransaction'
-import Flash from "../libs/flash";
+import Deposit from '../components/Deposit'
 
 export default class extends React.Component {
   state = {
@@ -16,7 +17,8 @@ export default class extends React.Component {
     roomData: {
       isMaster: null,
       mySeed: null,
-      flashState: null
+      flashState: null,
+      fullDepositMade: false
     }
   }
 
@@ -217,6 +219,12 @@ export default class extends React.Component {
     }
   }
 
+  renderDeposit() {
+    if(this.state.status === 'peer-joined') {
+      <Deposit roomData={this.state.roomData}></Deposit>
+    }
+  }
+
   renderCreateTransaction() {
     if(this.state.status === 'make-transaction') {
       return (<MakeTransaction></MakeTransaction>)
@@ -235,6 +243,7 @@ export default class extends React.Component {
         { this.renderStatus() }
         { this.renderWait() }
         { this.renderInit() }
+        { this.renderDeposit() }
         { this.renderCreateTransaction() }
         { this.renderFlashObjectDebug() }
       </div>
