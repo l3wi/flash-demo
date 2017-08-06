@@ -41,14 +41,14 @@ Player 1 enters:
 - [ ] Say how many transactions
 - [x] calculate the depth: `log(base3)x` 
 - [x] Generate fresh Flash object w/ counter
-- [ ] Initiate multisig address genny
+- [x] Initiate multisig address genny
 - [ ] Waits for other user to join
 
 Player 2 enter:
 
 - [ ] Establish RTC connection
 - [ ] **Reconcile State** (Recieve state)
-- [ ] Complete mulitsig address 
+- [x] Complete mulitsig address 
 - [ ] **Reconcile State** (Return Address)
 
 Player 1 & 2:
@@ -60,16 +60,19 @@ Player 1 & 2:
 
 Player 1 wants to change state:
 
-- [ ] Initiate new address genneration for outputs
+- [ ] Initiate the transaction request w/ outputs pointing to the new address
+- [x] **Run the tree** to determine the terminating Root.
+- [x] Initiate new address genneration for outputs
 
 -**Two party address generation happens here**-
 
-- [ ] Initiate the transaction request w/ outputs pointing to the new address
-- [x] **Run the tree** to determine the terminating Root.
 - [x] Check to see if the signature for each parent in the tree has been used 3 times.
-- [ ] If so move on to the parent's sibling and generate a new bundle for that item.
+- [ ] If so move on to the parent's sibling and generate a new bundle for that item.If so move on to the parent's sibling and generate a new bundle for that item.
 - [ ] Generate bundle root itself.
 - [ ] Send to Player 2
+
+-**Two party address generation happens here**-
+
 
 Player 2:
 
