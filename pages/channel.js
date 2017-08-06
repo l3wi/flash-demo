@@ -41,12 +41,22 @@ export default class extends React.Component {
       // TODO: add better checks (is the state of the peer newer?)
       if(this.state.roomData.flashState === null) {
         var mySeed = seedGen(81)
+        // Now we need to co-sign the room
+        var newFlashState = Flash.slave.initalize(mySeed, message.flashState)
+        // Now send the new state back to the other peer
+        this.broadcastFlashState(newFlashState)
         this.setState({
           roomData: {
-            flashState: message.flashState,
+            flashState: newFlashState,
             mySeed,
             isMaster: false // the creator is always the master, so we are a slave
           }
+        })
+      }
+      else {
+        this.state.roomData.flashState = message.flashState
+        this.setState({
+          roomData: this.state.roomData
         })
       }
     }
@@ -110,10 +120,10 @@ export default class extends React.Component {
     }
   }
 
-  broadcastFlashState() {
+  broadcastFlashState(flashState = this.state.roomData.flashState) {
     webRTC.broadcastMessage({
       cmd: 'flashState',
-      flashState: this.state.roomData.flashState
+      flashState: flashState
     })
   }
 
@@ -151,8 +161,7 @@ export default class extends React.Component {
       status: 'loaded'
     })
 
-    this.state.roomData = roomData // Workaround because setState doesn't update this.state until next render round.
-    this.broadcastFlashState()
+    this.broadcastFlashState(roomData.flashState)
   }
 
   renderInit() {
