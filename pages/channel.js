@@ -51,7 +51,8 @@ export default class extends React.Component {
       if(this.state.roomData.flashState === null) {
         var mySeed = seedGen(81)
         // Now we need to co-sign the room
-        var newFlashState = Flash.slave.initalize(mySeed, message.flashState)
+        var settlementAddress = prompt('Please enter your settlement address')
+        var newFlashState = Flash.slave.initalize(mySeed, message.flashState, settlementAddress)
         // Now send the new state back to the other peer
         this.broadcastFlashState(newFlashState)
         var roomData = {
@@ -158,6 +159,13 @@ export default class extends React.Component {
     return (<div>Status: { this.state.status }</div>)
   }
 
+  didDeposit() {
+    this.state.roomData.fullDepositMade = true
+    this.setState({
+      roomData: this.state.roomData
+    })
+  }
+
   initialRoomMade() {
     // Checking if mySeed is null
     // means that you haven't generated any private room data from this room yet.
@@ -220,8 +228,8 @@ export default class extends React.Component {
   }
 
   renderDeposit() {
-    if(this.state.status === 'peer-joined') {
-      <Deposit roomData={this.state.roomData}></Deposit>
+    if(!this.state.roomData.fullDepositMade && this.initialRoomMade()) {
+      return (<Deposit callback={this.didDeposit.bind(this)} roomData={this.state.roomData}></Deposit>)
     }
   }
 

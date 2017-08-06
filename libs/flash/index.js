@@ -22,13 +22,17 @@ class Master {
   static handleMessage = message => {};
 
   // Start the channel off
-  static initalize = (seed, number) => {
+  static initalize = (seed, number, depositAmount, settlementAddress) => {
     // Prompt user for Depth.
     const depth = calculateDepth(number);
     // Then generate flash object.
     var flash = initialFlash(depth);
     // Then generate the left of the tree's addresses.
     flash.addresses = startAddresses(seed, flash.addressIndex, depth);
+    flash.depositAmount = depositAmount
+    flash.settlementAddress = {
+      master: settlementAddress
+    }
     return flash;
   };
 
@@ -61,11 +65,12 @@ class Slave {
   static handleMessage = message => {};
 
   // Finish setup of multisig wallet form Player 1
-  static initalize = (seed, flash) => {
+  static initalize = (seed, flash, settlementAddress) => {
     // Take flash object, and sign the other half of the addresses.
     flash.addresses = closeAddresses(seed, flash.addresses);
     flash.addressIndex = flash.depth;
-    return flash;
+    flash.settlementAddress.slave = settlementAddress
+    return flash
   };
   //Finish up the signing of a new address
   static closeAddress = (seed, flash) => {

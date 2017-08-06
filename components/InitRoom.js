@@ -7,19 +7,23 @@ import Flash from "../libs/flash";
 
 export default class extends React.Component {
   state = {
-    amountOfTransactions: 100
+    amountOfTransactions: 100,
+    depositAmount: 50
   }
 
-  handleChange(event) {
-    this.setState({
-      amountOfTransactions: event.target.value
-    })
+  handleChange(key, event) {
+    var obj = {}
+    obj[key] = event.target.value
+    this.setState(obj)
   }
 
   createRoom() {
-    var maxTransactions = this.state.amountOfTransactions
     var mySeed = seedGen(81)
-    var flashState = Flash.master.initalize(mySeed, maxTransactions)
+    var amountOfTransactions = this.state.amountOfTransactions
+    var depositAmount = this.state.depositAmount
+    var settlementAddress = this.state.settlementAddress
+
+    var flashState = Flash.master.initalize(mySeed, amountOfTransactions, depositAmount, settlementAddress)
     var roomData = {
       isMaster: true, // The creator is always the master
       flashState,
@@ -31,7 +35,11 @@ export default class extends React.Component {
   render() {
     return (
       <div>
-        Max amount of transactions: <input onChange={this.handleChange} type="number" value={this.state.amountOfTransactions}></input>
+        Max amount of transactions: <input onChange={(e) => { this.handleChange('amountOfTransactions', e) }} type="number" value={this.state.amountOfTransactions}></input><br />
+        Deposit amount (both parties enter the equal amount): <input onChange={(e) => { this.handleChange('depositAmount', e) }} type="number" value={this.state.amountOfTransactions}></input> iota
+        Settlement address: <input onChange={(e) => { this.handleChange('settlementAddress', e) }} type="text" value={this.state.settlementAddress}></input>
+
+        <br />
         <input value="Create room" onClick={this.createRoom.bind(this)} type="button"></input>
       </div>
     )
