@@ -14,19 +14,28 @@ export default class extends React.Component {
   };
 
   componentDidMount() {
+    // Bundddles
+  }
+
+  startChannel = transactions => {
     var initial = {
       one: seedGen(81),
       two: seedGen(81)
     };
     /// Act as Player 1
-    var flash = Flash.master.initalize(initial.one, 10);
+    console.log(transactions);
+    var flash = Flash.master.initalize(initial.one, transactions);
     // Act as player 2
-    flash = Flash.slave.startup(initial.two, flash);
+    flash = Flash.slave.initalize(initial.two, flash);
+
+    Flash.master.newTransaction(flash);
+
+    Flash.master.closeTransaction(flash);
 
     this.setState({ flash, ...initial });
-  }
+  };
 
-  nedAddresses = (one, two, flash) => {
+  newAddresses = (one, two, flash) => {
     // New trany from Player 1
     flash = Flash.master.newAddress(one, flash);
     // Confirm transaction as Player 2
@@ -36,34 +45,47 @@ export default class extends React.Component {
   };
 
   render() {
-    var { one, two, flash } = this.state;
+    var { one, two, flash, transactions } = this.state;
     return (
       <Wrapper>
+        <div>
+          <h4>Flash Object</h4>
+          <div>
+            <input
+              value={transactions}
+              placeholder={`Max number of transactions`}
+              onChange={data =>
+                this.setState({ transactions: data.target.value })}
+            />
+            <button onClick={() => this.startChannel(transactions)}>
+              Start Channel
+            </button>
+          </div>
+          <div>
+            <button onClick={() => this.newAddresses(one, two, flash)}>
+              New addy
+            </button>
+            <p>
+              Depth: {flash.depth} Address Index: {flash.addressIndex}
+            </p>
+            {flash.addresses &&
+              flash.addresses.map((level, index) =>
+                <div key={index}>
+                  <strong>
+                    Level: {index}
+                  </strong>
+                  <p>
+                    {level.address && level.address.substring(0, 10)} ...
+                  </p>
+                </div>
+              )}
+          </div>
+        </div>
         <div>
           <h2>Player 1</h2>
           <p>
             Seed: {one && one.substring(0, 10)}...
           </p>
-        </div>
-        <div>
-          <h4>Flash Object</h4>
-          <button onClick={() => this.nedAddresses(one, two, flash)}>
-            New addy
-          </button>
-          <p>
-            Depth: {flash.depth} Address Index: {flash.addressIndex}
-          </p>
-          {flash.addresses &&
-            flash.addresses.map((level, index) =>
-              <div key={index}>
-                <strong>
-                  Level: {index}
-                </strong>
-                <p>
-                  {level.address && level.address.substring(0, 10)} ...
-                </p>
-              </div>
-            )}
         </div>
         <div>
           <h2>Player 2</h2>
