@@ -67,6 +67,33 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
   return addresses;
 };
 
+export const buildBundles = (flash, transfers) => {
+  console.log(flash);
+  /// Check to see if its the runs run?
+  if (!flash.reqBundles) {
+    // if so loop the length (minus the last one) of the tree and build bundles
+    var bundles = [];
+    Array(flash.depth - 1).fill().map(async (_, i) => {
+      // Build a bundle with the whole value & point down the tree
+      var transfers = [
+        {
+          address: flash.addresses[i + 1].address,
+          value: 10
+        }
+      ];
+      bundles.push(await startTransfer(flash.addresses[i].address, transfers));
+    });
+    return bundles;
+  }
+
+  // for (var i in flash.reqBundles) {
+  //   console.log(flash.addresses[flash.reqBundles[i]]);
+  //   // startTransfer(flash.addresses[flash.reqBundles[i]], transfers);
+  // }
+};
+
+// export const signBundle = (bundle, )
+
 ////// HELPERS
 // Start new addresses
 const initiateAddress = (seed, index) => {
@@ -83,6 +110,23 @@ const finishAddress = (seed, index, curlTrytes) => {
   var finalTrytes = iota.multisig.addAddressDigest(digest, curlTrytes);
   // Squeeze out address
   return iota.multisig.finalizeAddress(finalTrytes);
+};
+
+const startTransfer = (inputAddress, transfers) => {
+  var p = new Promise((res, rej) => {
+    iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
+      error,
+      success
+    ) {
+      if (error) {
+        console.error(error);
+      } else {
+        console.log(success);
+        res(success);
+      }
+    });
+  });
+  return p;
 };
 
 // Generate a random seed. Higher security needed
