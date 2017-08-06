@@ -1,6 +1,9 @@
 Important:
-  ☐ Integrate the flash object and the address generation in the webrtc/channel page (sending flash state back and forth)
-  ☐ Using localstorage to store the flash state
+  ✔ Integrate the flash object and the address generation in the webrtc/channel page (sending flash state back and forth) @done(2017-08-06 20:27)
+  ✔ Using localstorage to store the flash state @done(2017-08-06 20:27) @project(Important)
+  ☐ Start creating bundles
+  ☐ Create transactions
+  ☐ Allow to exist rooms
 
 Backlog:
   ☐ Encryption (based on room name)
