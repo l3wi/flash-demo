@@ -1,0 +1,7 @@
+Important:
+  ☐ Integrate the flash object and the address generation in the webrtc/channel page (sending flash state back and forth)
+  ☐ Using localstorage to store the flash state
+
+Backlog:
+  ☐ Encryption (based on room name)
+  ☐ Compression of flash state
