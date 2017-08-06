@@ -13,8 +13,14 @@ export default class extends React.Component {
 
   connectToPeersTimer = null
 
+  tryGetRoomData() {
+    this.state.roomData = {
+      mySeed: null,
+      flashState: null
+    }
+  }
+
   clearConnectTimer() {
-    console.log('clearConnectTimer', this.connectToPeersTimer);
     if(typeof this.connectToPeersTimer !== null) {
       this.connectToPeersTimer = null
       clearInterval(this.connectToPeersTimer)

@@ -104,16 +104,6 @@ export const seedGen = length => {
     );
 };
 
-// GET from localStorage
-const get = item => {
-  return JSON.parse(localStorage.getItem(item));
-};
-
-// SET item to localStorage
-const set = (item, data) => {
-  localStorage.setItem(item, JSON.stringify(data));
-};
-
 // Check if window is available
 const isWindow = () => {
   if (typeof window === "undefined" || typeof localStorage === "undefined") {
