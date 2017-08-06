@@ -5,6 +5,7 @@ import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { webRTC } from "../libs/flash"
 import { isClient, get, set } from '../libs/utils'
 import InitRoom from '../components/InitRoom'
+import Flash from "../libs/flash";
 
 export default class extends React.Component {
   state = {
@@ -71,7 +72,7 @@ export default class extends React.Component {
         _this.setState({
           messages: messages
         })
-        var messageJSON = JSON.parse(messageJSON)
+        var messageJSON = JSON.parse(message.data)
         _this.handleMessage(messageJSON)
         if(_this.state.roomData.isMaster) {
           Flash.master.handleMessage(messageJSON)
