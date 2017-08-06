@@ -41,24 +41,25 @@ export const walkTree = counters => {
   while (again) {
     // Check to see if we need another loop and to reset this level counter
     if (counters[index] === 2) {
+      // Mark the bundles that need to be generated
       requiredBundles.push(index);
       // Set the counter to 0
       arr[index] = 0;
       // Move the index up a level
       index--;
     } else {
+      // Mark the bundles that need to be generated
       requiredBundles.push(index);
-
       // Increase counter
       arr[index]++;
-
       // Break loop
       again = false;
     }
   }
-  console.log(requiredBundles);
   return { counter: arr, reqBundles: requiredBundles };
 };
+
+export const downTree = (counter, addresses) => {};
 
 /// Will ocme back to this func
 //////////

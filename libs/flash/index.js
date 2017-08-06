@@ -6,7 +6,8 @@ import {
   startAddresses,
   closeAddresses,
   startSingleAddress,
-  closeSingleAddress
+  closeSingleAddress,
+  buildBundles
 } from "./iota";
 
 ////////////////////
@@ -21,6 +22,7 @@ class Master {
     
   };
 
+  // Start the channel off
   static initalize = (seed, number) => {
     // Prompt user for Depth.
     const depth = calculateDepth(number);
@@ -31,7 +33,8 @@ class Master {
     return flash;
   };
 
-  static startTransfer = (seed, flash) => {
+  // Check to see what addresses need to be generated and starts signing
+  static newAddress = (seed, flash) => {
     var { counter, reqBundles } = walkTree(flash.counter);
     console.log(reqBundles.length);
 
@@ -43,6 +46,11 @@ class Master {
     );
     return { ...flash, addresses, addressIndex, reqBundles, counter };
   };
+
+  static newTransaction = async flash => {
+    var bundles = await buildBundles(flash);
+    console.log(bundles);
+  };
 }
 
 ////////////////////////////////////
@@ -51,23 +59,21 @@ class Slave {
   // Handle the different contents of messages
   static handleMessage = message => {};
 
-  // Setup multisig wallet from depth
-  static startup = (seed, flash) => {
+  // Finish setup of multisig wallet form Player 1
+  static initalize = (seed, flash) => {
     // Take flash object, and sign the other half of the addresses.
     flash.addresses = closeAddresses(seed, flash.addresses);
     flash.addressIndex = flash.depth;
     return flash;
   };
-
-  static closeTransfer = (seed, flash, reqBundles) => {
-    var addresses = closeSingleAddress(seed, reqBundles, flash.addresses);
+  //Finish up the signing of a new address
+  static closeAddress = (seed, flash) => {
+    var addresses = closeSingleAddress(seed, flash.reqBundles, flash.addresses);
     return { ...flash, addresses };
   };
 }
 
-class Flash {
+export default class Flash {
   static master = Master;
   static slave = Slave;
 }
-
-export default Flash;
