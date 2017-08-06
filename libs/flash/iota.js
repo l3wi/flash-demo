@@ -5,90 +5,80 @@ var iota = new IOTA({
   provider: "https://node.tangle.works"
 });
 
-export const info = () => {
-  iota.api.getNodeInfo(function(error, success) {
-    if (error) {
-      console.error(error);
-    } else {
-      console.log(success);
-    }
-  });
-};
+//////////////////////////////////////
+///// All functions are in pairs /////
 
-export const initialise = () => {
-  // Escape the function when server rendering
-  if (!isWindow()) return;
-  // Grab seed from local
-  var user = get("user");
-  // No seed? Then go make one!
-  if (user === null) {
-    console.log("No User");
-    user = Iota.setupUser();
-  }
-  console.log(user);
-};
-
-export const setupUser = async () => {
-  // Make a user zero state
-  var user = { seed: seedGen(81), index: 0, addresses: [], purchases: [] };
-  // Push the first address to the array
-  // user.addresses.push(await getAddress(user));
-  // Save the new user obj
-  set("user", user);
-  console.log(user);
-  return user;
-};
-
-// Initiate transaction from anywhere in the app.
-export const purchaseItem = async item => {
-  // Get latest user object
-  var user = await get("user");
-  // Create new multisig address
-  const address = getAddress(user);
-
-  // Build a transfer obj.
-  const transfers = [
-    {
-      address,
-      value: item.price,
-      tag: item.id
-    }
-  ];
-
-  // Generate partially signed budle
-  var partialBundle = iota.multisig.initiateTransfer(
-    4,
-    address,
-    address,
-    transfers,
-    callback // Does this need promises?
+///// Initialise a bunch of addresses for the left of the tree
+export const startAddresses = (seed, index, depth) => {
+  var trytes = Object.assign(
+    [],
+    Array(depth).fill().map((_, i) => {
+      var obj = {
+        depth: i,
+        index: index,
+        trytes: initiateAddress(seed, index)
+      };
+      index++;
+      return obj;
+    })
   );
+  return trytes;
+};
 
-  // Post the bundle to the server and wait for a response
-  const response = await Api("https://server.com/purchase", {
-    method: "POST",
-    body: JSON.stringify({ bundle: partialBundle })
-  });
+// Close off the addresses for the array
+export const closeAddresses = (seed, trytes) => {
+  var addresses = Object.assign(
+    [],
+    trytes.map((item, index) => {
+      return {
+        depth: item.depth,
+        index: item.index,
+        address: finishAddress(seed, item.index, item.trytes)
+      };
+    })
+  );
+  return addresses;
+};
 
-  // Handle error below
-  // ???????
+// Starts a multisig address in a spot on the tree
+export const startSingleAddress = (seed, index, reqBundles, addresses) => {
+  for (var i in reqBundles) {
+    addresses[reqBundles[i]] = {
+      depth: reqBundles[i],
+      index: index,
+      trytes: initiateAddress(seed, index)
+    };
+    // Push index up
+    index++;
+  }
+  return { addresses, addressIndex: index };
+};
 
-  // Update the react component which initiated the purchase
+// Closes the address and puts it in the tree
+export const closeSingleAddress = (seed, reqBundles, addresses) => {
+  for (var i in reqBundles) {
+    var item = addresses[reqBundles[i]];
+    addresses[reqBundles[i]] = {
+      depth: reqBundles[i],
+      index: item.index,
+      address: finishAddress(seed, item.index, item.trytes)
+    };
+  }
+  return addresses;
 };
 
 ////// HELPERS
-
-// Get a new Address
-export const initiateAddress = user => {
+// Start new addresses
+const initiateAddress = (seed, index) => {
   // Create new digest
-  var digest = iota.multisig.getDigest(user.seed, user.index + 1, 2);
+  var digest = iota.multisig.getDigest(seed, index + 1, 2);
   // Add your digest to the trytes
   return iota.multisig.addAddressDigest(digest);
 };
 
-export const finishAddress = (user, curlTrytes) => {
+const finishAddress = (seed, index, curlTrytes) => {
   // Create new digest
-  var digest = iota.multisig.getDigest(user.seed, user.index + 1, 2);
+  var digest = iota.multisig.getDigest(seed, index + 1, 2);
   // Add your digest to the trytes
   var finalTrytes = iota.multisig.addAddressDigest(digest, curlTrytes);
   // Squeeze out address

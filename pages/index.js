@@ -1,49 +1,84 @@
 import React from "react";
 import styled from "styled-components";
 
-import { seedGen, initiateAddress, finishAddress } from "../libs/flash/iota";
-import { calculateDepth, initialFlash, walkTree } from "../libs/flash/flash";
+import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
+import Flash from "../libs/flash";
 
 import { webRTC } from "../libs/flash";
 
 export default class extends React.Component {
   state = {
-    one: { seed: seedGen(81), input: 50 },
-    two: { seed: seedGen(81), input: 50 },
-    flash: {
-      depth: 5,
-      counter: [1, 2, 2, 2, 2],
-      addressIndex: 0,
-      addresses: [
-        ["KJFJGFJHGJHG"],
-        ["JKGFJKGFJGFHJGFJFK", "JGFGFUKFUFUKTFJFJHGIUHI"],
-        ["TUKDYTDUTKDKTDKUTDUKYFYFYFFY", "QJGFQUFKAUSGVAVA"]
-      ],
-      bundles: []
-    }
+    one: "",
+    two: "",
+    flash: {}
   };
 
   componentDidMount() {
-    /// User one
-    var digest = initiateAddress({
-      seed: this.state.one.seed,
-      index: this.state.flash.addressIndex
-    });
-    // User two
-    var address = finishAddress(
-      {
-        seed: this.state.two.seed,
-        index: this.state.flash.addressIndex
-      },
-      digest
-    );
-    /// New Addy
-    console.log(address);
+    var initial = {
+      one: seedGen(81),
+      two: seedGen(81)
+    };
+    /// Act as Player 1
+    var flash = Flash.master.initalise(initial.one, 10);
+    // Act as player 2
+    flash = Flash.slave.startup(initial.two, flash);
+
+    this.setState({ flash, ...initial });
   }
+
+  nedAddresses = (one, two, flash) => {
+    // New trany from Player 1
+    flash = Flash.master.startTransfer(one, flash);
+    // Confirm transaction as Player 2
+    flash = Flash.slave.closeTransfer(one, flash, flash.reqBundles);
+    console.log(flash);
+    this.setState({ flash });
+  };
 
   render() {
-    console.log(initialFlash(5));
-
-    return <div>Herro</div>;
+    var { one, two, flash } = this.state;
+    return (
+      <Wrapper>
+        <div>
+          <h2>Player 1</h2>
+          <p>
+            Seed: {one && one.substring(0, 10)}...
+          </p>
+        </div>
+        <div>
+          <h4>Flash Object</h4>
+          <button onClick={() => this.nedAddresses(one, two, flash)}>
+            New addy
+          </button>
+          <p>
+            Depth: {flash.depth} Address Index: {flash.addressIndex}
+          </p>
+          {flash.addresses &&
+            flash.addresses.map((level, index) =>
+              <div>
+                <strong>
+                  Level: {index}
+                </strong>
+                <p>
+                  {level.address && level.address.substring(0, 10)} ...
+                </p>
+              </div>
+            )}
+        </div>
+        <div>
+          <h2>Player 2</h2>
+          <p>
+            Seed: {two && two.substring(0, 10)}...
+          </p>
+        </div>
+      </Wrapper>
+    );
   }
 }
+
+const Wrapper = styled.section`
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+`;
