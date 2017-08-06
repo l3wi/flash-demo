@@ -34,6 +34,15 @@ export default class extends React.Component {
     this.clearConnectTimer()
   }
 
+  handleMessage(message) {
+    if(message.cmd === 'roomData') {
+      // TODO: add better checks (is the state of the peer newer?)
+      if(this.state.roomData.flashState === null) {
+        this.setState({ roomData: message.roomData })
+      }
+    }
+  }
+
   initWebRTC() {
     (async() => {
       var _this = this
@@ -54,6 +63,10 @@ export default class extends React.Component {
         _this.setState({
           messages: messages
         })
+        messageJSON = JSON.parse(messageJSON)
+
+        _this.handleMessage(messageJSON)
+        Flash.master.handleMessage(messageJSON)
       })
 
       webRTC.events.on('peerLeft', () => {
@@ -62,14 +75,11 @@ export default class extends React.Component {
         })
       })
 
-      webRTC.events.once('peerJoined', () => {
+      webRTC.events.once('peerJoined', ({ connection }) => {
         if(Object.values(webRTC.connections).length > 0) {
+          _this.setState({ status: 'peer-joined' })
           _this.clearConnectTimer()
         }
-        _this.setState({
-          peers: Object.values(webRTC.connections),
-          status: 'peer-joined'
-        })
       })
     })()
   }
@@ -124,7 +134,7 @@ export default class extends React.Component {
 
   renderWait() {
     if(isClient) {
-      if(!this.initialRoomMade() && this.state.status === 'loaded') {
+      if(!this.initialRoomMade() && (this.state.status === 'loaded' || this.state.status === 'peer-joined')) {
         return (<div>
           We haven't found any local room data yet. You can wait until a peer joins who does, or initialize the room yourself.
           <br />

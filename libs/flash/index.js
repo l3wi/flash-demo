@@ -17,7 +17,9 @@ export const webRTC = new WebRTC();
 // FLASH FACTORY FOR THE FIRST USER
 class Master {
   // Handle the different contents of messages
-  static handleMessage = message => {};
+  static handleMessage = message => {
+    
+  };
 
   static initalize = (seed, number) => {
     // Prompt user for Depth.
