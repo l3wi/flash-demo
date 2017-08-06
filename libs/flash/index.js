@@ -7,7 +7,8 @@ import {
   closeAddresses,
   startSingleAddress,
   closeSingleAddress,
-  buildBundles
+  buildBundles,
+  signBundle
 } from "./iota";
 
 ////////////////////
@@ -18,9 +19,7 @@ export const webRTC = new WebRTC();
 // FLASH FACTORY FOR THE FIRST USER
 class Master {
   // Handle the different contents of messages
-  static handleMessage = message => {
-    
-  };
+  static handleMessage = message => {};
 
   // Start the channel off
   static initalize = (seed, number) => {
@@ -49,7 +48,9 @@ class Master {
 
   static newTransaction = async flash => {
     var bundles = await buildBundles(flash);
-    console.log(bundles);
+
+    var halfSigned = await signBundle(bundles);
+    console.log(halfSigned);
   };
 }
 
