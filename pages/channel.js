@@ -46,6 +46,16 @@ export default class extends React.Component {
   }
 
   handleMessage(message) {
+    if(message.cmd === 'signAddress' && !this.state.roomData.isMaster) {
+      // co-sign the address for the slave
+      var newFlashState = Flash.slave.closeAddress(this.state.roomData.mySeed, message.flashState)
+      this.broadcastFlashState(newFlashState)
+      this.state.roomData.flashState = newFlashState
+      this.setState({
+        roomData: this.state.roomData
+      })
+    }
+
     if(message.cmd === 'flashState') {
       // TODO: add better checks (is the state of the peer newer?)
       if(this.state.roomData.flashState === null) {
@@ -95,13 +105,12 @@ export default class extends React.Component {
         _this.setState({
           messages: messages
         })
-        var messageJSON = JSON.parse(message.data)
-        _this.handleMessage(messageJSON)
+        _this.handleMessage(message.data)
         if(_this.state.roomData.isMaster) {
-          Flash.master.handleMessage(messageJSON)
+          Flash.master.handleMessage(message.data)
         }
         else {
-          Flash.slave.handleMessage(messageJSON)
+          Flash.slave.handleMessage(message.data)
         }
       })
 

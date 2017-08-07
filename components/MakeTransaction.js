@@ -28,7 +28,7 @@ export default class extends React.Component {
       value: this.state.amount
     }, {
       value: this.props.roomData.flashState.multiSigWalletBalance,
-      address:
+      address: ''
     }]
     iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
       error,

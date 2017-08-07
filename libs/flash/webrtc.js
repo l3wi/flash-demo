@@ -12,6 +12,30 @@ export default class WebRTC {
     this.events = new EventEmitter()
   }
 
+  async createAddress(roomData) {
+    return new Promise(function(resolve, reject) {
+      if(this.state.roomData.isMaster) {
+        // The master can just create an address and pass it on to slave to sign
+        var newFlash = Flash.master.newAddress(roomData.mySeed, roomData.flashState)
+        this.broadcastMessage({
+          cmd: 'signAddress',
+          flashState: newFlash
+        })
+      }
+      else {
+        // For the slave, we have to ask the master to create an address (order of signatures is important)
+        this.events.on('message', eventFn = (message) => {
+          if(message.cmd === 'signAddress') {
+            // We just have this event to check if we get to sign the final address
+          }
+        })
+        this.broadcastMessage({
+          cmd: 'createAddress'
+        })
+      }
+    });
+  }
+
   async getProbabilisticPeer() {
     // Keep trying to connect to a peer id
     // consisting of <channel address> + <peer number>
@@ -94,7 +118,7 @@ export default class WebRTC {
     conn.on('data', (data) => {
       _this.events.emit('message', {
         connection: conn,
-        data: data
+        data: JSON.parse(data)
       })
     })
   }
