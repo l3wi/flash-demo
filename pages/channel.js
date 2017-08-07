@@ -56,6 +56,15 @@ export default class extends React.Component {
       })
     }
 
+    if(message.cmd === 'createAddress' && this.state.roomData.isMaster) {
+      // co-sign the address for the slave
+      var newFlash = Flash.master.newAddress(this.state.roomData.mySeed, this.state.roomData.flashState)
+      webRTC.broadcastMessage({
+        cmd: 'signAddress',
+        flashState: newFlash
+      })
+    }
+
     if(message.cmd === 'flashState') {
       // TODO: add better checks (is the state of the peer newer?)
       if(this.state.roomData.flashState === null) {
