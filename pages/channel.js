@@ -185,7 +185,8 @@ export default class extends React.Component {
     if(this.state.roomData.flashState !== null) {
       return (<div>
         Balance: (master: { this.state.roomData.flashState.total['master'] } slave: { this.state.roomData.flashState.total['slave'] })<br />
-        Remainder: { this.state.roomData.flashState.remainder }
+        Stake: (master: { this.state.roomData.flashState.stake['master'] } slave: { this.state.roomData.flashState.stake['slave'] })<br />
+        Remainder: { Object.values(this.state.roomData.flashState.stake).reduce((a,b) => a+b, 0) }
       </div>)
     }
   }
@@ -201,7 +202,7 @@ export default class extends React.Component {
 
   didDeposit() {
     this.state.roomData.fullDepositMade = true
-    this.state.roomData.flashState.remainder += this.state.roomData.flashState.depositAmount
+    this.state.roomData.flashState.stake[this.state.roomData.isMaster ? "master" : "slave"] += this.state.roomData.flashState.depositAmount
     this.broadcastFlashState()
     this.storeRoomDataLocally()
     this.setState({

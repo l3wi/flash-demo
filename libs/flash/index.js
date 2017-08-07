@@ -31,7 +31,7 @@ class Master {
     flash.addresses = startAddresses(seed, flash.addressIndex, depth);
     flash.depositAmount = depositAmount;
     flash.total = { master: 0, slave: 0 }
-    flash.remainder = 0
+    flash.stake = { master: 0, slave: 0 }
     flash.settlementAddress = {
       master: settlementAddress
     };
