@@ -42,7 +42,6 @@ export default class extends React.Component {
           console.error(error);
         } else {
           console.log(success);
-          res(success);
         }
       })
     })()

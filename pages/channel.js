@@ -51,6 +51,7 @@ export default class extends React.Component {
       var newFlashState = Flash.slave.closeAddress(this.state.roomData.mySeed, message.flashState)
       this.broadcastFlashState(newFlashState)
       this.state.roomData.flashState = newFlashState
+      this.storeRoomDataLocally()
       this.setState({
         roomData: this.state.roomData
       })
@@ -173,6 +174,9 @@ export default class extends React.Component {
 
   didDeposit() {
     this.state.roomData.fullDepositMade = true
+    this.state.roomData.flashState.multiSigWalletBalance += this.state.roomData.flashState.depositAmount
+    this.broadcastFlashState()
+    this.storeRoomDataLocally()
     this.setState({
       roomData: this.state.roomData
     })
