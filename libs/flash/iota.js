@@ -65,6 +65,7 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
 ///////////////////////////////////////////////////////////////////////////////////////////
 export const buildMultipleBundles = async (flash, value) => {
   /// Check to see if its the first run?
+  console.log(value.master + value.slave);
   if (!flash.reqBundles) {
     // Generate an array of promises to be to initialise the tree
     var bundleProms = Array(flash.depth - 1).fill().map(async (_, i) => {
@@ -72,7 +73,7 @@ export const buildMultipleBundles = async (flash, value) => {
       var transfers = [
         {
           address: flash.addresses[i + 1].address,
-          value: flash.multiSigWalletBalance
+          value: value.master + value.slave
         }
       ];
       var bundle = await startTransfer(flash.addresses[i].address, transfers);
@@ -93,17 +94,17 @@ export const buildMultipleBundles = async (flash, value) => {
     if (item !== flash.depth - 1) {
       transfers.push({
         address: flash.addresses[item + 1].address, // Pass balance to child address
-        value: flash.multiSigWalletBalance // Pass full value down tree
+        value: value.master + value.slave // Pass full value down tree
       });
     } else {
       // Build transfer object for the Root Bundle
       transfers.push({
         address: flash.settlementAddress.master, // Pass to master addresses
-        value: 5 // Set the amount send to master
+        value: value.master // Set the amount send to master
       });
       transfers.push({
         address: flash.settlementAddress.slave, // Pass to slave addresses
-        value: 5 // Set the amount send to slave
+        value: value.slave // Set the amount send to slave
       });
     }
     var bundle = await startTransfer(flash.addresses[item].address, transfers);
