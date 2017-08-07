@@ -235,7 +235,7 @@ export default class extends React.Component {
 
   renderCreateTransaction() {
     if(this.state.status === 'make-transaction') {
-      return (<MakeTransaction></MakeTransaction>)
+      return (<MakeTransaction roomData={this.state.roomData}></MakeTransaction>)
     }
   }
 

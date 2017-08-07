@@ -1,9 +1,5 @@
-import IOTA from "iota.lib.js";
 import Api from "./api";
-// Create IOTA instance directly with provider
-var iota = new IOTA({
-  provider: "https://node.tangle.works"
-});
+import { iota } from "../iota-node"
 
 //////////////////////////////////////
 ///// All functions are in pairs /////
