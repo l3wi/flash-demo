@@ -23,8 +23,9 @@ export default class extends React.Component {
       if(this.props.roomData.isMaster) {
         // The master can just create the transaction and push it to the slave
         var amount = parseInt(this.state.amount)
-        Flash.master.newTransaction(this.props.roomData.flashState, amount, this.props.roomData.mySeed);
+        Flash.master.newTransaction(this.props.roomData.flashState, amount, this.props.roomData.mySeed)
       }
+    })()
   }
 
   render() {
