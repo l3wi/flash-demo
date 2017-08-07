@@ -20,13 +20,15 @@ export default class WebRTC {
         // The master can just create the transaction and push it to the slave
         var initTransactionCreation = async (flashState) => {
           // Start new transaction
+          flashState.stake['master'] -= amount
+          flashState.stake['slave'] -= amount
+
           amount *= 2
           var amountObj = {
             master: flashState.total.master,
             slave: flashState.total.slave
           }
           amountObj[sendToMaster ? "master" : "slave"] += amount
-          flashState.remainder -= amount
           if(flashState.remainder < 0) {
             alert("This flash channel has no transportable balance left. The room should be closed.")
             return
