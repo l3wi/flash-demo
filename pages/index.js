@@ -17,34 +17,39 @@ export default class extends React.Component {
     // Bundddles
   }
 
-  startChannel = transactions => {
+  startChannel = async transactions => {
     var initial = {
       one: seedGen(81),
       two: seedGen(81)
     };
-    /// Act as Player 1
+    /// Act as Player & Create inital addresses
     console.log(transactions);
-    var flash = Flash.master.initalize(initial.one, transactions);
-    // Act as player 2
-    flash = Flash.slave.initalize(initial.two, flash);
-
-    Flash.master.newTransaction(flash, 11, initial.one);
-
-    //Flash.master.closeTransaction(flash);
-
+    var flash = Flash.master.initalize(
+      initial.one,
+      transactions,
+      50,
+      initial.one
+    );
+    // Act as Player 2 & Sign those addeses
+    flash = Flash.slave.initalize(initial.two, flash, initial.two);
+    // Create new transaciton bundles
+    flash = await Flash.master.newTransaction(flash, 11, initial.one);
+    // Sign those transactionbundles
+    flash = await Flash.slave.closeTransaction(flash, initial.two);
+    console.log(flash);
     this.setState({ flash, ...initial });
   };
 
-  newAddresses = (one, two, flash) => {
+  newTransaction = async (one, two, flash) => {
     // New trany from Player 1
     flash = Flash.master.newAddress(one, flash);
     // Confirm transaction as Player 2
     flash = Flash.slave.closeAddress(one, flash);
     // Start new transaction
-    flash = Flash.master.newTransaction(flash, 11);
+    flash = await Flash.master.newTransaction(flash, 11, one);
     // Finsh signing the bundles
-    flash = Flash.slave.closeTransaction(flash, 11);
-
+    flash = await Flash.slave.closeTransaction(flash, two);
+    console.log("Flahs after bundle: ", flash);
     this.setState({ flash });
   };
 
@@ -66,7 +71,7 @@ export default class extends React.Component {
             </button>
           </div>
           <div>
-            <button onClick={() => this.newAddresses(one, two, flash)}>
+            <button onClick={() => this.newTransaction(one, two, flash)}>
               New Transaction
             </button>
             <p>

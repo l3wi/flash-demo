@@ -40,7 +40,6 @@ class Master {
   // Check to see what addresses need to be generated and starts signing
   static newAddress = (seed, flash) => {
     var { counter, reqBundles } = walkTree(flash.counter);
-    console.log(reqBundles.length);
 
     var { addresses, addressIndex } = startSingleAddress(
       seed,
@@ -53,9 +52,10 @@ class Master {
 
   static newTransaction = async (flash, value, seed) => {
     var bundles = await buildMultipleBundles(flash, value);
-
-    console.log(await signMultipleBundles(bundles, seed));
-    return;
+    return {
+      ...flash,
+      bundles: await signMultipleBundles(bundles, seed)
+    };
   };
 }
 
@@ -77,6 +77,24 @@ class Slave {
   static closeAddress = (seed, flash) => {
     var addresses = closeSingleAddress(seed, flash.reqBundles, flash.addresses);
     return { ...flash, addresses };
+  };
+
+  static closeTransaction = async (flash, seed) => {
+    // Sign the rest of the bundles
+    var bundles = await signMultipleBundles(flash.bundles, seed);
+    console.log(bundles);
+
+    // Strip out the index and only return the bundle
+    var newBundles = [...bundles];
+    bundles.map(item => {
+      console.log(newBundles[item.depth]);
+      newBundles[item.depth] = item.bundle;
+      console.log(newBundles[item.depth]);
+    });
+    return {
+      ...flash,
+      bundles: newBundles
+    };
   };
 }
 

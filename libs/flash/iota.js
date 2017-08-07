@@ -72,15 +72,14 @@ export const buildMultipleBundles = async (flash, value) => {
       var transfers = [
         {
           address: flash.addresses[i + 1].address,
-          value: value
+          value: flash.multiSigWalletBalance
         }
       ];
       var bundle = await startTransfer(flash.addresses[i].address, transfers);
-      console.log(bundle);
-
       return {
         bundle,
-        addressIndex: flash.addresses[i].index
+        addressIndex: flash.addresses[i].index,
+        depth: i
       };
     });
     // Wait until all concurrent promises are returned
@@ -89,17 +88,29 @@ export const buildMultipleBundles = async (flash, value) => {
 
   // Generate an array of promises to be to generate specific bundles
   var bundleProms = flash.reqBundles.map(async (item, i) => {
-    // Make up the transfer
-    var transfers = [
-      {
-        address: flash.addresses[item].address, // NEED TO HANDLE END OF TREE (Needs to be +1)
-        value: value // need to actually pass through the value
-      }
-    ];
+    var transfers = [];
+    // Make up the transfer for parent nodes
+    if (item !== flash.depth - 1) {
+      transfers.push({
+        address: flash.addresses[item + 1].address, // Pass balance to child address
+        value: flash.multiSigWalletBalance // Pass full value down tree
+      });
+    } else {
+      // Build transfer object for the Root Bundle
+      transfers.push({
+        address: flash.settlementAddress.master, // Pass to master addresses
+        value: 5 // Set the amount send to master
+      });
+      transfers.push({
+        address: flash.settlementAddress.slave, // Pass to slave addresses
+        value: 5 // Set the amount send to slave
+      });
+    }
     var bundle = await startTransfer(flash.addresses[item].address, transfers);
     return {
       bundle,
-      addressIndex: flash.addresses[item].index
+      addressIndex: flash.addresses[item].index,
+      depth: item
     };
   });
   // Wait until all concurrent promises are returned
@@ -107,12 +118,11 @@ export const buildMultipleBundles = async (flash, value) => {
 };
 
 export const signMultipleBundles = async (bundles, seed) => {
-  console.log("Signing Bundles: ", bundles);
   // Setup an array of promises to sign bundles
   var bundleProms = bundles.map(async object => {
     return {
       bundle: await signBundle(object, seed),
-      addressIndex: object.addressIndex
+      ...object
     };
   });
   // Wait until all concurrent promises are returned
