@@ -150,7 +150,9 @@ export default class WebRTC {
   }
 
   onError(error) {
-    console.error(`WebRTC Error (${error.type}):`, error)
+    if(error.type !== 'peer-unavailable') {
+      console.error(`WebRTC Error (${error.type}):`, error)
+    }
   }
 }
 
