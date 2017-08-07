@@ -58,6 +58,7 @@ export default class extends React.Component {
       // Finsh signing the bundles
       (async() => {
         var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
+        this.didMakeSuccessfulTransaction(newFlashState)
         webRTC.broadcastMessage({
           cmd: 'signTransactionResult',
           flashState: newFlashState
