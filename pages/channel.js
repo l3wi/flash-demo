@@ -46,23 +46,24 @@ export default class extends React.Component {
 
   handleMessage(message) {
     if(message.cmd === 'signAddress' && !this.state.roomData.isMaster) {
-      // co-sign the address for the slave
+      // co-sign the address as the slave
       var newFlashState = Flash.slave.closeAddress(this.state.roomData.mySeed, message.flashState)
-      this.broadcastFlashState(newFlashState)
-      this.state.roomData.flashState = newFlashState
-      this.storeRoomDataLocally()
-      this.setState({
-        roomData: this.state.roomData
+      webRTC.broadcastMessage({
+        cmd: 'signAddressResult',
+        flashState: newFlashState
       })
     }
 
-    if(message.cmd === 'createAddress' && this.state.roomData.isMaster) {
-      // co-sign the address for the slave
-      var newFlash = Flash.master.newAddress(this.state.roomData.mySeed, this.state.roomData.flashState)
-      webRTC.broadcastMessage({
-        cmd: 'signAddress',
-        flashState: newFlash
-      })
+    if(message.cmd === 'signTransaction' && !this.state.roomData.isMaster) {
+      // Finsh signing the bundles
+      var _this = this
+      (async () => {
+        var newFlashState = await Flash.slave.closeTransaction(message.flashState, _this.state.roomData.mySeed)
+        webRTC.broadcastMessage({
+          cmd: 'signTransactionResult',
+          flashState: newFlashState
+        })
+      })()
     }
 
     if(message.cmd === 'flashState') {

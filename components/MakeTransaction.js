@@ -18,13 +18,51 @@ export default class extends React.Component {
     })
   }
 
-  createTransaction() {
-    (async () => {
-      if(this.props.roomData.isMaster) {
+  async createTransaction() {
+    var _this = this
+    return new Promise(function(resolve, reject) {
+      if(_this.props.roomData.isMaster) {
         // The master can just create the transaction and push it to the slave
-        var amount = parseInt(this.state.amount)
-        Flash.master.newTransaction(this.props.roomData.flashState, amount, this.props.roomData.mySeed)
+        var initTransactionCreation = async (flashState) => {
+          var amount = parseInt(_this.state.amount)
+          // Start new transaction
+          var flashState = await Flash.master.newTransaction(flashState, amount)
+          var eventFn = (message) => {
+            message = message.data
+            if(message.cmd === 'signTransactionResult') {
+              webRTC.events.off('message', eventFn)
+              resolve(message.flashState)
+            }
+          }
+          webRTC.events.on('message', eventFn)
+          webRTC.broadcastMessage({
+            cmd: 'signTransaction',
+            flashState: flashState
+          })
+        }
+        var initAddressCreation = () => {
+          var flashState = Flash.master.newAddress(_this.props.roomData.mySeed, _this.props.roomData.flashState)
+          var eventFn = (message) => {
+            message = message.data
+            if(message.cmd === 'signAddressResult') {
+              webRTC.events.off('message', eventFn)
+              initTransactionCreation(message.flashState)
+            }
+          }
+          webRTC.events.on('message', eventFn)
+          webRTC.broadcastMessage({
+            cmd: 'signAddress',
+            flashState: flashState
+          })
+        }
+        initAddressCreation()
       }
+    });
+  }
+
+  createTransactionClick() {
+    (async () => {
+      await this.createTransaction()
     })()
   }
 
@@ -33,7 +71,7 @@ export default class extends React.Component {
       <div>
         Amount to send <input onChange={this.handleChange.bind(this)} type="number" value={this.state.amount}></input> iota
         <br />
-        <input value="Create transaction" onClick={this.createTransaction.bind(this)} type="button"></input>
+        <input value="Create transaction" onClick={this.createTransactionClick.bind(this)} type="button"></input>
       </div>
     )
   }
