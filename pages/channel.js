@@ -88,6 +88,8 @@ export default class extends React.Component {
   initWebRTC() {
     (async() => {
       var _this = this
+      // Super huge hack. Don't try at home
+      webRTC.channel = this
       var result = await webRTC.initChannel({
         roomId: _this.props.url.query.id
       })
@@ -151,7 +153,7 @@ export default class extends React.Component {
 
   renderMessage(message) {
     return (
-      <div key={message.data}>{message.from}: {message.data}</div>
+      <div key={message.data}>{message.from}: {JSON.stringify(message.data)}</div>
     )
   }
 
