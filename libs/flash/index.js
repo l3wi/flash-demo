@@ -7,8 +7,8 @@ import {
   closeAddresses,
   startSingleAddress,
   closeSingleAddress,
-  buildBundles,
-  signBundle
+  buildMultipleBundles,
+  signMultipleBundles
 } from "./iota";
 
 ////////////////////
@@ -29,11 +29,11 @@ class Master {
     var flash = initialFlash(depth);
     // Then generate the left of the tree's addresses.
     flash.addresses = startAddresses(seed, flash.addressIndex, depth);
-    flash.depositAmount = depositAmount
-    flash.multiSigWalletBalance = 0
+    flash.depositAmount = depositAmount;
+    flash.multiSigWalletBalance = 0;
     flash.settlementAddress = {
       master: settlementAddress
-    }
+    };
     return flash;
   };
 
@@ -51,11 +51,11 @@ class Master {
     return { ...flash, addresses, addressIndex, reqBundles, counter };
   };
 
-  static newTransaction = async flash => {
-    var bundles = await buildBundles(flash);
+  static newTransaction = async (flash, value, seed) => {
+    var bundles = await buildMultipleBundles(flash, value);
 
-    var halfSigned = await signBundle(bundles);
-    console.log(halfSigned);
+    console.log(await signMultipleBundles(bundles, seed));
+    return;
   };
 }
 
@@ -70,8 +70,8 @@ class Slave {
     // Take flash object, and sign the other half of the addresses.
     flash.addresses = closeAddresses(seed, flash.addresses);
     flash.addressIndex = flash.depth;
-    flash.settlementAddress.slave = settlementAddress
-    return flash
+    flash.settlementAddress.slave = settlementAddress;
+    return flash;
   };
   //Finish up the signing of a new address
   static closeAddress = (seed, flash) => {

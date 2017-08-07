@@ -28,7 +28,7 @@ export default class extends React.Component {
     // Act as player 2
     flash = Flash.slave.initalize(initial.two, flash);
 
-    Flash.master.newTransaction(flash);
+    Flash.master.newTransaction(flash, 11, initial.one);
 
     //Flash.master.closeTransaction(flash);
 
@@ -40,7 +40,11 @@ export default class extends React.Component {
     flash = Flash.master.newAddress(one, flash);
     // Confirm transaction as Player 2
     flash = Flash.slave.closeAddress(one, flash);
-    console.log(flash);
+    // Start new transaction
+    flash = Flash.master.newTransaction(flash, 11);
+    // Finsh signing the bundles
+    flash = Flash.slave.closeTransaction(flash, 11);
+
     this.setState({ flash });
   };
 
@@ -63,7 +67,7 @@ export default class extends React.Component {
           </div>
           <div>
             <button onClick={() => this.newAddresses(one, two, flash)}>
-              New addy
+              New Transaction
             </button>
             <p>
               Depth: {flash.depth} Address Index: {flash.addressIndex}

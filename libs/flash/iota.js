@@ -1,5 +1,5 @@
 import Api from "./api";
-import { iota } from "../iota-node"
+import { iota } from "../iota-node";
 
 //////////////////////////////////////
 ///// All functions are in pairs /////
@@ -35,7 +35,7 @@ export const closeAddresses = (seed, trytes) => {
   );
   return addresses;
 };
-
+///////////////////////////////////////////////////////////////////////////////////////////
 // Starts a multisig address in a spot on the tree
 export const startSingleAddress = (seed, index, reqBundles, addresses) => {
   for (var i in reqBundles) {
@@ -62,35 +62,64 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
   }
   return addresses;
 };
-
-export const buildBundles = (flash, transfers) => {
-  console.log(flash);
-  /// Check to see if its the runs run?
+///////////////////////////////////////////////////////////////////////////////////////////
+export const buildMultipleBundles = async (flash, value) => {
+  /// Check to see if its the first run?
   if (!flash.reqBundles) {
-    // if so loop the length (minus the last one) of the tree and build bundles
-    var bundles = [];
-    Array(flash.depth - 1).fill().map(async (_, i) => {
+    // Generate an array of promises to be to initialise the tree
+    var bundleProms = Array(flash.depth - 1).fill().map(async (_, i) => {
       // Build a bundle with the whole value & point down the tree
       var transfers = [
         {
           address: flash.addresses[i + 1].address,
-          value: 10
+          value: value
         }
       ];
-      bundles.push(await startTransfer(flash.addresses[i].address, transfers));
+      var bundle = await startTransfer(flash.addresses[i].address, transfers);
+      console.log(bundle);
+
+      return {
+        bundle,
+        addressIndex: flash.addresses[i].index
+      };
     });
-    return bundles;
+    // Wait until all concurrent promises are returned
+    return await Promise.all(bundleProms);
   }
 
-  // for (var i in flash.reqBundles) {
-  //   console.log(flash.addresses[flash.reqBundles[i]]);
-  //   // startTransfer(flash.addresses[flash.reqBundles[i]], transfers);
-  // }
+  // Generate an array of promises to be to generate specific bundles
+  var bundleProms = flash.reqBundles.map(async (item, i) => {
+    // Make up the transfer
+    var transfers = [
+      {
+        address: flash.addresses[item].address, // NEED TO HANDLE END OF TREE (Needs to be +1)
+        value: value // need to actually pass through the value
+      }
+    ];
+    var bundle = await startTransfer(flash.addresses[item].address, transfers);
+    return {
+      bundle,
+      addressIndex: flash.addresses[item].index
+    };
+  });
+  // Wait until all concurrent promises are returned
+  return await Promise.all(bundleProms);
 };
 
-// export const signBundle = (bundle, )
+export const signMultipleBundles = async (bundles, seed) => {
+  console.log("Signing Bundles: ", bundles);
+  // Setup an array of promises to sign bundles
+  var bundleProms = bundles.map(async object => {
+    return {
+      bundle: await signBundle(object, seed),
+      addressIndex: object.addressIndex
+    };
+  });
+  // Wait until all concurrent promises are returned
+  return await Promise.all(bundleProms);
+};
 
-////// HELPERS
+////// HELPERS /////////////////////////////////////////////////////////////////
 // Start new addresses
 const initiateAddress = (seed, index) => {
   // Create new digest
@@ -98,10 +127,6 @@ const initiateAddress = (seed, index) => {
   // Add your digest to the trytes
   return iota.multisig.addAddressDigest(digest);
 };
-
-const getBalance = async (address) => {
-  // TODO: implement for verification stuff
-}
 
 const finishAddress = (seed, index, curlTrytes) => {
   // Create new digest
@@ -112,6 +137,7 @@ const finishAddress = (seed, index, curlTrytes) => {
   return iota.multisig.finalizeAddress(finalTrytes);
 };
 
+//
 const startTransfer = (inputAddress, transfers) => {
   var p = new Promise((res, rej) => {
     iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
@@ -121,10 +147,28 @@ const startTransfer = (inputAddress, transfers) => {
       if (error) {
         console.error(error);
       } else {
-        console.log(success);
         res(success);
       }
     });
+  });
+  return p;
+};
+
+// Add the user's key to the bundle
+const signBundle = (object, seed) => {
+  var p = new Promise((res, rej) => {
+    iota.multisig.addSignature(
+      object.bundle,
+      object.bundle[1].address,
+      iota.multisig.getKey(seed, object.bundle[1].index, 4),
+      function(error, success) {
+        if (error) {
+          console.error(error);
+        } else {
+          res(success);
+        }
+      }
+    );
   });
   return p;
 };
