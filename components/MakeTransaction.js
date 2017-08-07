@@ -20,34 +20,11 @@ export default class extends React.Component {
 
   createTransaction() {
     (async () => {
-      var addresses = this.props.roomData.flashState.addresses
-      var address = this.props.roomData.isMaster ? this.props.roomData.flashState.settlementAddress.slave : this.props.roomData.flashState.settlementAddress.master
-      // Get the last generated address for the deepest level (I think this is the bottom-left of the tree?)
-      var inputAddress = addresses[addresses.length - 1].address
-      var newFlash = await webRTC.createAddress(this.props.roomData)
-      var amount = parseInt(this.state.amount) * 2
-      newFlash.multiSigWalletBalance -= amount
-      var transfers = [{
-        address,
-        value: amount
-      }, {
-        value: newFlash.multiSigWalletBalance,
-        address: newFlash.addresses[newFlash.addresses.length - 1].address
-      }]
-      console.log("Sending input: ", inputAddress, ' transfers: ', JSON.stringify(transfers, null, 2));
-      var _this = this
-      iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
-        error,
-        success
-      ) {
-        if (error) {
-          console.error(error);
-        } else {
-          // TODO: broadcast this flashstate and store tx?
-          console.log(success);
-        }
-      })
-    })()
+      if(this.props.roomData.isMaster) {
+        // The master can just create the transaction and push it to the slave
+        var amount = parseInt(this.state.amount)
+        Flash.master.newTransaction(this.props.roomData.flashState, amount, this.props.roomData.mySeed);
+      }
   }
 
   render() {

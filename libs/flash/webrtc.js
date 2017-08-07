@@ -22,7 +22,7 @@ export default class WebRTC {
         let eventFn = (message) => {
           message = message.data
           if(message.cmd === 'flashState') {
-            // The flashstate from the slave now should contain the newest state
+            // The flashState from the slave now should contain the newest state
             _this.events.off('message', eventFn)
             resolve(message.flashState)
           }
