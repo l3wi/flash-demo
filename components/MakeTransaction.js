@@ -21,18 +21,21 @@ export default class extends React.Component {
   createTransaction() {
     (async () => {
       var addresses = this.props.roomData.flashState.addresses
-      var address = this.props.roomData.isMaster ? this.props.roomData.flashState.settlementAddress.master : this.props.roomData.flashState.settlementAddress.slave
+      var address = this.props.roomData.isMaster ? this.props.roomData.flashState.settlementAddress.slave : this.props.roomData.flashState.settlementAddress.master
       // Get the last generated address for the deepest level (I think this is the bottom-left of the tree?)
-      var inputAddress = addresses[addresses.length - 1]
+      var inputAddress = addresses[addresses.length - 1].address
       var newFlash = await webRTC.createAddress(this.props.roomData)
+      var amount = parseInt(this.state.amount) * 2
+      newFlash.multiSigWalletBalance -= amount
       var transfers = [{
         address,
-        value: this.state.amount
+        value: amount
       }, {
-        value: this.props.roomData.flashState.multiSigWalletBalance - this.state.amount,
-        address: addresses[addresses.length - 1]
+        value: newFlash.multiSigWalletBalance,
+        address: newFlash.addresses[newFlash.addresses.length - 1].address
       }]
-      console.log("Sending input: ", inputAddress, ' transfers: ', transfers);
+      console.log("Sending input: ", inputAddress, ' transfers: ', JSON.stringify(transfers, null, 2));
+      var _this = this
       iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
         error,
         success
@@ -40,8 +43,8 @@ export default class extends React.Component {
         if (error) {
           console.error(error);
         } else {
+          // TODO: broadcast this flashstate and store tx?
           console.log(success);
-          res(success);
         }
       })
     })()
