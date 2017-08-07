@@ -39,15 +39,24 @@ class Master {
 
   // Check to see what addresses need to be generated and starts signing
   static newAddress = (seed, flash) => {
-    var { counter, reqBundles } = walkTree(flash.counter);
+    var { counter, reqBundles, reqAddresses } = walkTree(flash.counter);
+    console.log(reqBundles);
+    console.log(reqAddresses);
 
     var { addresses, addressIndex } = startSingleAddress(
       seed,
       flash.addressIndex,
-      reqBundles,
+      reqAddresses,
       flash.addresses
     );
-    return { ...flash, addresses, addressIndex, reqBundles, counter };
+    return {
+      ...flash,
+      addresses,
+      addressIndex,
+      reqBundles,
+      reqAddresses,
+      counter
+    };
   };
 
   static newTransaction = async (flash, value, seed) => {
@@ -75,7 +84,11 @@ class Slave {
   };
   //Finish up the signing of a new address
   static closeAddress = (seed, flash) => {
-    var addresses = closeSingleAddress(seed, flash.reqBundles, flash.addresses);
+    var addresses = closeSingleAddress(
+      seed,
+      flash.reqAddresses,
+      flash.addresses
+    );
     return { ...flash, addresses };
   };
 

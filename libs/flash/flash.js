@@ -32,6 +32,7 @@ export const walkTree = counters => {
 
   // ADD FLAGS TO INDICATE NEW BUNDLES TO BE GENERATED
   var requiredBundles = [];
+  var requiredAddresses = [];
 
   // Set a counter for the loop
   var index = counters.length - 1;
@@ -42,21 +43,30 @@ export const walkTree = counters => {
     // Check to see if we need another loop and to reset this level counter
     if (counters[index] === 2) {
       // Mark the bundles that need to be generated
+      requiredAddresses.push(index);
       requiredBundles.push(index);
+
       // Set the counter to 0
       arr[index] = 0;
       // Move the index up a level
       index--;
     } else {
       // Mark the bundles that need to be generated
+      requiredAddresses.push(index);
+      // Also get parent to change to new child
       requiredBundles.push(index);
+      if (index !== 0) requiredBundles.push(index - 1); // Escape the root of the tree
       // Increase counter
       arr[index]++;
       // Break loop
       again = false;
     }
   }
-  return { counter: arr, reqBundles: requiredBundles };
+  return {
+    counter: arr,
+    reqBundles: requiredBundles,
+    reqAddresses: requiredAddresses
+  };
 };
 
 export const downTree = (counter, addresses) => {};
