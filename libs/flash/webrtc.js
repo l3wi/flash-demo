@@ -19,11 +19,8 @@ export default class WebRTC {
       if(roomData.isMaster) {
         // The master can just create an address and pass it on to slave to sign
         var newFlash = Flash.master.newAddress(roomData.mySeed, roomData.flashState)
-        _this.broadcastMessage({
-          cmd: 'signAddress',
-          flashState: newFlash
-        })
-        var eventFn = (message) => {
+        let eventFn = (message) => {
+          message = message.data
           if(message.cmd === 'flashState') {
             // The flashstate from the slave now should contain the newest state
             _this.events.off('message', eventFn)
@@ -31,10 +28,15 @@ export default class WebRTC {
           }
         }
         _this.events.on('message', eventFn)
+        _this.broadcastMessage({
+          cmd: 'signAddress',
+          flashState: newFlash
+        })
       }
       else {
         // For the slave, we have to ask the master to create an address (order of signatures is important)
-        var eventFn = (message) => {
+        let eventFn = (message) => {
+          message = message.data
           if(message.cmd === 'signAddress') {
             // We just have this event to check if we get to sign the final address
             // Since the previous message event already signed the address, we can just return flash state

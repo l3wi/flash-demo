@@ -46,7 +46,6 @@ export default class extends React.Component {
   }
 
   handleMessage(message) {
-    console.log(message);
     if(message.cmd === 'signAddress' && !this.state.roomData.isMaster) {
       // co-sign the address for the slave
       var newFlashState = Flash.slave.closeAddress(this.state.roomData.mySeed, message.flashState)
@@ -255,7 +254,7 @@ export default class extends React.Component {
   render() {
     return (
       <div>
-        Herro! We are connected to { this.state.peers.length } peers!
+        Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
         <br /><b>Latest messages:</b><br />
         <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>

@@ -25,7 +25,6 @@ export default class extends React.Component {
       // Get the last generated address for the deepest level (I think this is the bottom-left of the tree?)
       var inputAddress = addresses[addresses.length - 1]
       var newFlash = await webRTC.createAddress(this.props.roomData)
-      console.log('newFlash', newFlash);
       var transfers = [{
         address,
         value: this.state.amount
@@ -33,6 +32,7 @@ export default class extends React.Component {
         value: this.props.roomData.flashState.multiSigWalletBalance - this.state.amount,
         address: addresses[addresses.length - 1]
       }]
+      console.log("Sending input: ", inputAddress, ' transfers: ', transfers);
       iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
         error,
         success
