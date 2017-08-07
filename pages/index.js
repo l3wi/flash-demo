@@ -10,7 +10,9 @@ export default class extends React.Component {
   state = {
     one: "",
     two: "",
-    flash: {}
+    flash: {},
+    total: { master: 50, slave: 50 },
+    remainder: 100
   };
 
   componentDidMount() {
@@ -32,8 +34,12 @@ export default class extends React.Component {
     );
     // Act as Player 2 & Sign those addeses
     flash = Flash.slave.initalize(initial.two, flash, initial.two);
-    // Create new transaciton bundles
-    flash = await Flash.master.newTransaction(flash, 11, initial.one);
+
+    flash = await Flash.master.newTransaction(
+      flash,
+      { master: 200, slave: 400 },
+      initial.one
+    );
     // Sign those transactionbundles
     flash = await Flash.slave.closeTransaction(flash, initial.two);
     console.log(flash);
@@ -46,11 +52,31 @@ export default class extends React.Component {
     // Confirm transaction as Player 2
     flash = Flash.slave.closeAddress(one, flash);
     // Start new transaction
-    flash = await Flash.master.newTransaction(flash, 11, one);
+    flash = await Flash.master.newTransaction(
+      flash,
+      { master: 200, slave: 400 },
+      one
+    );
     // Finsh signing the bundles
     flash = await Flash.slave.closeTransaction(flash, two);
-    console.log("Flahs after bundle: ", flash);
+    console.log("Updated Bundle: ", flash);
     this.setState({ flash });
+  };
+
+  send = (uid, amount, flash) => {
+    flash.balance.remainder = flash.balance.remainder - amount * 2;
+    if ("master") {
+      flash.balance.master = flash.balance.master + amount;
+      flash.balance.slave = flash.balance.slave - amount;
+    } else {
+      flash.balance.master = flash.balance.master - amount;
+      flash.balance.slave = flash.balance.slave + amount;
+    }
+    if (flash.balance.remainder <= 0)
+      return alert(
+        "You have no more balance. You should close this channel nowish.s"
+      );
+    this.setState({ ...flash });
   };
 
   render() {
@@ -74,20 +100,10 @@ export default class extends React.Component {
             <button onClick={() => this.newTransaction(one, two, flash)}>
               New Transaction
             </button>
+
             <p>
-              Depth: {flash.depth} Address Index: {flash.addressIndex}
+              {/* Balance left: {flash && flash.balance.remainder} */}
             </p>
-            {flash.addresses &&
-              flash.addresses.map((level, index) =>
-                <div key={index}>
-                  <strong>
-                    Level: {index}
-                  </strong>
-                  <p>
-                    {level.address && level.address.substring(0, 10)} ...
-                  </p>
-                </div>
-              )}
           </div>
         </div>
         <div>
@@ -95,12 +111,16 @@ export default class extends React.Component {
           <p>
             Seed: {one && one.substring(0, 10)}...
           </p>
+          <button onClick={() => this.send("master", 10, flash)}>
+            Send 10
+          </button>
         </div>
         <div>
           <h2>Player 2</h2>
           <p>
             Seed: {two && two.substring(0, 10)}...
           </p>
+          <button onClick={() => this.send("slave", 5, flash)}>Send 5</button>
         </div>
       </Wrapper>
     );
