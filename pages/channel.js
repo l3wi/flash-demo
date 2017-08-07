@@ -200,7 +200,6 @@ export default class extends React.Component {
 
   didDeposit() {
     this.state.roomData.fullDepositMade = true
-    this.state.roomData.flashState.total[this.state.roomData.isMaster ? "master" : "slave"] += this.state.roomData.flashState.depositAmount
     this.state.roomData.flashState.remainder += this.state.roomData.flashState.depositAmount
     this.broadcastFlashState()
     this.storeRoomDataLocally()
