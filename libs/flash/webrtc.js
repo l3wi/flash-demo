@@ -20,7 +20,6 @@ export default class WebRTC {
         // The master can just create the transaction and push it to the slave
         var initTransactionCreation = async (flashState) => {
           // Start new transaction
-          flashState.remainder = flash.remainder - amount * 2;
           var amountObj
           if(sendToMaster) {
             amountObj = {
@@ -35,12 +34,14 @@ export default class WebRTC {
             }
           }
           flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
+          amount *= 2
+          flashState.remainder -= amount;
           if (sendToMaster) {
-            flashState.total.master = flash.balance.master + amount;
-            flashState.total.slave = flash.balance.slave - amount;
+            flashState.total.master = flashState.total.master + amount;
+            flashState.total.slave = flashState.total.slave - amount;
           } else {
-            flashState.total.master = flash.balance.master - amount;
-            flashState.total.slave = flash.balance.slave + amount;
+            flashState.total.master = flashState.total.master - amount;
+            flashState.total.slave = flashState.total.slave + amount;
           }
 
           var eventFn = (message) => {
