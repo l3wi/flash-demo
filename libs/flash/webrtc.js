@@ -27,6 +27,10 @@ export default class WebRTC {
           }
           amountObj[sendToMaster ? "master" : "slave"] += amount
           flashState.remainder -= amount
+          if(flashState.remainder < 0) {
+            alert("This flash channel has no transportable balance left. The room should be closed.")
+            return
+          }
           flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
           flashState.total.master = amountObj.master;
           flashState.total.slave = amountObj.slave;
