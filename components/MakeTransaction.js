@@ -26,7 +26,7 @@ export default class extends React.Component {
         var initTransactionCreation = (flashState) => {
           var amount = parseInt(this.state.amount)
           // Start new transaction
-          var flashState = Flash.master.newTransaction(flashState, amount)
+          var flashState = await Flash.master.newTransaction(flashState, amount)
           var eventFn = (message) => {
             message = message.data
             if(message.cmd === 'signTransactionResult') {

@@ -56,11 +56,14 @@ export default class extends React.Component {
 
     if(message.cmd === 'signTransaction' && !this.state.roomData.isMaster) {
       // Finsh signing the bundles
-      var newFlashState = Flash.slave.closeTransaction(message.flashState, 11);
-      this.broadcastMessage({
-        cmd: 'signTransactionResult',
-        flashState: newFlashState
-      })
+      var _this = this
+      (async () => {
+        var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
+        _this.broadcastMessage({
+          cmd: 'signTransactionResult',
+          flashState: newFlashState
+        })
+      })()
     }
 
     if(message.cmd === 'flashState') {
