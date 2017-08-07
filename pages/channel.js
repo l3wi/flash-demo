@@ -6,6 +6,7 @@ import { webRTC } from "../libs/flash"
 import { isClient, get, set } from '../libs/utils'
 import Flash from "../libs/flash";
 import InitRoom from '../components/InitRoom'
+import CloseRoom from '../components/CloseRoom'
 import MakeTransaction from '../components/MakeTransaction'
 import Deposit from '../components/Deposit'
 
@@ -269,6 +270,12 @@ export default class extends React.Component {
     }
   }
 
+  renderClose() {
+    if(this.state.status === 'close-room') {
+      return (<CloseRoom></CloseRoom>)
+    }
+  }
+
   renderDeposit() {
     if(!this.state.roomData.fullDepositMade && this.initialRoomMade()) {
       return (<Deposit callback={this.didDeposit.bind(this)} roomData={this.state.roomData}></Deposit>)
@@ -284,14 +291,17 @@ export default class extends React.Component {
   render() {
     return (
       <div>
-        Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
-        <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
+        <input type="button" onClick={() => { this.setState({ status: 'close-room' }) }} value="Close Room"></input>
+        <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
+        <br />
+        Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
         <br />
         { this.renderStatus() }
         { this.renderWait() }
         { this.renderInit() }
         { this.renderDeposit() }
+        { this.renderClose() }
         { this.renderCreateTransaction() }
         { this.renderFlashObjectDebug() }
       </div>
