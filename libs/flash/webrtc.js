@@ -13,6 +13,53 @@ export default class WebRTC {
     this.events = new EventEmitter();
   }
 
+  async createTransaction(roomData, amount) {
+    var _this = this
+    return new Promise(function(resolve, reject) {
+      if(roomData.isMaster) {
+        // The master can just create the transaction and push it to the slave
+        var initTransactionCreation = async (flashState) => {
+          // Start new transaction
+          var flashState = await Flash.master.newTransaction(flashState, amount)
+          var eventFn = (message) => {
+            message = message.data
+            if(message.cmd === 'signTransactionResult') {
+              _this.events.off('message', eventFn)
+              resolve(message.flashState)
+            }
+          }
+          _this.events.on('message', eventFn)
+          _this.broadcastMessage({
+            cmd: 'signTransaction',
+            flashState: flashState
+          })
+        }
+        var initAddressCreation = () => {
+          var flashState = Flash.master.newAddress(roomData.mySeed, roomData.flashState)
+          var eventFn = (message) => {
+            message = message.data
+            if(message.cmd === 'signAddressResult') {
+              _this.events.off('message', eventFn)
+              initTransactionCreation(message.flashState)
+            }
+          }
+          _this.events.on('message', eventFn)
+          _this.broadcastMessage({
+            cmd: 'signAddress',
+            flashState: flashState
+          })
+        }
+        initAddressCreation()
+      }
+      else {
+        _this.broadcastMessage({
+          cmd: 'createTransaction',
+          amount: amount
+        })
+      }
+    });
+  }
+
   async createAddress(roomData) {
     var _this = this;
     return new Promise(function(resolve, reject) {

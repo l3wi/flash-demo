@@ -66,6 +66,13 @@ export default class extends React.Component {
       })()
     }
 
+    if(message.cmd === 'createTransaction' && this.state.roomData.isMaster) {
+      var _this = this
+      (async () => {
+        await webRTC.createTransaction(_this.state.roomData, message.amount)
+      })()
+    }
+
     if(message.cmd === 'flashState') {
       // TODO: add better checks (is the state of the peer newer?)
       if(this.state.roomData.flashState === null) {
