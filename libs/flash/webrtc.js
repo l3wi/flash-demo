@@ -44,8 +44,8 @@ export default class WebRTC {
             resolve(_this.channel.state.roomData.flashState)
           }
         }
-        this.events.on('message', eventFn)
-        this.broadcastMessage({
+        _this.events.on('message', eventFn)
+        _this.broadcastMessage({
           cmd: 'createAddress'
         })
       }

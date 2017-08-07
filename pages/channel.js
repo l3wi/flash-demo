@@ -13,7 +13,6 @@ export default class extends React.Component {
   state = {
     status: 'loaded',
     peers: [],
-    messages: [],
     roomData: {
       isMaster: null,
       mySeed: null,
@@ -100,15 +99,8 @@ export default class extends React.Component {
         webRTC.connectToPeers()
       }, 1000)
       webRTC.events.on('message', (message) => {
-        var messages = _this.state.messages
-        messages.push({
-          from: message.connection.peer,
-          data: message.data
-        })
-        _this.setState({
-          messages: messages
-        })
         _this.handleMessage(message.data)
+        console.log(`${message.connection.peer}: ${JSON.stringify(message.data, null, 2)}`)
         if(_this.state.roomData.isMaster) {
           Flash.master.handleMessage(message.data)
         }
@@ -150,13 +142,6 @@ export default class extends React.Component {
       cmd: 'flashState',
       flashState: flashState
     })
-  }
-
-  renderMessage(message) {
-    var dataString = JSON.stringify(message.data, null, 2)
-    return (
-      <pre key={dataString}>{message.from}: {dataString}</pre>
-    )
   }
 
   msgKeyPress(e) {
@@ -260,7 +245,6 @@ export default class extends React.Component {
       <div>
         Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
         MultiSig Balance: <b>{ this.state.roomData.flashState && this.state.roomData.flashState.multiSigWalletBalance }</b> iota
-        <br /><b>Latest messages:</b><br />
         <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
         <br />
@@ -270,7 +254,6 @@ export default class extends React.Component {
         { this.renderDeposit() }
         { this.renderCreateTransaction() }
         { this.renderFlashObjectDebug() }
-        { this.state.messages.map(this.renderMessage) }
       </div>
     )
   }
