@@ -30,7 +30,8 @@ class Master {
     // Then generate the left of the tree's addresses.
     flash.addresses = startAddresses(seed, flash.addressIndex, depth);
     flash.depositAmount = depositAmount;
-    flash.multiSigWalletBalance = 0;
+    flash.total = { master: 0, slave: 0 }
+    flash.remainder = 0
     flash.settlementAddress = {
       master: settlementAddress
     };

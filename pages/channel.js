@@ -177,13 +177,28 @@ export default class extends React.Component {
     }
   }
 
+  renderBalance() {
+    if(this.state.roomData.flashState !== null) {
+      return (<div>
+        Balance: (master: { this.state.roomData.flashState.total['master'] } slave: { this.state.roomData.flashState.total['slave'] })<br />
+        Remainder: { this.state.roomData.flashState.remainder }
+      </div>)
+    }
+  }
+
   renderStatus() {
-    return (<div>Status: { this.state.status }</div>)
+    return (
+      <div>
+        Status: { this.state.status }<br />
+        { this.renderBalance() }
+      </div>
+    )
   }
 
   didDeposit() {
     this.state.roomData.fullDepositMade = true
-    this.state.roomData.flashState.multiSigWalletBalance += this.state.roomData.flashState.depositAmount
+    this.state.roomData.flashState.total[this.state.roomData.isMaster ? "master" : "slave"] += this.state.roomData.flashState.depositAmount
+    this.state.roomData.flashState.remainder += this.state.roomData.flashState.depositAmount
     this.broadcastFlashState()
     this.storeRoomDataLocally()
     this.setState({
@@ -268,7 +283,6 @@ export default class extends React.Component {
     return (
       <div>
         Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
-        MultiSig Balance: <b>{ this.state.roomData.flashState && this.state.roomData.flashState.multiSigWalletBalance }</b> iota
         <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
         <br />
