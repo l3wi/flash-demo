@@ -54,7 +54,7 @@ class Master {
     var bundles = await buildMultipleBundles(flash, value);
     return {
       ...flash,
-      bundles: await signMultipleBundles(bundles, seed)
+      partialBundles: await signMultipleBundles(bundles, seed)
     };
   };
 }
@@ -81,19 +81,13 @@ class Slave {
 
   static closeTransaction = async (flash, seed) => {
     // Sign the rest of the bundles
-    var bundles = await signMultipleBundles(flash.bundles, seed);
-    console.log(bundles);
-
+    var newBundles = await signMultipleBundles(flash.partialBundles, seed);
+    var bundles = [...flash.bundles];
     // Strip out the index and only return the bundle
-    var newBundles = [...bundles];
-    bundles.map(item => {
-      console.log(newBundles[item.depth]);
-      newBundles[item.depth] = item.bundle;
-      console.log(newBundles[item.depth]);
-    });
+    newBundles.map(item => (bundles[item.depth] = item.bundle));
     return {
       ...flash,
-      bundles: newBundles
+      bundles
     };
   };
 }
