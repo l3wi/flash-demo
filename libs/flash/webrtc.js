@@ -13,14 +13,36 @@ export default class WebRTC {
     this.events = new EventEmitter();
   }
 
-  async createTransaction(roomData, amount) {
+  async createTransaction(roomData, amount, sendToMaster) {
     var _this = this
     return new Promise(function(resolve, reject) {
       if(roomData.isMaster) {
         // The master can just create the transaction and push it to the slave
         var initTransactionCreation = async (flashState) => {
           // Start new transaction
-          flashState = await Flash.master.newTransaction(flashState, amount, roomData.mySeed)
+          flashState.remainder = flash.remainder - amount * 2;
+          var amountObj
+          if(sendToMaster) {
+            amountObj = {
+              master: amount,
+              slave: 0
+            }
+          }
+          else {
+            amountObj = {
+              master: 0,
+              slave: amount
+            }
+          }
+          flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
+          if (sendToMaster) {
+            flashState.total.master = flash.balance.master + amount;
+            flashState.total.slave = flash.balance.slave - amount;
+          } else {
+            flashState.total.master = flash.balance.master - amount;
+            flashState.total.slave = flash.balance.slave + amount;
+          }
+
           var eventFn = (message) => {
             message = message.data
             if(message.cmd === 'signTransactionResult') {

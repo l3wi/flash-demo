@@ -67,7 +67,9 @@ export default class extends React.Component {
 
     if(message.cmd === 'createTransaction' && this.state.roomData.isMaster) {
       (async() => {
-        await webRTC.createTransaction(this.state.roomData, message.amount)
+        // True at the end make sure that if the slave asks the master to create a transaction
+        // the amount is always sent to master (since in essence, slave will be paying)
+        await webRTC.createTransaction(this.state.roomData, message.amount, true)
       })()
     }
 
