@@ -22,8 +22,41 @@ export default class extends React.Component {
     (async () => {
       if(this.props.roomData.isMaster) {
         // The master can just create the transaction and push it to the slave
-        var amount = parseInt(this.state.amount)
-        Flash.master.newTransaction(this.props.roomData.flashState, amount, this.props.roomData.mySeed)
+        var _this = this
+        var initTransactionCreation = (flashState) => {
+          var amount = parseInt(this.state.amount)
+          // Start new transaction
+          var flashState = Flash.master.newTransaction(flashState, amount)
+          var eventFn = (message) => {
+            message = message.data
+            if(message.cmd === 'signTransactionResult') {
+              webRTC.off('message', eventFn)
+              // todo: do something with new state
+
+            }
+          }
+          webRTC.on('message', eventFn)
+          webRTC.broadcastMessage({
+            cmd: 'signTransaction',
+            flashState: flashState
+          })
+        }
+        var initAddressCreation = () => {
+          var flashState = Flash.master.newAddress(_this.props.roomData.mySeed, _this.props.roomData.flashState)
+          var eventFn = (message) => {
+            message = message.data
+            if(message.cmd === 'signAddressResult') {
+              webRTC.off('message', eventFn)
+              initTransactionCreation(message.flashState)
+            }
+          }
+          webRTC.on('message', eventFn)
+          webRTC.broadcastMessage({
+            cmd: 'signAddress',
+            flashState: flashState
+          })
+        }
+        initAddressCreation()
       }
     })()
   }
