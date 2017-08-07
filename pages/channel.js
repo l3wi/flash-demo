@@ -56,9 +56,8 @@ export default class extends React.Component {
 
     if(message.cmd === 'signTransaction' && !this.state.roomData.isMaster) {
       // Finsh signing the bundles
-      var _this = this
-      (async () => {
-        var newFlashState = await Flash.slave.closeTransaction(message.flashState, _this.state.roomData.mySeed)
+      (async() => {
+        var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
         webRTC.broadcastMessage({
           cmd: 'signTransactionResult',
           flashState: newFlashState
@@ -67,9 +66,8 @@ export default class extends React.Component {
     }
 
     if(message.cmd === 'createTransaction' && this.state.roomData.isMaster) {
-      var _this = this
-      (async () => {
-        await webRTC.createTransaction(_this.state.roomData, message.amount)
+      (async() => {
+        await webRTC.createTransaction(this.state.roomData, message.amount)
       })()
     }
 
@@ -145,6 +143,15 @@ export default class extends React.Component {
         }
       })
     })()
+  }
+
+  didMakeSuccessfulTransaction(flashState) {
+    console.log('didMakeSuccessfulTransaction', flashState);
+    this.state.roomData.flashState = flashState
+    this.setState({
+      roomData: this.state.roomData
+    })
+    this.storeRoomDataLocally()
   }
 
   componentDidMount() {
@@ -253,7 +260,7 @@ export default class extends React.Component {
 
   renderCreateTransaction() {
     if(this.state.status === 'make-transaction') {
-      return (<MakeTransaction roomData={this.state.roomData}></MakeTransaction>)
+      return (<MakeTransaction callback={this.didMakeSuccessfulTransaction.bind(this)} roomData={this.state.roomData}></MakeTransaction>)
     }
   }
 
