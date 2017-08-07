@@ -1,6 +1,6 @@
 import { isClient } from '../utils'
 const EventEmitter = require('eventemitter3')
-import Flash from "../flash";
+import Flash from "./index";
 
 var Peer
 if(isClient) {
@@ -19,29 +19,30 @@ export default class WebRTC {
       if(roomData.isMaster) {
         // The master can just create an address and pass it on to slave to sign
         var newFlash = Flash.master.newAddress(roomData.mySeed, roomData.flashState)
-        this.broadcastMessage({
+        _this.broadcastMessage({
           cmd: 'signAddress',
           flashState: newFlash
         })
-        this.events.on('message', eventFn = (message) => {
+        var eventFn = (message) => {
           if(message.cmd === 'flashState') {
             // The flashstate from the slave now should contain the newest state
             _this.events.off('message', eventFn)
             resolve(message.flashState)
           }
-        })
+        }
+        _this.events.on('message', eventFn)
       }
       else {
         // For the slave, we have to ask the master to create an address (order of signatures is important)
-        var _this = this
-        this.events.on('message', eventFn = (message) => {
+        var eventFn = (message) => {
           if(message.cmd === 'signAddress') {
             // We just have this event to check if we get to sign the final address
             // Since the previous message event already signed the address, we can just return flash state
             _this.events.off('message', eventFn)
             resolve(_this.channel.state.roomData.flashState)
           }
-        })
+        }
+        this.events.on('message', eventFn)
         this.broadcastMessage({
           cmd: 'createAddress'
         })
