@@ -46,6 +46,7 @@ export default class extends React.Component {
   }
 
   handleMessage(message) {
+    console.log(message);
     if(message.cmd === 'signAddress' && !this.state.roomData.isMaster) {
       // co-sign the address for the slave
       var newFlashState = Flash.slave.closeAddress(this.state.roomData.mySeed, message.flashState)
@@ -152,8 +153,9 @@ export default class extends React.Component {
   }
 
   renderMessage(message) {
+    var dataString = JSON.stringify(message.data)
     return (
-      <div key={message.data}>{message.from}: {JSON.stringify(message.data)}</div>
+      <div key={dataString}>{message.from}: {dataString}</div>
     )
   }
 

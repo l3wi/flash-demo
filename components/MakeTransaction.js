@@ -25,6 +25,7 @@ export default class extends React.Component {
       // Get the last generated address for the deepest level (I think this is the bottom-left of the tree?)
       var inputAddress = addresses[addresses.length - 1]
       var newFlash = await webRTC.createAddress(this.props.roomData)
+      console.log('newFlash', newFlash);
       var transfers = [{
         address,
         value: this.state.amount
