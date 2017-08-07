@@ -153,9 +153,9 @@ export default class extends React.Component {
   }
 
   renderMessage(message) {
-    var dataString = JSON.stringify(message.data)
+    var dataString = JSON.stringify(message.data, null, 2)
     return (
-      <div key={dataString}>{message.from}: {dataString}</div>
+      <pre key={dataString}>{message.from}: {dataString}</pre>
     )
   }
 
@@ -259,17 +259,18 @@ export default class extends React.Component {
     return (
       <div>
         Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
+        MultiSig Balance: <b>{ this.state.roomData.flashState && this.state.roomData.flashState.multiSigWalletBalance }</b> iota
         <br /><b>Latest messages:</b><br />
         <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
         <br />
-        { this.state.messages.map(this.renderMessage) }
         { this.renderStatus() }
         { this.renderWait() }
         { this.renderInit() }
         { this.renderDeposit() }
         { this.renderCreateTransaction() }
         { this.renderFlashObjectDebug() }
+        { this.state.messages.map(this.renderMessage) }
       </div>
     )
   }
