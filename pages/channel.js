@@ -88,10 +88,11 @@ export default class extends React.Component {
       this.setState({
         roomData: this.state.roomData
       })
+      this.storeRoomDataLocally()
+      
       if(this.allPeersDeposited()) {
         this.createInitalTransaction()
       }
-      this.storeRoomDataLocally()
     }
 
     if(message.cmd === 'initRoomResult' && this.state.roomData.index == 0) {

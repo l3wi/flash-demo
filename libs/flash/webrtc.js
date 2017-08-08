@@ -39,6 +39,7 @@ export default class WebRTC {
           //   alert('Not enough balance to send this amount of iota')
           //   return
           // }
+          console.log('creating tx', flashState, amountObj, roomData.mySeed);
           flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
           flashState.total.master = amountObj.master;
           flashState.total.slave = amountObj.slave;
