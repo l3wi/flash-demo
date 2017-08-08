@@ -51,11 +51,10 @@ export const walkTree = counters => {
       // Move the index up a level
       index--;
     } else {
-      // Stops the master address changing
-      if (index !== 0) requiredAddresses.push(index);
       // Mark the bundles that need to be generated
-      requiredBundles.push(index);
+      requiredAddresses.push(index);
       // Also get parent to change to new child
+      requiredBundles.push(index);
       if (index !== 0) requiredBundles.push(index - 1); // Escape the root of the tree
       // Increase counter
       arr[index]++;
