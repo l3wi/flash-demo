@@ -38,11 +38,15 @@ export default class extends React.Component {
   }
 
   closeRoom() {
-    // todo: get bundles...
-    // todo: sign of all the balance from the remainder 50/50 to the 2 peers
     var bundles = this.getBundles()
     console.log(bundles);
-    console.log(this.bundlesToTrytes(bundles[0]))
+    for(var bundle of bundles) {
+      var trytes = this.bundlesToTrytes(bundle)
+      iota.api.sendTrytes(trytes, 5, 10, (e, r) => {
+        console.log('sendTrytes', e, r);
+      })
+      break // for now
+    }
   }
 
   render() {
