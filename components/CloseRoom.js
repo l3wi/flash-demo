@@ -37,16 +37,36 @@ export default class extends React.Component {
     return ret
   }
 
-  closeRoom() {
-    var bundles = this.getBundles()
-    console.log(bundles);
-    for(var bundle of bundles) {
-      var trytes = this.bundlesToTrytes(bundle)
+  async sendTrytes(trytes) {
+    return new Promise(function(resolve, reject) {
       iota.api.sendTrytes(trytes, 5, 10, (e, r) => {
         console.log('sendTrytes', e, r);
+        if(e !== null) {
+          reject(e)
+        }
+        else {
+          resolve(r)
+        }
       })
-      break // for now
+    });
+  }
+
+  async closeRoom() {
+    var bundles = this.getBundles()
+    var trytesPerBundle = []
+    for(var bundle of bundles) {
+      var trytes = this.bundlesToTrytes(bundle)
+      trytesPerBundle.push(trytes)
     }
+    for(var trytes of trytesPerBundle) {
+      await this.sendTrytes(trytes)
+    }
+  }
+
+  closeRoomClick() {
+    (async() => {
+      await this.closeRoom()
+    })()
   }
 
   render() {
@@ -54,7 +74,7 @@ export default class extends React.Component {
       <div>
         Closing the room means that both parties will get their final balance and the channel will be destroyed. Are you sure you want to close?
         <br />
-        <input value="Close Room" onClick={this.closeRoom.bind(this)} type="button"></input>
+        <input value="Close Room" onClick={this.closeRoomClick.bind(this)} type="button"></input>
       </div>
     )
   }
