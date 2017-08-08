@@ -30,8 +30,8 @@ class Master {
     // Then generate the left of the tree's addresses.
     flash.addresses = startAddresses(seed, flash.addressIndex, depth);
     flash.depositAmount = depositAmount;
-    flash.total = { master: 0, slave: 0 }
-    flash.stake = { master: 0, slave: 0 }
+    flash.total = { master: 0, slave: 0 };
+    flash.stake = { master: 0, slave: 0 };
     flash.settlementAddress = {
       master: settlementAddress
     };
@@ -40,9 +40,9 @@ class Master {
 
   // Check to see what addresses need to be generated and starts signing
   static newAddress = (seed, flash) => {
-    var { counter, reqBundles, reqAddresses } = walkTree(flash.counter);
-    console.log(reqBundles);
-    console.log(reqAddresses);
+    var { counter, reqBundles, reqAddresses } = walkTree(flash);
+    console.log("Need these bundles: ", reqBundles);
+    console.log("Need these Addresses: ", reqAddresses);
 
     var { addresses, addressIndex } = startSingleAddress(
       seed,
