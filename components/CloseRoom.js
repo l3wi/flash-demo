@@ -11,56 +11,38 @@ export default class extends React.Component {
 
   }
 
-  walkTree(counters) {
-    // New Obj
-    var arr = Object.assign([], counters);
+  bundlesToTrytes(bundle) {
+    var bundleTrytes = [];
 
-    // ADD FLAGS TO INDICATE NEW BUNDLES TO BE GENERATED
-    var requiredBundles = [];
-    var requiredAddresses = [];
+    bundle.forEach(function(bundleTx) {
+        bundleTrytes.push(iota.utils.transactionTrytes(bundleTx))
+    })
 
-    // Set a counter for the loop
-    var index = counters.length - 1;
-    // Flag to kill the loop when done
-    var again = true;
-    // While loop.... lol
-    while (again) {
-      // Check to see if we need another loop and to reset this level counter
-      if (counters[index] === 2) {
-        // Mark the bundles that need to be generated
-        requiredAddresses.push(index);
-        requiredBundles.push(index);
+    return bundleTrytes.reverse()
+  }
 
-        // Set the counter to 0
-        arr[index] = 0;
-        // Move the index up a level
-        index--;
-      } else {
-        // Mark the bundles that need to be generated
-        requiredAddresses.push(index);
-        // Also get parent to change to new child
-        requiredBundles.push(index);
-        if (index !== 0) requiredBundles.push(index - 1); // Escape the root of the tree
-        // Increase counter
-        arr[index]++;
-        // Break loop
-        again = false;
+  attachBundle(bundleTrytes) {
+    iota.broadcastTransactions(bundleTrytes, (e, r) => {
+      console.log('broadcastTransactions', e, r);
+    })
+  }
+
+  getBundles() {
+    var ret = []
+    for(var bundles of this.props.roomData.flashState.bundles) {
+      if(bundles !== null) {
+        ret.push(bundles)
       }
     }
-    return {
-      counter: arr,
-      reqBundles: requiredBundles,
-      reqAddresses: requiredAddresses
-    };
-  };
+    return ret
+  }
 
   closeRoom() {
     // todo: get bundles...
     // todo: sign of all the balance from the remainder 50/50 to the 2 peers
-    iota.api.sendTransfer(this.props.roomData.mySeed, 4, 10, transfers, (e, bundle) => {
-      if (e) throw e;
-      console.log("Successfully sent your transfer: ", bundle);
-    })
+    var bundles = this.getBundles()
+    console.log(bundles);
+    console.log(this.bundlesToTrytes(bundles[0]))
   }
 
   render() {

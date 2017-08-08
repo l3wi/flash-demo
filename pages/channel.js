@@ -273,7 +273,7 @@ export default class extends React.Component {
 
   renderClose() {
     if(this.state.status === 'close-room') {
-      return (<CloseRoom></CloseRoom>)
+      return (<CloseRoom roomData={this.state.roomData}></CloseRoom>)
     }
   }
 
