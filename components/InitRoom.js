@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
+import { webRTC } from "../libs/flash"
 import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { isClient, get, set } from '../libs/utils'
 import Flash from "../libs/flash";
@@ -29,6 +30,10 @@ export default class extends React.Component {
       flashState,
       mySeed
     }
+    webRTC.broadcastMessage({
+      cmd: 'initRoom',
+      flashState
+    })
     this.props.callback(roomData)
   }
 

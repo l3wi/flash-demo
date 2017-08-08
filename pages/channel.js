@@ -75,32 +75,42 @@ export default class extends React.Component {
       })()
     }
 
-    if(message.cmd === 'flashState') {
-      // TODO: add better checks (is the state of the peer newer?)
-      if(this.state.roomData.flashState === null) {
-        var mySeed = seedGen(81)
-        // Now we need to co-sign the room
-        var settlementAddress = prompt('Please enter your settlement address')
-        var newFlashState = Flash.slave.initalize(mySeed, message.flashState, settlementAddress)
-        // Now send the new state back to the other peer
-        this.broadcastFlashState(newFlashState)
-        var roomData = {
-          flashState: newFlashState,
-          mySeed,
-          index: this.state.peers.length // the creator is always the master, so we are a slave
-        }
-        this.setState({
-          roomData
-        })
-        this.storeRoomDataLocally(roomData)
+    if(message.cmd === 'didDeposit') {
+      this.state.roomData.flashState = message.flashState
+      this.setState({
+        roomData: this.state.roomData
+      })
+      this.storeRoomDataLocally()
+    }
+
+    if(message.cmd === 'initRoomResult' && this.state.roomData.index == 0) {
+      this.state.roomData.flashState = message.flashState
+      this.setState({
+        roomData: this.state.roomData
+      })
+      this.storeRoomDataLocally()
+    }
+
+    if(message.cmd === 'initRoom' && this.state.roomData.index == -1) {
+      var mySeed = seedGen(81)
+      // Now we need to co-sign the room
+      var settlementAddress = prompt('Please enter your settlement address')
+      var newFlashState = Flash.slave.initalize(mySeed, message.flashState, settlementAddress)
+      var roomData = {
+        flashState: newFlashState,
+        mySeed,
+        index: this.state.peers.length // the creator is always the master, so we are a slave
       }
-      else {
-        this.state.roomData.flashState = message.flashState
-        this.setState({
-          roomData: this.state.roomData
-        })
-        this.storeRoomDataLocally()
-      }
+      this.setState({
+        roomData
+      })
+      this.storeRoomDataLocally(roomData)
+
+      // Now send the new state back to the other peer
+      webRTC.broadcastMessage({
+        cmd: 'initRoomResult',
+        flashState: newFlashState
+      })
     }
   }
 
@@ -140,9 +150,6 @@ export default class extends React.Component {
             status: 'peer-joined',
             peers: Object.values(webRTC.connections)
           })
-          if(this.state.roomData.flashState !== null) {
-            _this.broadcastFlashState()
-          }
           _this.clearConnectTimer()
         }
       })
@@ -163,13 +170,6 @@ export default class extends React.Component {
       this.tryGetRoomData()
       this.initWebRTC()
     }
-  }
-
-  broadcastFlashState(flashState = this.state.roomData.flashState) {
-    webRTC.broadcastMessage({
-      cmd: 'flashState',
-      flashState: flashState
-    })
   }
 
   msgKeyPress(e) {
@@ -203,7 +203,10 @@ export default class extends React.Component {
   didDeposit() {
     this.state.roomData.fullDepositMade = true
     this.state.roomData.flashState.stake[this.state.roomData.index == 0? "master" : "slave"] += this.state.roomData.flashState.depositAmount
-    this.broadcastFlashState()
+    webRTC.broadcastMessage({
+      cmd: 'didDeposit',
+      flashState: this.state.roomData.flashState
+    })
     this.storeRoomDataLocally()
     this.setState({
       roomData: this.state.roomData
@@ -224,8 +227,6 @@ export default class extends React.Component {
       roomData,
       status: 'loaded'
     })
-
-    this.broadcastFlashState(roomData.flashState)
   }
 
   renderInit() {
@@ -294,9 +295,8 @@ export default class extends React.Component {
       <div>
         <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
         <input type="button" onClick={() => { this.setState({ status: 'close-room' }) }} value="Close Room"></input>
-        <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <br />
-        Herro! We are the <b>{ this.state.roomData.index == 0 ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
+        Herro! We are the <b>{ ['nothing', 'master', 'slave'][this.state.roomData.index + 1] }</b> connected to { this.state.peers.length } peers!
         <br />
         { this.renderStatus() }
         { this.renderWait() }
