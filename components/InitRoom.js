@@ -41,7 +41,7 @@ export default class extends React.Component {
     return (
       <div>
         Max amount of transactions: <input onChange={(e) => { this.handleChange('amountOfTransactions', e) }} type="number" value={this.state.amountOfTransactions}></input><br />
-        Deposit amount (both parties enter the equal amount): <input onChange={(e) => { this.handleChange('depositAmount', e) }} type="number" value={this.state.amountOfTransactions}></input> iota
+        Deposit amount (both parties enter the equal amount): <input onChange={(e) => { this.handleChange('depositAmount', e) }} type="number" value={this.state.depositAmount}></input> iota
         Settlement address: <input onChange={(e) => { this.handleChange('settlementAddress', e) }} type="text" value={this.state.settlementAddress}></input>
 
         <br />
