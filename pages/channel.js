@@ -45,6 +45,13 @@ export default class extends React.Component {
     this.clearConnectTimer()
   }
 
+  createInitalTransaction() {
+    (async() => {
+      var flashState = await webRTC.createTransaction(this.state.roomData, 0, false, false)
+      this.didMakeSuccessfulTransaction(flashState)
+    })()
+  }
+
   handleMessage(message) {
     if(message.cmd === 'signAddress' && this.state.roomData.index != 0) {
       // co-sign the address as the slave
@@ -55,7 +62,7 @@ export default class extends React.Component {
       })
     }
 
-    if(message.cmd === 'signTransaction' && this.state.roomData.index!= 0) {
+    if(message.cmd === 'signTransaction' && this.state.roomData.index != 0) {
       // Finsh signing the bundles
       (async() => {
         var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
@@ -89,6 +96,7 @@ export default class extends React.Component {
         roomData: this.state.roomData
       })
       this.storeRoomDataLocally()
+      this.createInitalTransaction()
     }
 
     if(message.cmd === 'initRoom' && this.state.roomData.index == -1) {
@@ -99,7 +107,7 @@ export default class extends React.Component {
       var roomData = {
         flashState: newFlashState,
         mySeed,
-        index: this.state.peers.length // the creator is always the master, so we are a slave
+        index: 1 // hardcoded for now (this.state.peers.length seems to fail sometimes)
       }
       this.setState({
         roomData
@@ -129,7 +137,7 @@ export default class extends React.Component {
       }, 1000)
       webRTC.events.on('message', (message) => {
         _this.handleMessage(message.data)
-        console.log(`${message.connection.peer}: ${JSON.stringify(message.data, null, 2)}`)
+        console.log(`${message.connection.peer}:`, message.data)
         if(_this.state.roomData.index == 0) {
           Flash.master.handleMessage(message.data)
         }

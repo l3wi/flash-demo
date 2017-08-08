@@ -13,7 +13,7 @@ export default class WebRTC {
     this.events = new EventEmitter();
   }
 
-  async createTransaction(roomData, amount, sendToMaster) {
+  async createTransaction(roomData, amount, sendToMaster, createAddress = true) {
     var _this = this
     return new Promise(function(resolve, reject) {
       if(roomData.index == 0) {
@@ -71,7 +71,12 @@ export default class WebRTC {
             flashState: flashState
           })
         }
-        initAddressCreation()
+        if(createAddress) {
+          initAddressCreation()
+        }
+        else {
+          initTransactionCreation(roomData.flashState)
+        }
       }
       else {
         _this.broadcastMessage({

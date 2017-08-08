@@ -37,7 +37,7 @@ export default class extends React.Component {
 
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 200, slave: 400 },
+      { master: 0, slave: 0 },
       initial.one
     );
     // Sign those transactionbundles
