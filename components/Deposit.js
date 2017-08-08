@@ -19,7 +19,8 @@ export default class extends React.Component {
   render() {
     return (
       <div>
-        Please deposit { this.props.roomData.flashState && this.props.roomData.flashState.depositAmount } iota to the multisig wallet address:
+        Please deposit { this.props.roomData.flashState && this.props.roomData.flashState.depositAmount } iota
+        to the multisig wallet address: { this.props.roomData.flashState.addresses[0].address }
         <input value="I did!" onClick={this.props.callback} type="button"></input>
       </div>
     )

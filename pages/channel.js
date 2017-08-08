@@ -87,6 +87,9 @@ export default class extends React.Component {
       this.setState({
         roomData: this.state.roomData
       })
+      if(this.allPeersDeposited()) {
+        this.createInitalTransaction()
+      }
       this.storeRoomDataLocally()
     }
 
@@ -96,7 +99,6 @@ export default class extends React.Component {
         roomData: this.state.roomData
       })
       this.storeRoomDataLocally()
-      this.createInitalTransaction()
     }
 
     if(message.cmd === 'initRoom' && this.state.roomData.index == -1) {
@@ -221,6 +223,21 @@ export default class extends React.Component {
     })
   }
 
+  allPeersDeposited() {
+    var allPeersDeposited = true
+    if(this.state.roomData.flashState === null) {
+      return false
+    }
+    for(var k in this.state.roomData.flashState.stake) {
+      var stakeAmount = this.state.roomData.flashState.stake[k]
+      if(stakeAmount !== this.state.roomData.flashState.depositAmount) {
+        allPeersDeposited = false
+        break
+      }
+    }
+    return allPeersDeposited
+  }
+
   initialRoomMade() {
     // Checking if mySeed is null
     // means that you haven't generated any private room data from this room yet.
@@ -298,13 +315,21 @@ export default class extends React.Component {
     }
   }
 
+  renderButtons() {
+    if(this.allPeersDeposited()) {
+      return (<div>
+        <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
+        <input type="button" onClick={() => { this.setState({ status: 'close-room' }) }} value="Close Room"></input>
+      </div>)
+    }
+  }
+
   render() {
     return (
       <div>
-        <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
-        <input type="button" onClick={() => { this.setState({ status: 'close-room' }) }} value="Close Room"></input>
+        { this.renderButtons() }
         <br />
-        Herro! We are the <b>{ ['nothing', 'master', 'slave'][this.state.roomData.index + 1] }</b> connected to { this.state.peers.length } peers!
+        Hello! We are the <b>{ ['nothing', 'master', 'slave'][this.state.roomData.index + 1] }</b> connected to { this.state.peers.length } peers!
         <br />
         { this.renderStatus() }
         { this.renderWait() }
