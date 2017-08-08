@@ -16,7 +16,7 @@ export default class WebRTC {
   async createTransaction(roomData, amount, sendToMaster) {
     var _this = this
     return new Promise(function(resolve, reject) {
-      if(roomData.isMaster) {
+      if(roomData.index == 0) {
         // The master can just create the transaction and push it to the slave
         var initTransactionCreation = async (flashState) => {
           // Start new transaction
@@ -85,7 +85,7 @@ export default class WebRTC {
   async createAddress(roomData) {
     var _this = this;
     return new Promise(function(resolve, reject) {
-      if (roomData.isMaster) {
+      if (roomData.index == 0) {
         // The master can just create an address and pass it on to slave to sign
         var newFlash = Flash.master.newAddress(roomData.mySeed, roomData.flashState)
         let eventFn = (message) => {

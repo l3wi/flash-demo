@@ -25,7 +25,7 @@ export default class extends React.Component {
 
     var flashState = Flash.master.initalize(mySeed, amountOfTransactions, depositAmount, settlementAddress)
     var roomData = {
-      isMaster: true, // The creator is always the master
+      index: 0, // The creator is always the master
       flashState,
       mySeed
     }

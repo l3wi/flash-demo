@@ -15,7 +15,7 @@ export default class extends React.Component {
     status: 'loaded',
     peers: [],
     roomData: {
-      isMaster: null,
+      index: -1,
       mySeed: null,
       flashState: null,
       fullDepositMade: false
@@ -46,7 +46,7 @@ export default class extends React.Component {
   }
 
   handleMessage(message) {
-    if(message.cmd === 'signAddress' && !this.state.roomData.isMaster) {
+    if(message.cmd === 'signAddress' && this.state.roomData.index != 0) {
       // co-sign the address as the slave
       var newFlashState = Flash.slave.closeAddress(this.state.roomData.mySeed, message.flashState)
       webRTC.broadcastMessage({
@@ -55,7 +55,7 @@ export default class extends React.Component {
       })
     }
 
-    if(message.cmd === 'signTransaction' && !this.state.roomData.isMaster) {
+    if(message.cmd === 'signTransaction' && this.state.roomData.index!= 0) {
       // Finsh signing the bundles
       (async() => {
         var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
@@ -67,7 +67,7 @@ export default class extends React.Component {
       })()
     }
 
-    if(message.cmd === 'createTransaction' && this.state.roomData.isMaster) {
+    if(message.cmd === 'createTransaction' && this.state.roomData.index == 0) {
       (async() => {
         // True at the end make sure that if the slave asks the master to create a transaction
         // the amount is always sent to master (since in essence, slave will be paying)
@@ -87,7 +87,7 @@ export default class extends React.Component {
         var roomData = {
           flashState: newFlashState,
           mySeed,
-          isMaster: false // the creator is always the master, so we are a slave
+          index: this.state.peers.length // the creator is always the master, so we are a slave
         }
         this.setState({
           roomData
@@ -120,7 +120,7 @@ export default class extends React.Component {
       webRTC.events.on('message', (message) => {
         _this.handleMessage(message.data)
         console.log(`${message.connection.peer}: ${JSON.stringify(message.data, null, 2)}`)
-        if(_this.state.roomData.isMaster) {
+        if(_this.state.roomData.index == 0) {
           Flash.master.handleMessage(message.data)
         }
         else {
@@ -202,7 +202,7 @@ export default class extends React.Component {
 
   didDeposit() {
     this.state.roomData.fullDepositMade = true
-    this.state.roomData.flashState.stake[this.state.roomData.isMaster ? "master" : "slave"] += this.state.roomData.flashState.depositAmount
+    this.state.roomData.flashState.stake[this.state.roomData.index == 0? "master" : "slave"] += this.state.roomData.flashState.depositAmount
     this.broadcastFlashState()
     this.storeRoomDataLocally()
     this.setState({
@@ -296,7 +296,7 @@ export default class extends React.Component {
         <input type="button" onClick={() => { this.setState({ status: 'close-room' }) }} value="Close Room"></input>
         <input type="text" placeholder="Type new message" onKeyPress={this.msgKeyPress} /><br />
         <br />
-        Herro! We are the <b>{ this.state.roomData.isMaster ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
+        Herro! We are the <b>{ this.state.roomData.index == 0 ? 'master' : 'slave' }</b> connected to { this.state.peers.length } peers!
         <br />
         { this.renderStatus() }
         { this.renderWait() }

@@ -20,7 +20,7 @@ export default class extends React.Component {
 
   createTransactionClick() {
     (async () => {
-      var flashState = await webRTC.createTransaction(this.props.roomData, parseInt(this.state.amount), !this.props.roomData.isMaster)
+      var flashState = await webRTC.createTransaction(this.props.roomData, parseInt(this.state.amount), this.props.roomData.index != 0)
       this.props.callback(flashState)
     })()
   }
