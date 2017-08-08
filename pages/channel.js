@@ -47,6 +47,7 @@ export default class extends React.Component {
 
   createInitalTransaction() {
     (async() => {
+      console.log('Making initial tx');
       var flashState = await webRTC.createTransaction(this.state.roomData, 0, false, false)
       this.didMakeSuccessfulTransaction(flashState)
     })()
