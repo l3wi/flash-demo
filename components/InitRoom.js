@@ -20,8 +20,8 @@ export default class extends React.Component {
 
   createRoom() {
     var mySeed = seedGen(81)
-    var amountOfTransactions = this.state.amountOfTransactions
-    var depositAmount = this.state.depositAmount
+    var amountOfTransactions = parseInt(this.state.amountOfTransactions)
+    var depositAmount = parseInt(this.state.depositAmount)
     var settlementAddress = this.state.settlementAddress
 
     var flashState = Flash.master.initalize(mySeed, amountOfTransactions, depositAmount, settlementAddress)

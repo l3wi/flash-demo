@@ -21,7 +21,7 @@ export default class extends React.Component {
     return (
       <div>
         Please deposit { this.props.roomData.flashState && this.props.roomData.flashState.depositAmount } iota
-        to the multisig wallet address: { iota.utils.addChecksum(this.props.roomData.flashState.addresses[0].address) }
+        to the multisig wallet address: { this.props.roomData.flashState.addresses[0].address && iota.utils.addChecksum(this.props.roomData.flashState.addresses[0].address) }
         <input value="I did!" onClick={this.props.callback} type="button"></input>
       </div>
     )

@@ -28,6 +28,12 @@ export default class extends React.Component {
     this.setState({
       roomData: Object.assign(this.state.roomData, get(`room-${this.props.url.query.id}`))
     })
+
+    // Remove later
+    var _this = this
+    window.setState = (s) => {
+      _this.didMakeSuccessfulTransaction(s)
+    }
   }
 
   storeRoomDataLocally(roomData = this.state.roomData) {
@@ -89,7 +95,7 @@ export default class extends React.Component {
         roomData: this.state.roomData
       })
       this.storeRoomDataLocally()
-      
+
       if(this.allPeersDeposited()) {
         this.createInitalTransaction()
       }
@@ -232,7 +238,7 @@ export default class extends React.Component {
     }
     for(var k in this.state.roomData.flashState.stake) {
       var stakeAmount = this.state.roomData.flashState.stake[k]
-      if(stakeAmount !== this.state.roomData.flashState.depositAmount) {
+      if(stakeAmount == 0) {
         allPeersDeposited = false
         break
       }
