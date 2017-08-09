@@ -58,6 +58,7 @@ export default class extends React.Component {
       var trytes = this.bundlesToTrytes(bundle)
       trytesPerBundle.push(trytes)
     }
+    console.log('closing room with trytes', trytesPerBundle);
     for(var trytes of trytesPerBundle) {
       await this.sendTrytes(trytes)
     }
