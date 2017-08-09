@@ -1254,9 +1254,9 @@ cssom@0.3.x, "cssom@>= 0.3.2 < 0.4.0":
   dependencies:
     cssom "0.3.x"
 
-curl.lib.js@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/curl.lib.js/-/curl.lib.js-1.0.8.tgz#3d9ffcbdabed19c1e24a2396256bb1cad9534543"
+"curl.lib.js@git+https://github.com/peterwilli/curl.lib.js.git":
+  version "1.0.7"
+  resolved "git+https://github.com/peterwilli/curl.lib.js.git#03037f669fc3a14281adb337c04c875a45fb67c5"
 
 dashdash@^1.12.0:
   version "1.14.1"
