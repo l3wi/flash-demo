@@ -1,6 +1,5 @@
 import IOTA from "iota.lib.js"
 import { isClient } from './utils'
-var curl;
 if(isClient) {
   require('curl.lib.js')
   console.log(curl)
