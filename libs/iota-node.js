@@ -1,7 +1,8 @@
 import IOTA from "iota.lib.js"
 import { isClient } from './utils'
+var curl;
 if(isClient) {
-  require('./curl.min.js')
+  require('curl.lib.js')
   console.log(curl)
 }
 // Create IOTA instance directly with provider
