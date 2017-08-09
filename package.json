@@ -7,7 +7,7 @@
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
-    "curl.lib.js": "^1.0.6",
+    "curl.lib.js": "^1.0.7",
     "eventemitter3": "^2.0.3",
     "iota.lib.js": "git+https://github.com/l3wi/iota.lib.js.git#master",
     "next": "^2.4.9",
