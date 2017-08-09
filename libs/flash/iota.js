@@ -3,7 +3,7 @@ import { iota } from "../iota-node";
 
 //////////////////////////////////////
 ///// All functions are in pairs /////
-
+console.log(iota);
 ///// Initialise a bunch of addresses for the left of the tree
 export const startAddresses = (seed, index, depth) => {
   var trytes = Object.assign(
@@ -134,18 +134,21 @@ export const signMultipleBundles = async (bundles, seed) => {
 // Start new addresses
 const initiateAddress = (seed, index) => {
   // Create new digest
-  var digest = iota.multisig.getDigest(seed, index + 1, 2);
-  // Add your digest to the trytes
-  return iota.multisig.addAddressDigest(digest);
+  return iota.multisig.getDigest(seed, index + 1, 2);
 };
 
-const finishAddress = (seed, index, curlTrytes) => {
+const finishAddress = (seed, index, digest) => {
   // Create new digest
-  var digest = iota.multisig.getDigest(seed, index + 1, 2);
+  var digests = [];
+
+  digests.push(digest, iota.multisig.getDigest(seed, index + 1, 2));
   // Add your digest to the trytes
-  var finalTrytes = iota.multisig.addAddressDigest(digest, curlTrytes);
+  var address = new iota.multisig.address(digests);
   // Squeeze out address
-  return iota.multisig.finalizeAddress(finalTrytes);
+  var finalAddress = address.finalize();
+  console.log(finalAddress);
+
+  return finalAddress;
 };
 
 //
