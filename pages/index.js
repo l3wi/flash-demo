@@ -35,15 +35,14 @@ export default class extends React.Component {
     // Act as Player 2 & Sign those addeses
     flash = Flash.slave.initalize(initial.two, flash, initial.two);
 
-    console.log('initalized', JSON.stringify(flash));
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 0, slave: 0 },
+      { master: 10, slave: 10 },
       initial.one
     );
     // Sign those transactionbundles
     flash = await Flash.slave.closeTransaction(flash, initial.two);
-    console.log(flash);
+    console.log('updated flash', flash);
     this.setState({ flash, ...initial });
   };
 
