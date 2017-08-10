@@ -69,7 +69,7 @@ class Master {
   };
 
   static newTransaction = async (flash, value, seed) => {
-    var bundles = await buildMultipleBundles(flash, value, true);
+    var bundles = await buildMultipleBundles(flash, value, false)
     return {
       ...flash,
       partialBundles: await signMultipleBundles(bundles, seed)

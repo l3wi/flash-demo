@@ -35,9 +35,10 @@ export default class extends React.Component {
     // Act as Player 2 & Sign those addeses
     flash = Flash.slave.initalize(initial.two, flash, initial.two);
 
+    console.log('initalized', JSON.stringify(flash));
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 10, slave: 10 },
+      { master: 0, slave: 0 },
       initial.one
     );
     // Sign those transactionbundles
@@ -54,7 +55,7 @@ export default class extends React.Component {
     // Start new transaction
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 10, slave: 10 },
+      { master: 0, slave: 0 },
       one
     );
     // Finsh signing the bundles
@@ -99,7 +100,7 @@ export default class extends React.Component {
               onChange={data =>
                 this.setState({ transactions: data.target.value })}
             />
-            <button onClick={() => this.startChannel(transactions)}>
+            <button onClick={() => this.startChannel(parseInt(transactions))}>
               Start Channel
             </button>
           </div>

@@ -51,15 +51,6 @@ export default class extends React.Component {
     this.clearConnectTimer()
   }
 
-  createInitialTransaction(roomData) {
-    (async() => {
-      console.log('Making initial tx');
-      var flashState = await webRTC.createTransaction(roomData, 0, false, false)
-      console.log('flashState', flashState);
-      this.didMakeSuccessfulTransaction(flashState)
-    })()
-  }
-
   async attachAndPOWClosedBundle() {
     var bundles = this.getBundles(this.state.roomData)
     var trytesPerBundle = []
@@ -134,14 +125,13 @@ export default class extends React.Component {
 
     if(message.cmd === 'didDeposit') {
       this.state.roomData.flashState = message.flashState
-      this.setState({
-        roomData: this.state.roomData
-      })
       this.storeRoomDataLocally()
-
       if(this.allPeersDeposited()) {
         this.createInitialTransaction(this.state.roomData)
       }
+      this.setState({
+        roomData: this.state.roomData
+      })
     }
 
     if(message.cmd === 'initRoomResult' && this.state.roomData.index == 0) {
@@ -157,6 +147,7 @@ export default class extends React.Component {
       // Now we need to co-sign the room
       var settlementAddress = prompt('Please enter your settlement address')
       var newFlashState = Flash.slave.initalize(mySeed, message.flashState, settlementAddress)
+      console.log('initalized', JSON.stringify(newFlashState));
       var roomData = {
         flashState: newFlashState,
         mySeed,
