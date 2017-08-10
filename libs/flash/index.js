@@ -83,13 +83,9 @@ class Master {
     ////////////////////////
     // Need to add logic here that halves the remainder and adds it
     // to the users balance.
-    var value = {
-      master: 60,
-      slave: 40
-    };
     const updatedFlash = { ...flash, reqBundles: highestBundle(flash.counter) };
 
-    var bundles = await buildFinalBundles(updatedFlash, value, true);
+    var bundles = await buildFinalBundles(updatedFlash, false)
 
     return {
       ...updatedFlash,
