@@ -13,6 +13,34 @@ export default class WebRTC {
     this.events = new EventEmitter();
   }
 
+  async closeChannel(roomData) {
+    var _this = this
+    return new Promise(function(resolve, reject) {
+      if(roomData.index == 0) {
+        // The master will send a signing request to the slave after initially making his half of the close-request
+        var flashState = await Flash.master.closeChannel(flash, roomData.mySeed)
+        var eventFn = (message) => {
+          message = message.data
+          if(message.cmd === 'signCloseChannelResult') {
+            _this.events.off('message', eventFn)
+            resolve(message.flashState)
+          }
+        }
+        _this.events.on('message', eventFn)
+        _this.broadcastMessage({
+          cmd: 'signCloseChannel',
+          flashState: flashState
+        })
+      }
+      else {
+        // The slave will tell the master to initiate close channel.
+        _this.broadcastMessage({
+          cmd: 'closeChannel'
+        })
+      }
+    });
+  }
+
   async createTransaction(roomData, amount, sendToMaster, createAddress = true) {
     var _this = this
     return new Promise(function(resolve, reject) {

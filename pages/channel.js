@@ -89,6 +89,12 @@ export default class extends React.Component {
       })()
     }
 
+    if(message.cmd === 'closeChannel' && this.state.roomData.index == 0) {
+      (async() => {
+        await webRTC.createTransaction(this.state.roomData)
+      })()
+    }
+
     if(message.cmd === 'didDeposit') {
       this.state.roomData.flashState = message.flashState
       this.setState({
