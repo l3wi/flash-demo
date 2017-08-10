@@ -231,6 +231,10 @@ export default class extends React.Component {
     })
   }
 
+  shouldCloseRoom() {
+    return Object.values(this.state.roomData.flashState.stake).reduce((sum, value) => sum + value) == 0
+  }
+
   allPeersDeposited() {
     if(this.state.roomData.flashState === null) {
       return false
@@ -321,7 +325,7 @@ export default class extends React.Component {
   renderButtons() {
     if(this.allPeersDeposited()) {
       return (<div>
-        <input type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
+        <input disabled={this.shouldCloseRoom()} type="button" onClick={() => { this.setState({ status: 'make-transaction' }) }} value="Make Transaction"></input>
         <input type="button" onClick={() => { this.setState({ status: 'close-room' }) }} value="Close Room"></input>
       </div>)
     }
