@@ -63,10 +63,9 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
   return addresses;
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
-export const buildMultipleBundles = async (flash, testFlag) => {
+export const buildMultipleBundles = async (flash, value, testFlag) => {
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
   const testAddress = addy.substring(0, addy.length - 9);
-  var value = flash.total
 
   /// Check to see if its the first run?
   if (!flash.reqBundles) {
@@ -129,9 +128,10 @@ export const buildMultipleBundles = async (flash, testFlag) => {
   return await Promise.all(bundleProms);
 };
 
-export const buildFinalBundles = async (flash, value, testFlag) => {
+export const buildFinalBundles = async (flash, testFlag) => {
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
   const testAddress = addy.substring(0, addy.length - 9);
+  var value = flash.total
 
   var bundleProms = flash.reqBundles.map(async (item, i) => {
     var transfers = [];
