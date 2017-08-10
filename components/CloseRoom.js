@@ -12,46 +12,6 @@ export default class extends React.Component {
 
   }
 
-  bundlesToTrytes(bundle) {
-    var bundleTrytes = [];
-
-    bundle.forEach(function(bundleTx) {
-        bundleTrytes.push(iota.utils.transactionTrytes(bundleTx))
-    })
-
-    return bundleTrytes.reverse()
-  }
-
-  attachBundle(bundleTrytes) {
-    iota.broadcastTransactions(bundleTrytes, (e, r) => {
-      console.log('broadcastTransactions', e, r);
-    })
-  }
-
-  getBundles(roomData) {
-    var ret = []
-    for(var bundles of roomData.flashState.bundles) {
-      if(bundles !== null) {
-        ret.push(bundles)
-      }
-    }
-    return ret
-  }
-
-  async sendTrytes(trytes) {
-    return new Promise(function(resolve, reject) {
-      iota.api.sendTrytes(trytes, 5, 10, (e, r) => {
-        console.log('sendTrytes', e, r);
-        if(e !== null) {
-          reject(e)
-        }
-        else {
-          resolve(r)
-        }
-      })
-    });
-  }
-
   async closeChannel() {
     var flashState = await webRTC.closeChannel(this.props.roomData)
   }

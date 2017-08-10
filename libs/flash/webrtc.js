@@ -41,8 +41,9 @@ export default class WebRTC {
     }
   }
 
-  async createTransaction(roomData, amount, sendToMaster, createAddress = true) {
+  async createTransaction(roomData, amount, sendToMaster) {
     var _this = this
+    var createAddress = roomData.flashState.counter.reduce((val, sum) => val + sum) > 0
     return new Promise(function(resolve, reject) {
       if(roomData.index == 0) {
         // The master can just create the transaction and push it to the slave

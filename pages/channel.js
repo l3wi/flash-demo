@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { webRTC } from "../libs/flash"
 import { isClient, get, set } from '../libs/utils'
+import { iota } from "../libs/iota-node";
 import Flash from "../libs/flash";
 import InitRoom from '../components/InitRoom'
 import CloseRoom from '../components/CloseRoom'
@@ -51,11 +52,50 @@ export default class extends React.Component {
     this.clearConnectTimer()
   }
 
+  bundleToTrytes(bundle) {
+    var bundleTrytes = [];
+    bundle.forEach(function(bundleTx) {
+        bundleTrytes.push(iota.utils.transactionTrytes(bundleTx))
+    })
+
+    return bundleTrytes.reverse()
+  }
+
+  attachBundle(bundleTrytes) {
+    iota.broadcastTransactions(bundleTrytes, (e, r) => {
+      console.log('broadcastTransactions', e, r);
+    })
+  }
+
+  async sendTrytes(trytes) {
+    return new Promise(function(resolve, reject) {
+      iota.api.sendTrytes(trytes, 5, 10, (e, r) => {
+        console.log('sendTrytes', e, r);
+        if(e !== null) {
+          reject(e)
+        }
+        else {
+          resolve(r)
+        }
+      })
+    });
+  }
+
   async attachAndPOWClosedBundle() {
-    var bundles = this.getBundles(this.state.roomData)
+    var getBundles = (roomData) => {
+      var ret = []
+      for(var bundles of roomData.flashState.bundles) {
+        if(bundles !== null) {
+          ret.push(bundles)
+        }
+      }
+      return ret
+    }
+
+    var bundles = getBundles(this.state.roomData)
     var trytesPerBundle = []
     for(var bundle of bundles) {
-      var trytes = this.bundlesToTrytes(bundle)
+      var trytes = this.bundleToTrytes(bundle)
       trytesPerBundle.push(trytes)
     }
     console.log('closing room with trytes', trytesPerBundle);
@@ -96,7 +136,7 @@ export default class extends React.Component {
         if('createAddress' in message) {
           createAddress = message.createAddress
         }
-        var newFlashState = await webRTC.createTransaction(this.state.roomData, message.amount, true, createAddress)
+        var newFlashState = await webRTC.createTransaction(this.state.roomData, message.amount, true)
         this.didMakeSuccessfulTransaction(newFlashState)
       })()
     }
@@ -109,8 +149,8 @@ export default class extends React.Component {
 
     if(message.cmd === 'signCloseChannel' && this.state.roomData.index == 1) {
       (async() => {
-        var flashState = await Flash.slave.closeFinalBundle(message.flashState, this.state.roomData.mySeed)
-        this.didMakeSuccessfulTransaction(flashState)
+        var newFlashState = await Flash.slave.closeFinalBundle(message.flashState, this.state.roomData.mySeed)
+        this.didMakeSuccessfulTransaction(newFlashState)
         webRTC.broadcastMessage({
           cmd: 'signCloseChannelResult',
           flashState: newFlashState
@@ -126,9 +166,6 @@ export default class extends React.Component {
     if(message.cmd === 'didDeposit') {
       this.state.roomData.flashState = message.flashState
       this.storeRoomDataLocally()
-      if(this.allPeersDeposited()) {
-        this.createInitialTransaction(this.state.roomData)
-      }
       this.setState({
         roomData: this.state.roomData
       })
