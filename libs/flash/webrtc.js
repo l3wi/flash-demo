@@ -42,6 +42,8 @@ export default class WebRTC {
   }
 
   async createTransaction(roomData, amount, sendToMaster, createAddress = true) {
+    console.log('creating tx', roomData, amount, sendToMaster, createAddress);
+
     var _this = this
     return new Promise(function(resolve, reject) {
       if(roomData.index == 0) {
@@ -67,7 +69,6 @@ export default class WebRTC {
           //   alert('Not enough balance to send this amount of iota')
           //   return
           // }
-          console.log('creating tx', flashState, amountObj, roomData.mySeed);
           flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
           flashState.total.master = amountObj.master;
           flashState.total.slave = amountObj.slave;
@@ -108,11 +109,14 @@ export default class WebRTC {
         }
       }
       else {
+        _this.events.once('signTransactionResult', (newFlashState) => {
+          resolve(newFlashState)
+        })
         _this.broadcastMessage({
           cmd: 'createTransaction',
-          amount: amount
+          amount: amount,
+          createAddress: false
         })
-        resolve()
       }
     });
   }

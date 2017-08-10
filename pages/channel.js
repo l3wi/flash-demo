@@ -51,10 +51,10 @@ export default class extends React.Component {
     this.clearConnectTimer()
   }
 
-  createInitalTransaction() {
+  createInitialTransaction(roomData) {
     (async() => {
       console.log('Making initial tx');
-      var flashState = await webRTC.createTransaction(this.state.roomData, 0, false, false)
+      var flashState = await webRTC.createTransaction(roomData, 0, false, false)
       this.didMakeSuccessfulTransaction(flashState)
     })()
   }
@@ -87,11 +87,12 @@ export default class extends React.Component {
       (async() => {
         var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
         this.didMakeSuccessfulTransaction(newFlashState)
+        // Dirty, temporary workaround. So we can rely on a good callback for slave.
+        webRTC.events.emit('signTransactionResult', newFlashState)
         webRTC.broadcastMessage({
           cmd: 'signTransactionResult',
           flashState: newFlashState
         })
-        await this.attachAndPOWClosedBundle()
       })()
     }
 
@@ -99,7 +100,11 @@ export default class extends React.Component {
       (async() => {
         // True at the end make sure that if the slave asks the master to create a transaction
         // the amount is always sent to master (since in essence, slave will be paying)
-        await webRTC.createTransaction(this.state.roomData, message.amount, true)
+        var createAddress = true
+        if('createAddress' in message) {
+          createAddress = message.createAddress
+        }
+        await webRTC.createTransaction(this.state.roomData, message.amount, true, createAddress)
       })()
     }
 
@@ -117,6 +122,7 @@ export default class extends React.Component {
           cmd: 'signCloseChannelResult',
           flashState: newFlashState
         })
+        await this.attachAndPOWClosedBundle()
       })()
     }
 
@@ -132,7 +138,7 @@ export default class extends React.Component {
       this.storeRoomDataLocally()
 
       if(this.allPeersDeposited()) {
-        this.createInitalTransaction()
+        this.createInitialTransaction(message.flashState)
       }
     }
 
@@ -181,8 +187,8 @@ export default class extends React.Component {
         webRTC.connectToPeers()
       }, 1000)
       webRTC.events.on('message', (message) => {
-        _this.handleMessage(message.data)
         console.log(`${message.connection.peer}:`, message.data)
+        _this.handleMessage(message.data)
         if(_this.state.roomData.index == 0) {
           Flash.master.handleMessage(message.data)
         }
