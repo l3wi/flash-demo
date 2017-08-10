@@ -5,6 +5,7 @@ import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import { isClient, get, set } from '../libs/utils'
 import { iota } from "../libs/iota-node";
 import Flash from "../libs/flash";
+import { webRTC } from "../libs/flash"
 
 export default class extends React.Component {
   state = {
@@ -27,9 +28,9 @@ export default class extends React.Component {
     })
   }
 
-  getBundles() {
+  getBundles(roomData) {
     var ret = []
-    for(var bundles of this.props.roomData.flashState.bundles) {
+    for(var bundles of roomData.flashState.bundles) {
       if(bundles !== null) {
         ret.push(bundles)
       }
@@ -52,16 +53,7 @@ export default class extends React.Component {
   }
 
   async closeRoom() {
-    var bundles = this.getBundles()
-    var trytesPerBundle = []
-    for(var bundle of bundles) {
-      var trytes = this.bundlesToTrytes(bundle)
-      trytesPerBundle.push(trytes)
-    }
-    console.log('closing room with trytes', trytesPerBundle);
-    for(var trytes of trytesPerBundle) {
-      await this.sendTrytes(trytes)
-    }
+    var flashState = await webRTC.closeRoom(this.props.roomData)    
   }
 
   closeRoomClick() {

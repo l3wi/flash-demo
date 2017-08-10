@@ -59,6 +59,19 @@ export default class extends React.Component {
     })()
   }
 
+  async attachAndPOWClosedBundle() {
+    var bundles = this.getBundles(this.state.roomData)
+    var trytesPerBundle = []
+    for(var bundle of bundles) {
+      var trytes = this.bundlesToTrytes(bundle)
+      trytesPerBundle.push(trytes)
+    }
+    console.log('closing room with trytes', trytesPerBundle);
+    for(var trytes of trytesPerBundle) {
+      await this.sendTrytes(trytes)
+    }
+  }
+
   handleMessage(message) {
     if(message.cmd === 'signAddress' && this.state.roomData.index != 0) {
       // co-sign the address as the slave
@@ -78,6 +91,7 @@ export default class extends React.Component {
           cmd: 'signTransactionResult',
           flashState: newFlashState
         })
+        await this.attachAndPOWClosedBundle()
       })()
     }
 
@@ -93,6 +107,21 @@ export default class extends React.Component {
       (async() => {
         await webRTC.createTransaction(this.state.roomData)
       })()
+    }
+
+    if(message.cmd === 'signCloseChannel' && this.state.roomData.index == 1) {
+      (async() => {
+        var flashState = await Flash.slave.closeFinalBundle(message.flashState, this.state.roomData.mySeed)
+        this.didMakeSuccessfulTransaction(flashState)
+        webRTC.broadcastMessage({
+          cmd: 'signCloseChannelResult',
+          flashState: newFlashState
+        })
+      })()
+    }
+
+    if(message.cmd === 'signCloseChannelResult' && this.state.roomData.index == 0) {
+      this.didMakeSuccessfulTransaction(message.flashState)
     }
 
     if(message.cmd === 'didDeposit') {
