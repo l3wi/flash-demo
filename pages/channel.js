@@ -204,7 +204,7 @@ export default class extends React.Component {
       return (<div>
         Balance: (master: { this.state.roomData.flashState.total['master'] } slave: { this.state.roomData.flashState.total['slave'] })<br />
         Stake: (master: { this.state.roomData.flashState.stake['master'] } slave: { this.state.roomData.flashState.stake['slave'] })<br />
-        Remainder: { Object.values(this.state.roomData.flashState.stake).reduce((a,b) => a+b, 0) }
+        Remainder: { Object.values(this.state.roomData.flashState.stake).reduce((sum, value) => sum + value, 0) }
       </div>)
     }
   }
@@ -232,18 +232,13 @@ export default class extends React.Component {
   }
 
   allPeersDeposited() {
-    var allPeersDeposited = true
     if(this.state.roomData.flashState === null) {
       return false
     }
-    for(var k in this.state.roomData.flashState.stake) {
-      var stakeAmount = this.state.roomData.flashState.stake[k]
-      if(stakeAmount == 0) {
-        allPeersDeposited = false
-        break
-      }
-    }
-    return allPeersDeposited
+    var totalInRoom =
+        Object.values(this.state.roomData.flashState.stake).reduce((sum, value) => sum + value)
+      + Object.values(this.state.roomData.flashState.total).reduce((sum, value) => sum + value)
+    return totalInRoom === (this.state.roomData.flashState.depositAmount * 2)
   }
 
   initialRoomMade() {
