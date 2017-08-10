@@ -96,23 +96,39 @@ export const buildMultipleBundles = async (flash, value, testFlag) => {
   // Generate an array of promises to be to generate specific bundles
   var bundleProms = flash.reqBundles.map(async (item, i) => {
     var transfers = [];
-    // Make up the transfer for parent nodes
-    if (item !== flash.depth - 1) {
+    console.log('reqBundles', i, item);
+    if(i < flash.depth - 1) {
       transfers.push({
-        address: flash.addresses[item + 1].address, // Pass balance to child address
-        value: value.master + value.slave // Pass full value down tree
-      });
-    } else {
-      // Build transfer object for the Root Bundle
+        address: flash.addresses[i].address,
+        value: (flash.depositAmount * 2) * -1
+      })
       transfers.push({
-        address: flash.settlementAddress.master, // Pass to master addresses
-        value: value.master // Set the amount send to master
-      });
-      transfers.push({
-        address: flash.settlementAddress.slave, // Pass to slave addresses
-        value: value.slave // Set the amount send to slave
-      });
+        address: flash.addresses[i + 1].address,
+        value: (flash.depositAmount * 2)
+      })
     }
+    else {
+      transfers.push({
+        address: flash.addresses[i].address,
+        value: (flash.depositAmount * 2) * -1
+      })
+      transfers.push({
+        address: flash.remainderAddress,
+        value: Object.values(flash.stake).reduce((sum, value) => sum + value, 0)
+      })
+      transfers.push({
+        address: flash.settlementAddress.master,
+        value: flash.total.master
+      })
+      transfers.push({
+        address: flash.settlementAddress.slave,
+        value: flash.total.slave
+      })
+    }
+      // transfers.push({
+      //   address: flash.settlementAddress.slave, // Pass to slave addresses
+      //   value: value.slave // Set the amount send to slave
+      // });
     var bundle = await startTransfer(
       testFlag ? testAddress : flash.addresses[i].address,
       transfers,

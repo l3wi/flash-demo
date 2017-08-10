@@ -40,6 +40,7 @@ export default class extends React.Component {
       { master: 10, slave: 10 },
       initial.one
     );
+
     // Sign those transactionbundles
     flash = await Flash.slave.closeTransaction(flash, initial.two);
     console.log('updated flash', flash);
