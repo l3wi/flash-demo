@@ -20,8 +20,14 @@ export default class extends React.Component {
 
   createTransactionClick() {
     (async () => {
-      var flashState = await webRTC.createTransaction(this.props.roomData, parseInt(this.state.amount), this.props.roomData.index != 0)
-      this.props.callback(flashState)
+      var amount = parseInt(this.state.amount)
+      if(amount > 0) {
+        var flashState = await webRTC.createTransaction(this.props.roomData, amount, this.props.roomData.index != 0)
+        this.props.callback(flashState)
+      }
+      else {
+        alert("Need > 1 iota to make a transaction")
+      }
     })()
   }
 

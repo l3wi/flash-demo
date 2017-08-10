@@ -29,7 +29,7 @@ export default class WebRTC {
             slave: flashState.total.slave
           }
           amountObj[sendToMaster ? "master" : "slave"] += amount
-          var remainder = Object.values(flashState.stake).reduce((a,b) => a+b, 0)
+          var remainder = Object.values(flashState.stake).reduce((sum, value) => sum + value)
           if(remainder < 0) {
             alert("This flash channel has no transportable balance left. The room should be closed.")
             return
