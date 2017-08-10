@@ -15,10 +15,10 @@ export default class WebRTC {
 
   async closeChannel(roomData) {
     var _this = this
-    return new Promise(function(resolve, reject) {
-      if(roomData.index == 0) {
-        // The master will send a signing request to the slave after initially making his half of the close-request
-        var flashState = await Flash.master.closeChannel(flash, roomData.mySeed)
+    if(roomData.index === 0) {
+      // The master will send a signing request to the slave after initially making his half of the close-request
+      var flashState = await Flash.master.closeChannel(flash, roomData.mySeed)
+      return new Promise(function(resolve, reject) {
         var eventFn = (message) => {
           message = message.data
           if(message.cmd === 'signCloseChannelResult') {
@@ -31,14 +31,14 @@ export default class WebRTC {
           cmd: 'signCloseChannel',
           flashState: flashState
         })
-      }
-      else {
-        // The slave will tell the master to initiate close channel.
-        _this.broadcastMessage({
-          cmd: 'closeChannel'
-        })
-      }
-    });
+      });
+    }
+    else {
+      // The slave will tell the master to initiate close channel.
+      _this.broadcastMessage({
+        cmd: 'closeChannel'
+      })
+    }
   }
 
   async createTransaction(roomData, amount, sendToMaster, createAddress = true) {
@@ -112,6 +112,7 @@ export default class WebRTC {
           cmd: 'createTransaction',
           amount: amount
         })
+        resolve()
       }
     });
   }

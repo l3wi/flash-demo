@@ -242,7 +242,7 @@ export default class extends React.Component {
   }
 
   allPeersDeposited() {
-    if(this.state.roomData.flashState === null) {
+    if(typeof this.state.roomData.flashState === undefined || this.state.roomData.flashState === null) {
       return false
     }
     var totalInRoom =
