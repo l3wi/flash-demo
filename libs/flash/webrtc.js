@@ -17,7 +17,7 @@ export default class WebRTC {
     var _this = this
     if(roomData.index === 0) {
       // The master will send a signing request to the slave after initially making his half of the close-request
-      var flashState = await Flash.master.closeChannel(flash, roomData.mySeed)
+      var flashState = await Flash.master.closeChannel(roomData.flashState, roomData.mySeed)
       return new Promise(function(resolve, reject) {
         var eventFn = (message) => {
           message = message.data

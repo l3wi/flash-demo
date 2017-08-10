@@ -87,10 +87,9 @@ export default class extends React.Component {
       // Finsh signing the bundles
       (async() => {
         var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
-
         // Dirty, temporary workaround. So we can rely on a good callback for slave.
+        this.didMakeSuccessfulTransaction(newFlashState)
         webRTC.events.emit('signTransactionResult', newFlashState)
-
         webRTC.broadcastMessage({
           cmd: 'signTransactionResult',
           flashState: newFlashState
@@ -113,7 +112,7 @@ export default class extends React.Component {
 
     if(message.cmd === 'closeChannel' && this.state.roomData.index == 0) {
       (async() => {
-        await webRTC.createTransaction(this.state.roomData)
+        await webRTC.closeChannel(this.state.roomData)
       })()
     }
 
@@ -141,7 +140,7 @@ export default class extends React.Component {
       this.storeRoomDataLocally()
 
       if(this.allPeersDeposited()) {
-        this.createInitialTransaction(message.flashState)
+        this.createInitialTransaction(this.state.roomData)
       }
     }
 

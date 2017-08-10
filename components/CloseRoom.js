@@ -52,13 +52,13 @@ export default class extends React.Component {
     });
   }
 
-  async closeRoom() {
-    var flashState = await webRTC.closeRoom(this.props.roomData)    
+  async closeChannel() {
+    var flashState = await webRTC.closeChannel(this.props.roomData)
   }
 
   closeRoomClick() {
     (async() => {
-      await this.closeRoom()
+      await this.closeChannel()
     })()
   }
 
