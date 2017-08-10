@@ -55,6 +55,7 @@ export default class extends React.Component {
     (async() => {
       console.log('Making initial tx');
       var flashState = await webRTC.createTransaction(roomData, 0, false, false)
+      console.log('flashState', flashState);
       this.didMakeSuccessfulTransaction(flashState)
     })()
   }
@@ -86,9 +87,10 @@ export default class extends React.Component {
       // Finsh signing the bundles
       (async() => {
         var newFlashState = await Flash.slave.closeTransaction(message.flashState, this.state.roomData.mySeed)
-        this.didMakeSuccessfulTransaction(newFlashState)
+
         // Dirty, temporary workaround. So we can rely on a good callback for slave.
         webRTC.events.emit('signTransactionResult', newFlashState)
+
         webRTC.broadcastMessage({
           cmd: 'signTransactionResult',
           flashState: newFlashState
@@ -104,7 +106,8 @@ export default class extends React.Component {
         if('createAddress' in message) {
           createAddress = message.createAddress
         }
-        await webRTC.createTransaction(this.state.roomData, message.amount, true, createAddress)
+        var newFlashState = await webRTC.createTransaction(this.state.roomData, message.amount, true, createAddress)
+        this.didMakeSuccessfulTransaction(newFlashState)
       })()
     }
 

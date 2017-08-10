@@ -76,6 +76,7 @@ export default class WebRTC {
           var eventFn = (message) => {
             message = message.data
             if(message.cmd === 'signTransactionResult') {
+              console.log('signTransactionResult', 'resolve');
               _this.events.off('message', eventFn)
               resolve(message.flashState)
             }
