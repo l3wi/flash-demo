@@ -63,9 +63,11 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
   return addresses;
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
-export const buildMultipleBundles = async (flash, value) => {
+export const buildMultipleBundles = async (flash, value, testFlag) => {
+  const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
+  const testAddress = addy.substring(0, addy.length - 9);
+
   /// Check to see if its the first run?
-  console.log(value.master + value.slave);
   if (!flash.reqBundles) {
     // Generate an array of promises to be to initialise the tree
     var bundleProms = Array(flash.depth - 1).fill().map(async (_, i) => {
@@ -76,7 +78,11 @@ export const buildMultipleBundles = async (flash, value) => {
           value: value.master + value.slave
         }
       ];
-      var bundle = await startTransfer(flash.addresses[i].address, transfers);
+      var bundle = await startTransfer(
+        testFlag ? testAddress : flash.addresses[i].address,
+        transfers,
+        flash.poolAddress
+      );
       return {
         bundle,
         addressIndex: flash.addresses[i].index,
@@ -107,7 +113,52 @@ export const buildMultipleBundles = async (flash, value) => {
         value: value.slave // Set the amount send to slave
       });
     }
-    var bundle = await startTransfer(flash.addresses[item].address, transfers);
+    var bundle = await startTransfer(
+      testFlag ? testAddress : flash.addresses[i].address,
+      transfers,
+      flash.poolAddress
+    );
+    return {
+      bundle,
+      addressIndex: flash.addresses[item].index,
+      depth: item
+    };
+  });
+  // Wait until all concurrent promises are returned
+  return await Promise.all(bundleProms);
+};
+
+export const buildFinalBundles = async (flash, value, testFlag) => {
+  const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
+  const testAddress = addy.substring(0, addy.length - 9);
+
+  var bundleProms = flash.reqBundles.map(async (item, i) => {
+    var transfers = [];
+    // Make up the transfer for parent nodes
+    console.log(item);
+    console.log(flash.reqBundles.length - 1);
+    console.log(item !== flash.reqBundles.length - 1);
+    if (item === flash.reqBundles.length - 1) {
+      transfers.push({
+        address: flash.addresses[item + 1].address, // Pass balance to child address
+        value: value.master + value.slave // Pass full value down tree
+      });
+    } else {
+      // Build transfer object for the Root Bundle
+      transfers.push({
+        address: flash.settlementAddress.master, // Pass to master addresses
+        value: value.master // Set the amount send to master
+      });
+      transfers.push({
+        address: flash.settlementAddress.slave, // Pass to slave addresses
+        value: value.slave // Set the amount send to slave
+      });
+    }
+    var bundle = await startTransfer(
+      testFlag ? testAddress : flash.addresses[i].address,
+      transfers,
+      flash.poolAddress
+    );
     return {
       bundle,
       addressIndex: flash.addresses[item].index,
@@ -130,14 +181,14 @@ export const signMultipleBundles = async (bundles, seed) => {
   return await Promise.all(bundleProms);
 };
 
-////// HELPERS /////////////////////////////////////////////////////////////////
+////// HELPERS //////////////////
 // Start new addresses
-const initiateAddress = (seed, index) => {
+export const initiateAddress = (seed, index) => {
   // Create new digest
   return iota.multisig.getDigest(seed, index + 1, 2);
 };
 
-const finishAddress = (seed, index, digest) => {
+export const finishAddress = (seed, index, digest) => {
   // Create new digest
   var digests = [];
 
@@ -145,25 +196,26 @@ const finishAddress = (seed, index, digest) => {
   // Add your digest to the trytes
   var address = new iota.multisig.address(digests);
   // Squeeze out address
-  var finalAddress = address.finalize();
-  console.log(finalAddress);
-
-  return finalAddress;
+  return address.finalize();
 };
 
 //
-const startTransfer = (inputAddress, transfers) => {
+const startTransfer = (inputAddress, transfers, poolAddress) => {
+  console.log("Remainder Addy: ", poolAddress);
   var p = new Promise((res, rej) => {
-    iota.multisig.initiateTransfer(4, inputAddress, null, transfers, function(
-      error,
-      success
-    ) {
-      if (error) {
-        console.error(error);
-      } else {
-        res(success);
+    iota.multisig.initiateTransfer(
+      4,
+      inputAddress,
+      poolAddress,
+      transfers,
+      function(error, success) {
+        if (error) {
+          console.error(error);
+        } else {
+          res(success);
+        }
       }
-    });
+    );
   });
   return p;
 };

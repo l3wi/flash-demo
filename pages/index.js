@@ -37,7 +37,7 @@ export default class extends React.Component {
 
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 0, slave: 0 },
+      { master: 10, slave: 10 },
       initial.one
     );
     // Sign those transactionbundles
@@ -54,13 +54,20 @@ export default class extends React.Component {
     // Start new transaction
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 200, slave: 400 },
+      { master: 10, slave: 10 },
       one
     );
     // Finsh signing the bundles
     flash = await Flash.slave.closeTransaction(flash, two);
     console.log("Updated Bundle: ", flash);
     this.setState({ flash });
+  };
+
+  closeChannel = async (one, two, flash) => {
+    flash = await Flash.master.closeChannel(flash, one);
+    console.log(flash);
+    flash = await Flash.slave.closeFinalBundle(flash, two);
+    console.log("Updated Bundle: ", flash);
   };
 
   send = (uid, amount, flash) => {
@@ -99,6 +106,15 @@ export default class extends React.Component {
           <div>
             <button onClick={() => this.newTransaction(one, two, flash)}>
               New Transaction
+            </button>
+
+            <p>
+              {/* Balance left: {flash && flash.balance.remainder} */}
+            </p>
+          </div>
+          <div>
+            <button onClick={() => this.closeChannel(one, two, flash)}>
+              Close Channel
             </button>
 
             <p>

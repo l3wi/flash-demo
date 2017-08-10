@@ -1,6 +1,6 @@
 import WebRTC from "./webrtc";
 
-import { calculateDepth, initialFlash, walkTree } from "./flash";
+import { calculateDepth, initialFlash, walkTree, highestBundle } from "./flash";
 import {
   seedGen,
   startAddresses,
@@ -8,7 +8,10 @@ import {
   startSingleAddress,
   closeSingleAddress,
   buildMultipleBundles,
-  signMultipleBundles
+  signMultipleBundles,
+  buildFinalBundles,
+  initiateAddress,
+  finishAddress
 } from "./iota";
 
 ////////////////////
@@ -23,15 +26,20 @@ class Master {
 
   // Start the channel off
   static initalize = (seed, number, depositAmount, settlementAddress) => {
-    // Prompt user for Depth.
+    // Calculate depth.
     const depth = calculateDepth(number);
     // Then generate flash object.
     var flash = initialFlash(depth);
+
+    // Generate Pool Addresss Digest
+    flash.poolAddress = initiateAddress(seed, flash.addressIndex);
+    flash.addressIndex = 1;
     // Then generate the left of the tree's addresses.
     flash.addresses = startAddresses(seed, flash.addressIndex, depth);
+
     flash.depositAmount = depositAmount;
-    flash.total = { master: 0, slave: 0 }
-    flash.stake = { master: 0, slave: 0 }
+    flash.total = { master: 0, slave: 0 };
+    flash.stake = { master: 0, slave: 0 };
     flash.settlementAddress = {
       master: settlementAddress
     };
@@ -40,9 +48,9 @@ class Master {
 
   // Check to see what addresses need to be generated and starts signing
   static newAddress = (seed, flash) => {
-    var { counter, reqBundles, reqAddresses } = walkTree(flash.counter);
-    console.log(reqBundles);
-    console.log(reqAddresses);
+    var { counter, reqBundles, reqAddresses } = walkTree(flash);
+    console.log("Need these bundles: ", reqBundles);
+    console.log("Need these Addresses: ", reqAddresses);
 
     var { addresses, addressIndex } = startSingleAddress(
       seed,
@@ -61,9 +69,30 @@ class Master {
   };
 
   static newTransaction = async (flash, value, seed) => {
-    var bundles = await buildMultipleBundles(flash, value);
+    var bundles = await buildMultipleBundles(flash, value, true);
     return {
       ...flash,
+      partialBundles: await signMultipleBundles(bundles, seed)
+    };
+  };
+
+  static closeChannel = async (flash, seed) => {
+    // Figure out many available tokens are around to share.
+    const remainder = (flash.stake.master + flash.stake.slave) / 2;
+    // Make a totals bundle
+    ////////////////////////
+    // Need to add logic here that halves the remainder and adds it
+    // to the users balance.
+    var value = {
+      master: 60,
+      slave: 40
+    };
+    const updatedFlash = { ...flash, reqBundles: highestBundle(flash.counter) };
+
+    var bundles = await buildFinalBundles(updatedFlash, value, true);
+
+    return {
+      ...updatedFlash,
       partialBundles: await signMultipleBundles(bundles, seed)
     };
   };
@@ -77,12 +106,18 @@ class Slave {
 
   // Finish setup of multisig wallet form Player 1
   static initalize = (seed, flash, settlementAddress) => {
-    // Take flash object, and sign the other half of the addresses.
+    // Finish off pool address and set index
+    flash.poolAddress = finishAddress(seed, 0, flash.poolAddress);
+
+    // Take flash object, and sign the other half of the addresses. Also advance the index
     flash.addresses = closeAddresses(seed, flash.addresses);
-    flash.addressIndex = flash.depth;
+    flash.addressIndex = flash.addressIndex + flash.depth;
+
+    // Add second user's settlement address
     flash.settlementAddress.slave = settlementAddress;
     return flash;
   };
+
   //Finish up the signing of a new address
   static closeAddress = (seed, flash) => {
     var addresses = closeSingleAddress(
@@ -102,6 +137,14 @@ class Slave {
     return {
       ...flash,
       bundles
+    };
+  };
+
+  static closeFinalBundle = async (flash, seed) => {
+    var newBundles = await signMultipleBundles(flash.partialBundles, seed);
+    return {
+      ...flash,
+      finalBundles: Object.assign([], newBundles.map(item => item.bundle))
     };
   };
 }

@@ -10,40 +10,50 @@ export const calculateDepth = num => {
 export const initialFlash = depth => {
   var counter = [];
   var addresses = [];
-
+  var bundles = [];
   // Add the correct amount of counters and arrays
   for (var i of Array(depth).keys()) {
     counter[i] = 0;
-    addresses[i] = [];
+    addresses[i] = false;
+    bundles[i] = false;
   }
   return {
     depth: depth,
     addressIndex: 0,
-    bundles: [],
+    bundles,
     counter,
     addresses
   };
 };
 
 // This recurisvly walks the tree from the tip and update values
-export const walkTree = counters => {
+export const walkTree = flash => {
   // New Obj
-  var arr = Object.assign([], counters);
+  var arr = Object.assign([], flash.counter);
 
   // ADD FLAGS TO INDICATE NEW BUNDLES TO BE GENERATED
   var requiredBundles = [];
   var requiredAddresses = [];
 
+  // Gets all required items on startup minus the leaf transaction
+  if (!flash.addresses[0]) {
+    Array(flash.counter.length - 1).fill().map((_, i) => {
+      requiredBundles.push(i);
+      requiredAddresses.push(flash.counter.length - 1);
+    });
+  }
+
   // Set a counter for the loop
-  var index = counters.length - 1;
+  var index = flash.counter.length - 1;
   // Flag to kill the loop when done
   var again = true;
   // While loop.... lol
   while (again) {
     // Check to see if we need another loop and to reset this level counter
-    if (counters[index] === 2) {
-      // Mark the bundles that need to be generated
+    if (flash.counter[index] === 2) {
+      // Mark the addresses that need to be generated
       requiredAddresses.push(index);
+      // Mark the bundles that need to be generated
       requiredBundles.push(index);
 
       // Set the counter to 0
@@ -62,6 +72,8 @@ export const walkTree = counters => {
       again = false;
     }
   }
+  console.log(requiredBundles);
+
   return {
     counter: arr,
     reqBundles: requiredBundles,
@@ -69,21 +81,14 @@ export const walkTree = counters => {
   };
 };
 
-export const downTree = (counter, addresses) => {};
+// Get the highest useable bundle by looking down the counter
+export const highestBundle = counter => {
+  var requiredBundles = [];
 
-/// Will ocme back to this func
-//////////
-// export const walkies = (tree, index) => {
-//   let move = false;
-//   for (var depth of Object.keys(tree).reverse()) {
-//     if (move || tree[depth].uses === 2) {
-//       console.log(tree[depth]);
-//       tree[depth].keyIndex = index++;
-//       tree[depth].uses = 0;
-//       move = true;
-//     } else {
-//       tree[depth].uses++;
-//     }
-//   }
-//   return tree;
-// };
+  for (var index in counter) {
+    requiredBundles.push(index);
+    // When you get to an address that hasn't been used three times
+    if (counter[index] !== 2) return requiredBundles;
+  }
+  return Error(`You're at the end of the bundle`);
+};

@@ -2004,7 +2004,7 @@ invert-kv@^1.0.0:
 
 "iota.lib.js@git+https://github.com/l3wi/iota.lib.js.git":
   version "0.4.0"
-  resolved "git+https://github.com/l3wi/iota.lib.js.git#320df0fc4d862b800f8acb06dfcb409a278a6e81"
+  resolved "git+https://github.com/l3wi/iota.lib.js.git#047693a95c1e1d9198afad0679ac0fdb82525a64"
   dependencies:
     async "^2.5.0"
     crypto-js "^3.1.9-1"
