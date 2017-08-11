@@ -10,5 +10,6 @@ export const iota = new IOTA({
   provider: "http://52.58.212.188:14700"
 })
 if(isClient) {
+  window.iota = iota
   curl.overrideAttachToTangle(iota.api)
 }

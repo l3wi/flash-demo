@@ -48,9 +48,16 @@ export default class extends React.Component {
       slave: 50
     }
     console.log('creating test tx');
+    var amount = 20
+    for(var key of Object.keys(flash.stake)) {
+      flash.stake[key] -= amount
+      flash.total[key] += amount
+    }
+    flash.total[from] -= amount
+    flash.total[to] += amount
+
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 10, slave: 0 },
       initial.one
     );
 
