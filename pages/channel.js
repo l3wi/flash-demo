@@ -10,8 +10,10 @@ import InitRoom from '../components/InitRoom'
 import CloseRoom from '../components/CloseRoom'
 import MakeTransaction from '../components/MakeTransaction'
 import Deposit from '../components/Deposit'
+import CloseRoom from '../libs/flash/close-room'
 
 export default class extends React.Component {
+  closeRoom = new CloseRoom()
   state = {
     status: 'loaded',
     peers: [],
@@ -50,58 +52,6 @@ export default class extends React.Component {
 
   componentWillUnmount() {
     this.clearConnectTimer()
-  }
-
-  bundleToTrytes(bundle) {
-    var bundleTrytes = [];
-    bundle.forEach(function(bundleTx) {
-        bundleTrytes.push(iota.utils.transactionTrytes(bundleTx))
-    })
-
-    return bundleTrytes.reverse()
-  }
-
-  attachBundle(bundleTrytes) {
-    iota.broadcastTransactions(bundleTrytes, (e, r) => {
-      console.log('broadcastTransactions', e, r);
-    })
-  }
-
-  async sendTrytes(trytes) {
-    return new Promise(function(resolve, reject) {
-      iota.api.sendTrytes(trytes, 5, 10, (e, r) => {
-        console.log('sendTrytes', e, r);
-        if(e !== null) {
-          reject(e)
-        }
-        else {
-          resolve(r)
-        }
-      })
-    });
-  }
-
-  async attachAndPOWClosedBundle() {
-    var getBundles = (roomData) => {
-      var ret = []
-      for(var bundles of roomData.flashState.bundles) {
-        if(bundles !== null) {
-          ret.push(bundles)
-        }
-      }
-      return ret
-    }
-
-    var bundles = getBundles(this.state.roomData)
-    var trytesPerBundle = []
-    for(var bundle of bundles) {
-      var trytes = this.bundleToTrytes(bundle)
-      trytesPerBundle.push(trytes)
-    }
-    console.log('closing room with trytes', trytesPerBundle);
-    for(var trytes of trytesPerBundle) {
-      await this.sendTrytes(trytes)
-    }
   }
 
   handleMessage(message) {
@@ -157,7 +107,7 @@ export default class extends React.Component {
           cmd: 'signCloseChannelResult',
           flashState: newFlashState
         })
-        await this.attachAndPOWClosedBundle()
+        await this.closeRoom.attachAndPOWClosedBundle()
       })()
     }
 

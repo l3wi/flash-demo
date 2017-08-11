@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
 import Flash from "../libs/flash";
+import CloseRoom from "../libs/flash/close-room.js"
 
 export default class extends React.Component {
   state = {
@@ -11,6 +12,8 @@ export default class extends React.Component {
     total: { master: 50, slave: 50 },
     remainder: 100
   };
+
+  closeRoom = new CloseRoom()
 
   componentDidMount() {
     // Bundddles
@@ -51,11 +54,10 @@ export default class extends React.Component {
     this.setState({ flash, seeds });
   };
 
-  closeChannel = async (one, two, flash) => {
-    flash = await Flash.master.closeChannel(flash, one);
-    console.log(flash);
-    flash = await Flash.slave.closeFinalBundle(flash, two);
-    console.log("Updated Bundle: ", flash);
+  closeChannel = async (seeds, flash) => {
+    flash = await Flash.master.closeChannel(flash, seeds.master)
+    flash = await Flash.slave.closeFinalBundle(flash, seeds.slave)
+    await this.closeRoom.attachAndPOWClosedBundle()
   };
 
   send = (to, from, amount, flash, seeds) => {
@@ -100,7 +102,7 @@ export default class extends React.Component {
             </p>
           </div>
           <div>
-            <button onClick={() => this.closeChannel(one, two, flash)}>
+            <button onClick={() => this.closeChannel(seeds, flash)}>
               Close Channel
             </button>
 
