@@ -1209,9 +1209,9 @@ css-tree@1.0.0-alpha17:
   dependencies:
     source-map "^0.5.3"
 
-curl.lib.js@^1.0.10:
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/curl.lib.js/-/curl.lib.js-1.0.10.tgz#5acea79e6443d1294eb1f050898feef2c26fea07"
+curl.lib.js@^1.0.14:
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/curl.lib.js/-/curl.lib.js-1.0.14.tgz#949af003e6369689ec947378a861b83de809d5b9"
 
 d@1:
   version "1.0.0"
