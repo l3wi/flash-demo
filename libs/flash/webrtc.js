@@ -41,7 +41,7 @@ export default class WebRTC {
     }
   }
 
-  async createTransaction(roomData, amount, sendToMaster) {
+  async createTransaction(roomData, amount, to, from) {
     var _this = this
     var createAddress = roomData.flashState.counter.reduce((val, sum) => val + sum) > 0
     return new Promise(function(resolve, reject) {
@@ -49,30 +49,20 @@ export default class WebRTC {
         // The master can just create the transaction and push it to the slave
         var initTransactionCreation = async (flashState) => {
           // Start new transaction
-          flashState.stake['master'] -= amount
-          flashState.stake['slave'] -= amount
-
-          amount *= 2
-          var amountObj = {
-            master: flashState.total.master,
-            slave: flashState.total.slave
+          for(var key of Object.keys(flashState.stake)) {
+            flashState.stake[key] -= amount
+            flashState.total[key] += amount
           }
-          amountObj[sendToMaster ? "master" : "slave"] += amount
+          flashState.total[from] -= amount
+          flashState.total[to] += amount
           var remainder = Object.values(flashState.stake).reduce((sum, value) => sum + value)
           if(remainder < 0) {
             alert("This flash channel has no transportable balance left. The room should be closed.")
             return
           }
-          // Is the same as the above
-          // if(flashState.stake[sendToMaster ? "slave" : "master"] < 0) {
-          //   alert('Not enough balance to send this amount of iota')
-          //   return
-          // }
-          console.log('creating tx', roomData, amountObj, sendToMaster, createAddress);
-          flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
-          //TODO: remove?
-          flashState.total.master = amountObj.master;
-          flashState.total.slave = amountObj.slave;
+
+          console.log('creating tx', roomData, createAddress);
+          flashState = await Flash.master.newTransaction(flashState, roomData.mySeed)
 
           var eventFn = (message) => {
             message = message.data

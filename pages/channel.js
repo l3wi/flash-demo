@@ -136,7 +136,9 @@ export default class extends React.Component {
         if('createAddress' in message) {
           createAddress = message.createAddress
         }
-        var newFlashState = await webRTC.createTransaction(this.state.roomData, message.amount, true)
+        var from = "slave"
+        var to = "master"
+        var newFlashState = await webRTC.createTransaction(this.state.roomData, message.amount, to, from)
         this.didMakeSuccessfulTransaction(newFlashState)
       })()
     }

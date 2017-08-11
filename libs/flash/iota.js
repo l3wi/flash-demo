@@ -63,27 +63,16 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
   return addresses;
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
-export const buildMultipleBundles = async (flash, value, testFlag) => {
-  console.log('buildMultipleBundles');
+export const buildMultipleBundles = async (flash, testFlag) => {
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
-  const testAddress = addy.substring(0, addy.length - 9);
-
-  for(var k in value) {
-    flash.total[k] += value[k] * 2
-  }
-  console.log(flash.total);
-
+  const testAddress = addy.substring(0, addy.length - 9)
+  // Generate an array of promises to be to generate specific bundles
   /// Check to see if its the first run?
   if(!flash.reqBundles) {
     flash.reqBundles = Array(flash.depth).fill()
   }
-  var totalAmount = value.master + value.slave
-  flash.stake['master'] -= totalAmount
-  flash.stake['slave'] -= totalAmount
-  // Generate an array of promises to be to generate specific bundles
   var bundleProms = flash.reqBundles.map(async (item, i) => {
     var transfers = [];
-    console.log('build prom: ', item, i);
     if(i < flash.depth - 1) {
       transfers.push({
         address: flash.addresses[i + 1].address,
@@ -132,20 +121,18 @@ export const buildMultipleBundles = async (flash, value, testFlag) => {
 export const buildFinalBundles = async (flash, testFlag) => {
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
   const testAddress = addy.substring(0, addy.length - 9);
+  for(var key in Object.keys(flash.stake)) {
+    flash.total[key] += flash.stake[key]
+    flash.stake[key] = 0
+  }
   var value = flash.total
-
   var bundleProms = flash.reqBundles.map(async (item, i) => {
     var transfers = [];
     // Make up the transfer for parent nodes
     console.log(item);
     console.log(flash.reqBundles.length - 1);
     console.log(item !== flash.reqBundles.length - 1);
-    if (item === flash.reqBundles.length - 1) {
-      transfers.push({
-        address: flash.addresses[item + 1].address, // Pass balance to child address
-        value: value.master + value.slave // Pass full value down tree
-      });
-    } else {
+    if (i === flash.reqBundles.length - 1) {
       // Build transfer object for the Root Bundle
       transfers.push({
         address: flash.settlementAddress.master, // Pass to master addresses
@@ -155,8 +142,14 @@ export const buildFinalBundles = async (flash, testFlag) => {
         address: flash.settlementAddress.slave, // Pass to slave addresses
         value: value.slave // Set the amount send to slave
       });
+    } else {
+      transfers.push({
+        address: flash.addresses[item + 1].address, // Pass balance to child address
+        value: value.master + value.slave // Pass full value down tree
+      });
     }
     var bundle = await startTransfer(
+      flash,
       testFlag ? testAddress : flash.addresses[i].address,
       transfers,
       flash.poolAddress
@@ -202,7 +195,6 @@ export const finishAddress = (seed, index, digest) => {
   return address.finalize();
 };
 
-//+Multisig.prototype.initiateTransfer = function(input, remainderAddress, transfers, callback) {
 const startTransfer = (flash, inputAddress, transfers, poolAddress) => {
   console.log("Remainder Addy: ", poolAddress);
   var p = new Promise((res, rej) => {

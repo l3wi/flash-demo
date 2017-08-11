@@ -22,7 +22,9 @@ export default class extends React.Component {
     (async () => {
       var amount = parseInt(this.state.amount)
       if(amount > 0) {
-        var flashState = await webRTC.createTransaction(this.props.roomData, amount, this.props.roomData.index != 0)
+        var from = "master"
+        var to = "slave"
+        var flashState = await webRTC.createTransaction(this.props.roomData, amount, to, from)
         this.props.callback(flashState)
       }
       else {
