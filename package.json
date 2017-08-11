@@ -9,7 +9,7 @@
   "dependencies": {
     "curl.lib.js": "git+https://github.com/peterwilli/curl.lib.js.git",
     "eventemitter3": "^2.0.3",
-    "iota.lib.js": "file:///home/peter/Projects/IOTA/paul/iotalewis",
+    "iota.lib.js": "git+https://github.com/peterwilli/iota.lib.js.novalidation.git",
     "next": "^3.0.3",
     "next-routes": "^1.0.40",
     "peer": "^0.2.8",

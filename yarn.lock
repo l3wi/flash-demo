@@ -2002,8 +2002,9 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-"iota.lib.js@file:///home/peter/Projects/IOTA/paul/iotalewis":
+"iota.lib.js@git+https://github.com/peterwilli/iota.lib.js.novalidation.git":
   version "0.4.0"
+  resolved "git+https://github.com/peterwilli/iota.lib.js.novalidation.git#28ef1b12c1ff4f7576b5717ecb30536ee6a258d8"
   dependencies:
     async "^2.5.0"
     crypto-js "^3.1.9-1"
