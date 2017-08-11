@@ -70,6 +70,7 @@ export default class WebRTC {
           // }
           console.log('creating tx', roomData, amountObj, sendToMaster, createAddress);
           flashState = await Flash.master.newTransaction(flashState, amountObj, roomData.mySeed)
+          //TODO: remove?
           flashState.total.master = amountObj.master;
           flashState.total.slave = amountObj.slave;
 

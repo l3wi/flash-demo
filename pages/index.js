@@ -32,12 +32,22 @@ export default class extends React.Component {
       50,
       initial.one
     );
+    flash.stake = {
+      master: 50,
+      slave: 50
+    }
+    flash.index = 0
+
     // Act as Player 2 & Sign those addeses
     flash = Flash.slave.initalize(initial.two, flash, initial.two);
-
+    flash.index = 1
+    flash.stake = {
+      master: 50,
+      slave: 50
+    }
     flash = await Flash.master.newTransaction(
       flash,
-      { master: 10, slave: 10 },
+      { master: 10, slave: 0 },
       initial.one
     );
 

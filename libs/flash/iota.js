@@ -67,41 +67,23 @@ export const buildMultipleBundles = async (flash, value, testFlag) => {
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
   const testAddress = addy.substring(0, addy.length - 9);
 
-  /// Check to see if its the first run?
-  if (!flash.reqBundles) {
-    // Generate an array of promises to be to initialise the tree
-    var bundleProms = Array(flash.depth - 1).fill().map(async (_, i) => {
-      // Build a bundle with the whole value & point down the tree
-      var transfers = [
-        {
-          address: flash.addresses[i + 1].address,
-          value: value.master + value.slave
-        }
-      ];
-      var bundle = await startTransfer(
-        testFlag ? testAddress : flash.addresses[i].address,
-        transfers,
-        flash.poolAddress
-      );
-      return {
-        bundle,
-        addressIndex: flash.addresses[i].index,
-        depth: i
-      };
-    });
-    // Wait until all concurrent promises are returned
-    return await Promise.all(bundleProms);
+  for(var k in value) {
+    flash.total[k] += value[k] * 2
   }
+  console.log(flash.total);
 
+  /// Check to see if its the first run?
+  if(!flash.reqBundles) {
+    flash.reqBundles = Array(flash.depth).fill()
+  }
+  var totalAmount = value.master + value.slave
+  flash.stake['master'] -= totalAmount
+  flash.stake['slave'] -= totalAmount
   // Generate an array of promises to be to generate specific bundles
   var bundleProms = flash.reqBundles.map(async (item, i) => {
     var transfers = [];
-    console.log('reqBundles', i, item);
+    console.log('build prom: ', item, i);
     if(i < flash.depth - 1) {
-      transfers.push({
-        address: flash.addresses[i].address,
-        value: (flash.depositAmount * 2) * -1
-      })
       transfers.push({
         address: flash.addresses[i + 1].address,
         value: (flash.depositAmount * 2)
@@ -109,35 +91,37 @@ export const buildMultipleBundles = async (flash, value, testFlag) => {
     }
     else {
       transfers.push({
-        address: flash.addresses[i].address,
-        value: (flash.depositAmount * 2) * -1
-      })
-      transfers.push({
-        address: flash.remainderAddress,
+        address: flash.poolAddress,
         value: Object.values(flash.stake).reduce((sum, value) => sum + value, 0)
       })
-      transfers.push({
-        address: flash.settlementAddress.master,
-        value: flash.total.master
-      })
-      transfers.push({
-        address: flash.settlementAddress.slave,
-        value: flash.total.slave
-      })
+      if(flash.total.master > 0) {
+        transfers.push({
+          address: flash.settlementAddress.master,
+          value: flash.total.master
+        })
+      }
+      if(flash.total.slave > 0) {
+        transfers.push({
+          address: flash.settlementAddress.slave,
+          value: flash.total.slave
+        })
+      }
+      console.log('transfers', transfers);
     }
       // transfers.push({
       //   address: flash.settlementAddress.slave, // Pass to slave addresses
       //   value: value.slave // Set the amount send to slave
       // });
     var bundle = await startTransfer(
+      flash,
       testFlag ? testAddress : flash.addresses[i].address,
       transfers,
       flash.poolAddress
     );
     return {
       bundle,
-      addressIndex: flash.addresses[item].index,
-      depth: item
+      addressIndex: flash.addresses[i].index,
+      depth: i
     };
   });
   // Wait until all concurrent promises are returned
@@ -216,13 +200,17 @@ export const finishAddress = (seed, index, digest) => {
   return address.finalize();
 };
 
-//
-const startTransfer = (inputAddress, transfers, poolAddress) => {
+//+Multisig.prototype.initiateTransfer = function(input, remainderAddress, transfers, callback) {
+const startTransfer = (flash, inputAddress, transfers, poolAddress) => {
   console.log("Remainder Addy: ", poolAddress);
   var p = new Promise((res, rej) => {
+    var input = {
+      address: inputAddress,
+      securitySum: 4,
+      balance: (flash.depositAmount * flash.stake.length)
+    }
     iota.multisig.initiateTransfer(
-      4,
-      inputAddress,
+      input,
       poolAddress,
       transfers,
       function(error, success) {
