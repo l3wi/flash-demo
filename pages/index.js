@@ -25,7 +25,6 @@ export default class extends React.Component {
       two: seedGen(81)
     };
     /// Act as Player & Create inital addresses
-    console.log(transactions);
     var flash = Flash.master.initalize(
       initial.one,
       transactions,
@@ -37,14 +36,18 @@ export default class extends React.Component {
       slave: 50
     }
     flash.index = 0
+    console.log('first half of room', flash);
 
     // Act as Player 2 & Sign those addeses
     flash = Flash.slave.initalize(initial.two, flash, initial.two);
+    console.log('cosiging room2', flash);
+
     flash.index = 1
     flash.stake = {
       master: 50,
       slave: 50
     }
+    console.log('creating test tx');
     flash = await Flash.master.newTransaction(
       flash,
       { master: 10, slave: 0 },

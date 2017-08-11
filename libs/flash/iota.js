@@ -64,6 +64,7 @@ export const closeSingleAddress = (seed, reqBundles, addresses) => {
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
 export const buildMultipleBundles = async (flash, value, testFlag) => {
+  console.log('buildMultipleBundles');
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
   const testAddress = addy.substring(0, addy.length - 9);
 
@@ -170,11 +171,12 @@ export const buildFinalBundles = async (flash, testFlag) => {
   return await Promise.all(bundleProms);
 };
 
-export const signMultipleBundles = async (bundles, seed) => {
+export const signMultipleBundles = async (flash, bundles, seed) => {
   // Setup an array of promises to sign bundles
-  var bundleProms = bundles.map(async object => {
+  var offset = flash.addresses.length - bundles.length
+  var bundleProms = bundles.map(async (object, index) => {
     return {
-      bundle: await signBundle(object, seed),
+      bundle: await signBundle(flash.addresses[offset + index], object, seed),
       ...object
     };
   });
@@ -207,7 +209,7 @@ const startTransfer = (flash, inputAddress, transfers, poolAddress) => {
     var input = {
       address: inputAddress,
       securitySum: 4,
-      balance: (flash.depositAmount * flash.stake.length)
+      balance: (flash.depositAmount * Object.keys(flash.stake).length)
     }
     iota.multisig.initiateTransfer(
       input,
@@ -226,12 +228,12 @@ const startTransfer = (flash, inputAddress, transfers, poolAddress) => {
 };
 
 // Add the user's key to the bundle
-const signBundle = (object, seed) => {
+const signBundle = (multisig, object, seed) => {
   var p = new Promise((res, rej) => {
     iota.multisig.addSignature(
       object.bundle,
-      object.bundle[1].address,
-      iota.multisig.getKey(seed, object.bundle[1].index, 4),
+      multisig.address,
+      iota.multisig.getKey(seed, multisig.index, 2),
       function(error, success) {
         if (error) {
           console.error(error);
