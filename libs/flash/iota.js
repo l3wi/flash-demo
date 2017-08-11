@@ -164,10 +164,11 @@ export const buildFinalBundles = async (flash, testFlag) => {
   return await Promise.all(bundleProms);
 };
 
-export const signMultipleBundles = async (flash, bundles, seed) => {
+export const signMultipleBundles = async (flash, bundles, seed, offset) => {
   // Setup an array of promises to sign bundles
-  var offset = flash.addresses.length - bundles.length
   var bundleProms = bundles.map(async (object, index) => {
+      console.log(object)
+      console.log("Paulie is shit: ", offset, flash.addresses[offset + index])
     return {
       bundle: await signBundle(flash.addresses[offset + index], object, seed),
       ...object
@@ -189,10 +190,15 @@ export const finishAddress = (seed, index, digest) => {
   var digests = [];
 
   digests.push(digest, iota.multisig.getDigest(seed, index + 1, 2));
+
   // Add your digest to the trytes
   var address = new iota.multisig.address(digests);
   // Squeeze out address
-  return address.finalize();
+  var finalAddress = address.finalize();
+
+  console.log(iota.multisig.validateAddress(finalAddress, digests))
+
+  return finalAddress
 };
 
 const startTransfer = (flash, inputAddress, transfers, poolAddress) => {
@@ -221,6 +227,8 @@ const startTransfer = (flash, inputAddress, transfers, poolAddress) => {
 
 // Add the user's key to the bundle
 const signBundle = (multisig, object, seed) => {
+  console.log(object.bundle)
+  console.log(iota.multisig.getKey(seed, multisig.index, 2))
   var p = new Promise((res, rej) => {
     iota.multisig.addSignature(
       object.bundle,
