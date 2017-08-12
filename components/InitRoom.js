@@ -19,7 +19,7 @@ export default class extends React.Component {
   }
 
   createRoom() {
-    var mySeed = "NAUHCHAASGMMBBFDTTEYYYDEYHFCNSBRTQTARWXFWKLXFVYDCTTF9RVR9EUAQQRRRUKHYDFKYCXBQDFTF"
+    var mySeed = seedGen(81)
     var amountOfTransactions = parseInt(this.state.amountOfTransactions)
     var depositAmount = parseInt(this.state.depositAmount)
     var settlementAddress = this.state.settlementAddress

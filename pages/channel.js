@@ -138,7 +138,7 @@ export default class extends React.Component {
     }
 
     if(message.cmd === 'initRoom' && this.state.roomData.index == -1) {
-      var mySeed = "UABRTYEHLZMINBZFFPUDPBPHMUXYRMCCZGWIRMGJFKKABOSMMFWNWK9VGPMCHLHPFSNNJ9MSMYKGYKJZN"
+      var mySeed = seedGen(81)
       // Now we need to co-sign the room
       var settlementAddress = prompt('Please enter your settlement address')
       console.log('settlementAddress (prompt)', settlementAddress);
