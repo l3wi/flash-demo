@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import { seedGen, startAddresses, closeAddresses } from "../libs/flash/iota";
+import {seedGen, startAddresses, closeAddresses} from "../libs/flash/iota";
 import Flash from "../libs/flash";
 import CloseRoom from "../libs/flash/close-room.js"
 
@@ -9,7 +9,10 @@ export default class extends React.Component {
   state = {
     flash: {},
     seeds: {},
-    total: { master: 50, slave: 50 },
+    total: {
+      master: 50,
+      slave: 50
+    },
     remainder: 100
   };
 
@@ -19,22 +22,20 @@ export default class extends React.Component {
     // Bundddles
   }
 
-  startChannel = async (maxTransactions) => {
-    if(isNaN(maxTransactions)) {
+  startChannel = async(maxTransactions) => {
+    // lewis iota vanlla here
+    return
+    if (isNaN(maxTransactions)) {
       maxTransactions = 100
     }
     console.log(maxTransactions);
     var seeds = {
       master: seedGen(81),
-      slave:  seedGen(81)
+      slave: 0
     };
+    seeds.slave = seeds.master // a thing
     /// Act as Player & Create inital addresses
-    var flash = Flash.master.initalize(
-      seeds.master,
-      maxTransactions,
-      50,
-      'KFENNTAJQPKKL9TQISCID9ERYXQNGBJWEUIKVH9QEUSC9PLMFLJOGHYPYGSUZXRXHBAMAKWIFZWYCP9FYLTMKNOVEB'
-    );
+    var flash = Flash.master.initalize(seeds.master, maxTransactions, 50, 'KFENNTAJQPKKL9TQISCID9ERYXQNGBJWEUIKVH9QEUSC9PLMFLJOGHYPYGSUZXRXHBAMAKWIFZWYCP9FYLTMKNOVEB');
     flash.stake = {
       master: 50,
       slave: 50
@@ -52,24 +53,29 @@ export default class extends React.Component {
     }
     console.log('updated flash', flash);
     console.log('deposit address: ', flash.addresses[0].address);
-    this.setState({ flash, seeds });
+    this.setState({flash, seeds});
   };
 
-  closeChannel = async (seeds, flash) => {
+  closeChannel = async(seeds, flash) => {
+    var result = await this.closeRoom.attachAndPOWClosedBundle(flash.bundles)
+    console.log('attachAndPOWClosedBundle', result);
+    console.log('attachAndPOWClosedBundle > validateSignatures', iota.utils.validateSignatures(result[0], flash.addresses[0].address))
+    return
     flash = await Flash.master.closeChannel(flash, seeds.master)
     flash = await Flash.slave.closeFinalBundle(flash, seeds.slave)
-    await this.closeRoom.attachAndPOWClosedBundle()
+    console.log('closeFinalBundle', flash);
+    //console.log('validateSignatures', iota.utils.validateSignatures(flash.finalBundles, flash.addresses[0].address))
   };
 
   send = (to, from, amount, flash, seeds) => {
-    for(var key of Object.keys(flash.stake)) {
+    for (var key of Object.keys(flash.stake)) {
       flash.stake[key] -= amount
       flash.total[key] += amount
     }
     flash.total[from] -= amount
     flash.total[to] += amount
     var remainder = Object.values(flash.stake).reduce((sum, value) => sum + value)
-    if(remainder < 0) {
+    if (remainder < 0) {
       alert("This flash channel has no transportable balance left. The room should be closed.")
       return
     }
@@ -79,23 +85,19 @@ export default class extends React.Component {
       console.log('first half of tx: ', flash);
       flash = await Flash.slave.closeTransaction(flash, seeds[from])
       console.log('second half of tx: ', flash);
+      this.setState({flash});
     })()
   };
 
   render() {
-    var { seeds, flash, transactions } = this.state;
+    var {seeds, flash, transactions} = this.state;
     return (
       <Wrapper>
         <div>
           <h4>Flash Object</h4>
           <div>
-            Max number of transactions (defaults to 100)<br />
-            <input
-              value={transactions}
-              type='number'
-              onChange={data =>
-                this.setState({ transactions: data.target.value })}
-            />
+            Max number of transactions (defaults to 100)<br/>
+            <input value={transactions} type='number' onChange={data => this.setState({transactions: data.target.value})}/>
             <button onClick={() => this.startChannel(parseInt(transactions))}>
               Start Channel
             </button>
@@ -136,7 +138,7 @@ export default class extends React.Component {
   }
 }
 
-const Wrapper = styled.section`
+const Wrapper = styled.section `
   width: 100%;
   display: flex;
   justify-content: space-around;
