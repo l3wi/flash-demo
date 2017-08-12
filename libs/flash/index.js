@@ -71,7 +71,7 @@ class Master {
   static newTransaction = async (flash, seed) => {
 
     var bundles = await buildMultipleBundles(flash, false)
-    
+
     var offset = flash.addresses.length - bundles.length
 
     return {
@@ -90,10 +90,11 @@ class Master {
     const updatedFlash = { ...flash, reqBundles: highestBundle(flash.counter) };
 
     var bundles = await buildFinalBundles(updatedFlash, false)
+    var offset = flash.addresses.length - flash.bundles.length
 
     return {
       ...updatedFlash,
-      partialBundles: await signMultipleBundles(flash, bundles, seed)
+      partialBundles: await signMultipleBundles(flash, bundles, seed, offset)
     };
   };
 }
@@ -143,7 +144,7 @@ class Slave {
   };
 
   static closeFinalBundle = async (flash, seed) => {
-    var newBundles = await signMultipleBundles(flash, flash.partialBundles, seed, 0 );
+    var newBundles = await signMultipleBundles(flash, flash.partialBundles, seed, 0)
     return {
       ...flash,
       finalBundles: Object.assign([], newBundles.map(item => item.bundle))

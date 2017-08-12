@@ -41,6 +41,7 @@ export default class CloseRoom {
   }
 
   async attachAndPOWClosedBundle(bundles) {
+    console.log('attachAndPOWClosedBundle', bundles);
     bundles = this.getBundles(bundles)
     var trytesPerBundle = []
     for(var bundle of bundles) {

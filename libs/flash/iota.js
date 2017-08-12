@@ -167,8 +167,6 @@ export const buildFinalBundles = async (flash, testFlag) => {
 export const signMultipleBundles = async (flash, bundles, seed, offset) => {
   // Setup an array of promises to sign bundles
   var bundleProms = bundles.map(async (object, index) => {
-      console.log(object)
-      console.log("Paulie is shit: ", offset, flash.addresses[offset + index])
     return {
       bundle: await signBundle(flash.addresses[offset + index], object, seed),
       ...object

@@ -51,6 +51,7 @@ export default class extends React.Component {
       slave: 50
     }
     console.log('updated flash', flash);
+    console.log('deposit address: ', flash.addresses[0].address);
     this.setState({ flash, seeds });
   };
 
@@ -75,6 +76,9 @@ export default class extends React.Component {
 
     (async() => {
       flash = await Flash.master.newTransaction(flash, seeds[to])
+      console.log('first half of tx: ', flash);
+      flash = await Flash.slave.closeTransaction(flash, seeds[from])
+      console.log('second half of tx: ', flash);
     })()
   };
 
