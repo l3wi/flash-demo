@@ -166,9 +166,24 @@ export const buildFinalBundles = async (flash, testFlag) => {
 
 export const signMultipleBundles = async (flash, bundles, seed, offset) => {
   // Setup an array of promises to sign bundles
+  console.log('signMultipleBundles > bundles', bundles);
   var bundleProms = bundles.map(async (object, index) => {
+    var bundleInputAddress
+    for(var i in object.bundle) {
+      if(object.bundle[i].value < 0) {
+        for(var addressObj of flash.addresses) {
+          console.log('signMultipleBundles', addressObj.address, object.bundle[i].address);
+          if(addressObj.address === object.bundle[i].address) {
+            bundleInputAddress = addressObj
+            console.log("signMultipleBundles > bundleInputAddress: " + bundleInputAddress, addressObj)
+            break
+          }
+        }
+        break
+      }
+    }
     return {
-      bundle: await signBundle(flash.addresses[offset + index], object, seed),
+      bundle: await signBundle(bundleInputAddress, object, seed),
       ...object
     };
   });
@@ -180,22 +195,23 @@ export const signMultipleBundles = async (flash, bundles, seed, offset) => {
 // Start new addresses
 export const initiateAddress = (seed, index) => {
   // Create new digest
-  return iota.multisig.getDigest(seed, index + 1, 2);
+  return iota.multisig.getDigest(seed, index, 2);
 };
 
+// Multisig address class
+var Address = iota.multisig.address;
 export const finishAddress = (seed, index, digest) => {
   // Create new digest
-  var digests = [];
+  var digest2 = iota.multisig.getDigest(seed, index, 2)
+  var finalAddress = new Address()
+    // Absorb the first cosigners key digest
+    .absorb(digest)
+    // Absorb the second cosigners key digest
+    .absorb(digest2)
+    //and finally we finalize the address itself
+    .finalize()
 
-  digests.push(digest, iota.multisig.getDigest(seed, index + 1, 2));
-
-  // Add your digest to the trytes
-  var address = new iota.multisig.address(digests);
-  // Squeeze out address
-  var finalAddress = address.finalize();
-
-  console.log(iota.multisig.validateAddress(finalAddress, digests))
-
+  console.log('finishAddress', `finalAddress: ${finalAddress}`, iota.multisig.validateAddress(finalAddress, [digest, digest2]))
   return finalAddress
 };
 

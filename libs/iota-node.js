@@ -1,6 +1,5 @@
 import { isClient } from './utils'
 import IOTA from 'iota.lib.js'
-
 if(isClient) {
   //require('curl.lib.js')
   //console.log(curl)
