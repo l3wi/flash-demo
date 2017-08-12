@@ -138,10 +138,10 @@ export default class extends React.Component {
     }
 
     if(message.cmd === 'initRoom' && this.state.roomData.index == -1) {
-      var mySeed = seedGen(81)
+      var mySeed = "UABRTYEHLZMINBZFFPUDPBPHMUXYRMCCZGWIRMGJFKKABOSMMFWNWK9VGPMCHLHPFSNNJ9MSMYKGYKJZN"
       // Now we need to co-sign the room
       var settlementAddress = prompt('Please enter your settlement address')
-      console.log('settlementAddress', settlementAddress);
+      console.log('settlementAddress (prompt)', settlementAddress);
       var newFlashState = Flash.slave.initalize(mySeed, message.flashState, settlementAddress)
       console.log('initalized', JSON.stringify(newFlashState));
       var roomData = {

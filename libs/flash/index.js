@@ -81,8 +81,6 @@ class Master {
   };
 
   static closeChannel = async (flash, seed) => {
-    // Figure out many available tokens are around to share.
-    const remainder = (flash.stake.master + flash.stake.slave) / 2;
     // Make a totals bundle
     ////////////////////////
     // Need to add logic here that halves the remainder and adds it

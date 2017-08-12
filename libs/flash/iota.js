@@ -121,7 +121,7 @@ export const buildMultipleBundles = async (flash, testFlag) => {
 export const buildFinalBundles = async (flash, testFlag) => {
   const addy = `IIIMXMCGPOOUAS9YTBGAPNVEUWHEDSYIAEYXUEHPHFFVPUWKJQYSPGUSGIFZYWKFXRAQMWNOZOJJFHWXBMEXTPLKNX`;
   const testAddress = addy.substring(0, addy.length - 9);
-  for(var key in Object.keys(flash.stake)) {
+  for(var key of Object.keys(flash.stake)) {
     flash.total[key] += flash.stake[key]
     flash.stake[key] = 0
   }
