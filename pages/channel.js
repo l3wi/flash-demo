@@ -7,7 +7,6 @@ import { isClient, get, set } from '../libs/utils'
 import { iota } from "../libs/iota-node";
 import Flash from "../libs/flash";
 import InitRoom from '../components/InitRoom'
-import CloseRoom from '../components/CloseRoom'
 import MakeTransaction from '../components/MakeTransaction'
 import Deposit from '../components/Deposit'
 import CloseRoom from '../libs/flash/close-room'
