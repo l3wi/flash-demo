@@ -17,6 +17,7 @@
     "peerjs": "^0.3.14",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
+    "shortid": "^2.2.8",
     "styled-components": "^2.1.2",
     "webrtc-adapter": "^4.2.2"
   }
