@@ -363,7 +363,7 @@ export default class extends React.Component {
 
   render() {
     return (
-      <div>
+      <div style={{ padding:'15px' }}>
         { this.renderButtons() }
         <br />
         Hello! We are the <b>{ ['nothing', 'master', 'slave'][this.state.roomData.index + 1] }</b> connected to { this.state.peers.length } peers!
