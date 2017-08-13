@@ -47,11 +47,12 @@ const LeftBox = styled.div`
   position: absolute;
   top: 20%;
   right: 0%;
-  min-height: 25rem;
+  height: 25rem;
   max-width: 35rem;
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
+  word-wrap: break-word;
   background: ${props => (props.noBg ? "none" : "#fff")};
   color: ${props => (props.noBg ? "none" : "#222")};
   @media screen and (max-width: 640px) {
@@ -65,11 +66,13 @@ const RightBox = styled.div`
   position: absolute;
   top: 20%;
   left: 0%;
-  min-height: 25rem;
-  min-width: 16rem;
+  height: 25rem;
+  width: 16rem;
   box-sizing: border-box;
   padding: 10px;
-  background: #b4b4b4;
+  background: rgba(180, 180, 180, 1);
+  display: flex;
+  flex-direction: column;
   @media screen and (max-width: 640px) {
     top: 0%;
     right: 0%;
