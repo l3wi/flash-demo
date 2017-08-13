@@ -7,9 +7,10 @@ import { isClient, get, set } from '../libs/utils'
 import { iota } from "../libs/iota-node";
 import Flash from "../libs/flash";
 import InitRoom from '../components/InitRoom'
+import CloseRoomComponent from '../components/CloseRoom'
 import MakeTransaction from '../components/MakeTransaction'
 import Deposit from '../components/Deposit'
-import CloseRoom from '../libs/flash/close-room'
+import CloseRoom from '../libs/flash/close-room.js'
 
 export default class extends React.Component {
   closeRoom = new CloseRoom()
@@ -106,7 +107,13 @@ export default class extends React.Component {
           cmd: 'signCloseChannelResult',
           flashState: newFlashState
         })
-        await this.closeRoom.attachAndPOWClosedBundle()
+        var results = await this.closeRoom.attachAndPOWClosedBundle(newFlashState.finalBundles)
+        for(var bundle of results) {
+          console.log(
+            "attachAndPOWClosedBundle > validateSignatures",
+            iota.utils.validateSignatures(bundle, newFlashState.addresses[0].address)
+          );
+        }
       })()
     }
 
@@ -134,6 +141,7 @@ export default class extends React.Component {
       var mySeed = seedGen(81)
       // Now we need to co-sign the room
       var settlementAddress = prompt('Please enter your settlement address')
+      console.log('settlementAddress (prompt)', settlementAddress);
       var newFlashState = Flash.slave.initalize(mySeed, message.flashState, settlementAddress)
       console.log('initalized', JSON.stringify(newFlashState));
       var roomData = {
@@ -328,7 +336,7 @@ export default class extends React.Component {
 
   renderClose() {
     if(this.state.status === 'close-room') {
-      return (<CloseRoom roomData={this.state.roomData}></CloseRoom>)
+      return (<CloseRoomComponent roomData={this.state.roomData}></CloseRoomComponent>)
     }
   }
 

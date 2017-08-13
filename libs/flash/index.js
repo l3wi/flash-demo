@@ -71,7 +71,7 @@ class Master {
   static newTransaction = async (flash, seed) => {
 
     var bundles = await buildMultipleBundles(flash, false)
-    
+
     var offset = flash.addresses.length - bundles.length
 
     return {
@@ -81,8 +81,6 @@ class Master {
   };
 
   static closeChannel = async (flash, seed) => {
-    // Figure out many available tokens are around to share.
-    const remainder = (flash.stake.master + flash.stake.slave) / 2;
     // Make a totals bundle
     ////////////////////////
     // Need to add logic here that halves the remainder and adds it
@@ -90,10 +88,11 @@ class Master {
     const updatedFlash = { ...flash, reqBundles: highestBundle(flash.counter) };
 
     var bundles = await buildFinalBundles(updatedFlash, false)
+    var offset = flash.addresses.length - flash.bundles.length
 
     return {
       ...updatedFlash,
-      partialBundles: await signMultipleBundles(flash, bundles, seed)
+      partialBundles: await signMultipleBundles(flash, bundles, seed, offset)
     };
   };
 }
@@ -143,7 +142,7 @@ class Slave {
   };
 
   static closeFinalBundle = async (flash, seed) => {
-    var newBundles = await signMultipleBundles(flash, flash.partialBundles, seed, 0 );
+    var newBundles = await signMultipleBundles(flash, flash.partialBundles, seed, 0)
     return {
       ...flash,
       finalBundles: Object.assign([], newBundles.map(item => item.bundle))

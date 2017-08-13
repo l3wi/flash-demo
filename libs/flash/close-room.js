@@ -33,7 +33,7 @@ export default class CloseRoom {
   getBundles (bundles) {
     var ret = []
     for(var bundle of bundles) {
-      if(bundle !== null) {
+      if(bundle !== null || bundle.value !== 0) {
         ret.push(bundle)
       }
     }
@@ -41,6 +41,7 @@ export default class CloseRoom {
   }
 
   async attachAndPOWClosedBundle(bundles) {
+    console.log('attachAndPOWClosedBundle', bundles);
     bundles = this.getBundles(bundles)
     var trytesPerBundle = []
     for(var bundle of bundles) {
@@ -48,8 +49,11 @@ export default class CloseRoom {
       trytesPerBundle.push(trytes)
     }
     console.log('closing room with trytes', trytesPerBundle);
+    var results = []
     for(var trytes of trytesPerBundle) {
-      await this.sendTrytes(trytes)
+      var result = await this.sendTrytes(trytes)
+      results.push(result)
     }
+    return results
   }
 }
