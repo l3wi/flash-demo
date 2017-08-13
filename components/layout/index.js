@@ -48,7 +48,7 @@ const LeftBox = styled.div`
   top: 20%;
   right: 0%;
   min-height: 25rem;
-  max-width: calc(14 * 3vw);
+  max-width: 35rem;
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
