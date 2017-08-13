@@ -1,5 +1,5 @@
 import React from "react"
-import styled from "styled-components"
+import styled, { css } from "styled-components"
 import Header from "./header"
 export default class extends React.Component {
   state = {
@@ -8,7 +8,7 @@ export default class extends React.Component {
     transactions: 0,
     address: "",
     peer: false,
-    title: `Waiting for peer`
+    title: `Waiting for peer to connect...`
   }
 
   componentDidMount() {
@@ -26,17 +26,41 @@ export default class extends React.Component {
     console.log(this.props)
     return (
       <div>
-        <Header {...this.state} />
+        {/* <Header {...this.state} title={`Waiting for peer to connect...`} />
+
+        <h2>Share this room link with your partner:</h2>
+        <p>
+          {window && window.location.href}
+        </p> */}
+        {/* <Header {...this.state} title={`Waiting for deposits`} />
+
+        <h2>Deposit 50 IOTA into this multisig address:</h2>
+        <p>
+          {`SFDYSHYROSXOFMNFSJTNJYZGJDLSVOPDOEKVRB9KOGHXRFPPLXPVANRKIRGLBCVHGMVMMNNBWFFXASURD`}
+        </p> */}
+        <Header {...this.state} title={`Channel Setup!`} />
 
         <Row>
-          <h5>Your Balance: 5 IOTA</h5>
+          <h5>Your Balance: 80 IOTA</h5>
           <h5>Partner Balance: 20 IOTA</h5>
-          <h5>Partner Balance: 20 IOTA</h5>
+          <h5>Remaining transactable: 0 IOTA</h5>
         </Row>
-        <h4>Send IOTA to your partner:</h4>
+        <h4>Send IOTA:</h4>
         <Row>
-          <Field type={"number"} placeholder={"Enter amount to send"} />
-          <Button>Send Transfer</Button>
+          <Field type={"number"} placeholder={"Enter amount in IOTA"} />
+          <div />
+        </Row>
+        <Row>
+          <Button full>Send Transfer</Button>
+          <Button full left>
+            Request Transfer
+          </Button>
+        </Row>
+
+        <Row>
+          <Button full accent>
+            Close Channel
+          </Button>
         </Row>
       </div>
     )
@@ -66,12 +90,14 @@ const Field = styled.input`
   }
 `
 const Button = styled.button`
+  flex: ${props => (props.full ? "1" : null)};
   padding: 15px 20px;
-  background: #d30c7b;
+  background: ${props => (props.accent ? "#d30c7b" : "#222")};
   border: none;
   color: white;
   font-weight: 600;
-  margin: 0 2rem;
+  margin: ${props => (props.full ? "1rem 0rem" : "0 1rem")};
+  margin: ${props => (props.left ? "1rem 0rem 1rem 3rem" : null)};
   &:focus {
     outline: none;
   }

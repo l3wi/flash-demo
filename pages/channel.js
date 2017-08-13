@@ -1,7 +1,7 @@
 import React from "react"
 import styled from "styled-components"
 import { Layout, LeftContent, RightContent } from "../components/layout"
-import Channel from "../components/channel"
+import ChannelInterface from "../components/channel"
 import Setup from "../components/channelSetup"
 
 const SideBar = () =>
@@ -56,8 +56,10 @@ export default class extends React.Component {
     console.log(this.props)
     return (
       <Layout right={setup && SideBar()}>
-        <LeftContent noBg={!setup}>
-          {!setup ? <Setup setChannel={this.setChannel} /> : <Channel />}
+        <LeftContent noBg={!setup} active={form === 1}>
+          {!setup
+            ? <Setup setChannel={this.setChannel} />
+            : <ChannelInterface {...this.state} />}
         </LeftContent>
       </Layout>
     )
