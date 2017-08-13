@@ -1,7 +1,7 @@
 import { isClient } from './utils'
 import IOTA from 'iota.lib.js'
 if(isClient) {
-  //require('curl.lib.js')
+  require('curl.lib.js')
   //console.log(curl)
 }
 // Create IOTA instance directly with provider
@@ -10,6 +10,5 @@ export const iota = new IOTA({
   provider: "http://52.58.212.188:14700"
 })
 if(isClient) {
-  window.iota = iota
-  //curl.overrideAttachToTangle(iota.api)
+  curl.overrideAttachToTangle(iota.api)
 }
