@@ -10,7 +10,7 @@
     "babel-polyfill": "^6.23.0",
     "curl.lib.js": "^1.0.14",
     "eventemitter3": "^2.0.3",
-    "iota.lib.js": "git+https://github.com/iotaledger/iota.lib.js.git",
+    "iota.lib.js": "git+https://github.com/peterwilli/iota.lib.js.webpack.git",
     "next": "^3.0.3",
     "next-routes": "^1.0.40",
     "peer": "^0.2.8",
