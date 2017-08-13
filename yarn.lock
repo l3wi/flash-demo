@@ -2012,7 +2012,7 @@ invert-kv@^1.0.0:
 
 "iota.lib.js@git+https://github.com/peterwilli/iota.lib.js.webpack.git":
   version "0.4.0"
-  resolved "git+https://github.com/peterwilli/iota.lib.js.webpack.git#bb6257af009cd51537a17a696dff2f11b7549da3"
+  resolved "git+https://github.com/peterwilli/iota.lib.js.webpack.git#37a5b5c99a273a5bd777a0e5588e2e4e8f60507b"
   dependencies:
     async "^2.5.0"
     crypto-js "^3.1.9-1"
