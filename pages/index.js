@@ -27,18 +27,16 @@ export default class extends React.Component {
     var { form } = this.state
     return (
       <Layout>
-        <LeftContent noBg>
-          <AnimatedLeftBox active={form === 1}>
-            <Logo src={"/static/iota.svg"} />
-            <h2>IOTA Flash Channels</h2>
-            <p
-            >{`Flash channels enable for instant, peer-to-peer transactions.`}</p>
-            <p>
-              {`In Flash users can create and send transactions between each other off the
+        <LeftContent noBg active={form === 1}>
+          <Logo src={"/static/iota.svg"} />
+          <h2>IOTA Flash Channels</h2>
+          <p
+          >{`Flash channels enable for instant, peer-to-peer transactions.`}</p>
+          <p>
+            {`In Flash users can create and send transactions between each other off the
       network without doing Proof of Work while remaining secure. `}
-            </p>
-            <Button onClick={() => this.startChannel()}>Start a channel</Button>
-          </AnimatedLeftBox>
+          </p>
+          <Button onClick={() => this.startChannel()}>Start a channel</Button>
         </LeftContent>
       </Layout>
     )

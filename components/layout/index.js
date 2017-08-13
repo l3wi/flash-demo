@@ -55,6 +55,11 @@ const LeftBox = styled.div`
   word-wrap: break-word;
   background: ${props => (props.noBg ? "none" : "#fff")};
   color: ${props => (props.noBg ? "none" : "#222")};
+  transition: all .5s ease;
+  transform: ${props =>
+    props.active ? "translateY(0px)" : "translateY(20px)"};
+  visibility: ${props => (props.active ? "visible" : "hidden")};
+  opacity: ${props => (props.active ? "1" : "0")};
   @media screen and (max-width: 640px) {
     top: 20%;
     right: 0%;
