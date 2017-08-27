@@ -34,7 +34,7 @@ Very very rough way the Flash system will work
 
 Player 1 enters:
 
-- [ ] Say how many transactions
+- [x] Say how many transactions
 - [x] calculate the depth: `log(base3)x`
 - [x] Generate fresh Flash object w/ counter
 - [x] Create a multisig wallet address
@@ -53,7 +53,7 @@ Player 1 & 2:
 
   - both peers send an equal amount, i.e 50 iota each = 100 iota in the wallet
 
-- [ ] They also enter their settlement addresses
+- [x] They also enter their settlement addresses
 
   - this address is created outside the multisig wallet. It's made with a unique seed by each peer and kept secret from eachother.
 
@@ -61,7 +61,7 @@ Player 1 & 2:
 
 Player 1 wants to change state:
 
-- [ ] Initiate the transaction request w/ outputs
+- [x] Initiate the transaction request w/ outputs
 
   - The first output is the settlement address of the other user (here goes the amount of iota you want to send to the user, _times 2_).
   - The second output is the remainder of the full balance, sent to the next address (from the tree, based on the multisig wallet)
@@ -73,16 +73,16 @@ Player 1 wants to change state:
 -**Two party address generation happens here**-
 
 - [x] Check to see if the signature for each parent in the tree has been used 3 times.
-- [ ] If so move on to the parent's sibling and generate a new bundle for that item.
-- [ ] Generate bundle root itself.
-- [ ] Send to Player 2
+- [x] If so move on to the parent's sibling and generate a new bundle for that item.
+- [x] Generate bundle root itself.
+- [x] Send to Player 2
 
 -**Two party address generation happens here**-
 
 Player 2:
 
 - [ ] Accept the proposed transaction and sign the bundles
-- [ ] Send bundle to Player 1
+- [x] Send bundle to Player 1
 
 Player 1:
 
@@ -92,8 +92,8 @@ Player 1:
 
 Player 1 or 2 ends the session
 
-- [ ] Leaving user attaches the latest set of bundles to get all the money that has been spent.
-- [ ] 50% of the settlement address is sent to peer 1 and the other 50% is sent to peer 2
+- [x] Leaving user attaches the latest set of bundles to get all the money that has been spent.
+- [x] 50% of the settlement address is sent to peer 1 and the other 50% is sent to peer 2
 
 ## Limitations
 
