@@ -4,6 +4,11 @@ import { Layout, LeftContent, RightContent } from "../components/layout"
 import ChannelInterface from "../components/channel"
 import Setup from "../components/channelSetup"
 
+import Header from "../components/channel/header"
+
+import RTC from "../libs/rtc"
+import Channel from "../libs/channel"
+
 const SideBar = () =>
   <RightContent>
     <h3>Channel History</h3>
@@ -34,35 +39,133 @@ export default class extends React.Component {
   }
 
   state = {
-    setup: false,
+    setup: true,
     form: 0,
-    transactions: 0,
     address: "",
-    peer: false
+    peer: false,
+    channel: "share",
+    title: `Waiting for peer to connect...`
   }
 
   componentDidMount() {
+    console.log(this.props)
     setTimeout(() => {
       this.setState({ form: 1 })
     }, 300)
+    this.initChannel()
   }
 
-  setChannel = (address, transactions, deposits) => {
+  initChannel = async () => {
+    var Events = await RTC.initChannel(this.props.id)
+    RTC.connectToPeers(this.props.id)
+
+    Events.on("message", message => {
+      console.log(`${message.connection.peer}:`, message.data)
+      if (message.data.cmd === "startSetup") {
+        Channel.signSetup(message)
+      } else if (message.data.cmd === "signSetup") {
+        Channel.closeSetup(message)
+      } else if (message.data.cmd === "shareFlash") {
+        Channel.initFlash(message.data.flash)
+      }
+    })
+    Events.on("peerLeft", message => {
+      console.log(`Peer Left`)
+      this.setState({ peer: false })
+    })
+    Events.on("peerJoined", message => {
+      console.log(`Peer Joined`)
+      console.log(message.connection.peer)
+      this.setState({ peer: true, channel: "deposit" })
+
+      if (message.connection.peer.slice(-1) !== 0) {
+        Channel.startSetup()
+      }
+    })
+  }
+
+  setChannel = (address, deposits) => {
     this.setState({ setup: true })
   }
 
   render() {
-    var { form, peer, setup } = this.state
+    var { form, peer, setup, channel } = this.state
     console.log(this.props)
-    return (
-      <Layout right={setup && SideBar()}>
-        <LeftContent noBg={!setup} active={form === 1}>
-          {!setup
-            ? <Setup setChannel={this.setChannel} />
-            : <ChannelInterface {...this.state} />}
-        </LeftContent>
-      </Layout>
-    )
+    if (!setup) {
+      return (
+        <Layout right={setup && SideBar()}>
+          <LeftContent noBg={!setup} active={form === 1}>
+            <Setup setChannel={this.setChannel} />
+          </LeftContent>
+        </Layout>
+      )
+    } else {
+      return (
+        <Layout right={setup && SideBar()}>
+          <LeftContent noBg={!setup} active={form === 1}>
+            {channel === "share" &&
+              <div>
+                <Header
+                  {...this.state}
+                  {...this.props}
+                  title={`Waiting for peer to connect...`}
+                />
+
+                <h2>Share this room link with your partner:</h2>
+                <p>
+                  {/* {window && window.localStorage ? window.location.href : null} */}
+                </p>
+              </div>}
+            {channel === "deposit" &&
+              <div>
+                <Header {...this.state} title={`Waiting for deposits`} />
+
+                <h2>Deposit 50 IOTA into this multisig address:</h2>
+                <p>
+                  {`SFDYSHYROSXOFMNFSJTNJYZGJDLSVOPDOEKVRB9KOGHXRFPPLXPVANRKIRGLBCVHGMVMMNNBWFFXASURD`}
+                </p>
+                <Row>
+                  <Button
+                    full
+                    accent
+                    onClick={() => this.setState({ channel: "main" })}
+                  >
+                    Deposited
+                  </Button>
+                </Row>
+              </div>}
+
+            {channel === "main" &&
+              <div>
+                <Header {...this.state} title={`Channel Setup!`} />
+
+                <Row>
+                  <h5>Your Balance: 80 IOTA</h5>
+                  <h5>Partner Balance: 20 IOTA</h5>
+                  <h5>Remaining transactable: 0 IOTA</h5>
+                </Row>
+                <h4>Send IOTA:</h4>
+                <Row>
+                  <Field type={"number"} placeholder={"Enter amount in IOTA"} />
+                  <div />
+                </Row>
+                <Row>
+                  <Button full>Send Transfer</Button>
+                  <Button full left>
+                    Request Transfer
+                  </Button>
+                </Row>
+
+                <Row>
+                  <Button full accent>
+                    Close Channel
+                  </Button>
+                </Row>
+              </div>}
+          </LeftContent>
+        </Layout>
+      )
+    }
   }
 }
 
@@ -88,12 +191,14 @@ const Field = styled.input`
   }
 `
 const Button = styled.button`
+  flex: ${props => (props.full ? "1" : null)};
   padding: 15px 20px;
-  background: #d30c7b;
+  background: ${props => (props.accent ? "#d30c7b" : "#222")};
   border: none;
   color: white;
   font-weight: 600;
-  margin: 0 2rem;
+  margin: ${props => (props.full ? "1rem 0rem" : "0 1rem")};
+  margin: ${props => (props.left ? "1rem 0rem 1rem 3rem" : null)};
   &:focus {
     outline: none;
   }
