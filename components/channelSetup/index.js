@@ -18,10 +18,10 @@ export default class extends React.Component {
   startChannel = (address, transactions, deposit) => {
     this.setState({ form: 0 })
 
-    if (transactions <= 3)
-      return alert(
-        "Need more than 3 transaction to make a Flash channel worth while."
-      )
+    // if (transactions <= 3)
+    //   return alert(
+    //     "Need more than 3 transaction to make a Flash channel worth while."
+    //   )
 
     if (deposit < 0)
       return alert(
@@ -32,7 +32,7 @@ export default class extends React.Component {
       return alert("Address not long enough")
 
     setTimeout(() => {
-      this.props.setChannel(address, transactions, deposit)
+      this.props.setChannel(address, deposit)
     }, 500)
   }
   render() {
@@ -40,7 +40,7 @@ export default class extends React.Component {
     return (
       <AnimatedLeftBox active={form === 1}>
         <h2>Setup Channel</h2>
-        <div>
+        {/* <div>
           <Field
             type="text"
             value={transactions}
@@ -53,7 +53,7 @@ export default class extends React.Component {
         <p>
           {`Flash requires a maximum number of transactions to be defined 
             before hand. Try 100 to start.`}
-        </p>
+        </p> */}
         <div>
           <Field
             type="text"
