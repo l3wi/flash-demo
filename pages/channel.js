@@ -44,11 +44,13 @@ export default class extends React.Component {
     address: "",
     peer: false,
     channel: "share",
+    flash: {},
+    userID: 0,
+    transfer: 0,
     title: `Waiting for peer to connect...`
   }
 
   componentDidMount() {
-    console.log(this.props)
     setTimeout(() => {
       this.setState({ form: 1 })
     }, 300)
@@ -67,6 +69,7 @@ export default class extends React.Component {
         Channel.closeSetup(message)
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
+        this.setState({ flash: message.data.flash })
       }
     })
     Events.on("peerLeft", message => {
@@ -76,7 +79,11 @@ export default class extends React.Component {
     Events.on("peerJoined", message => {
       console.log(`Peer Joined`)
       console.log(message.connection.peer)
-      this.setState({ peer: true, channel: "deposit" })
+      this.setState({
+        peer: true,
+        channel: "deposit",
+        userID: message.connection.peer.slice(-1)
+      })
 
       if (message.connection.peer.slice(-1) !== 0) {
         Channel.startSetup()
@@ -84,13 +91,26 @@ export default class extends React.Component {
     })
   }
 
+  sendTransaction = (value, address) => {
+    console.log("Creating transactions")
+    Channel.composeTransfer(value, address)
+  }
+
+  confirmDeposit = async amount => {
+    var state = await store.get("state")
+    state.flash.deposit[this.state.userID === "0" ? 1 : 0] = amount
+    state.flash.balance += amount
+    Channel.shareFlash(state.flash)
+    this.setState({ channel: "main", flash: state.flash })
+  }
+
   setChannel = (address, deposits) => {
     this.setState({ setup: true })
   }
 
   render() {
-    var { form, peer, setup, channel } = this.state
-    console.log(this.props)
+    var { form, peer, setup, channel, flash, userID, transfer } = this.state
+    console.log(this.state)
     if (!setup) {
       return (
         <Layout right={setup && SideBar()}>
@@ -125,11 +145,7 @@ export default class extends React.Component {
                   {`SFDYSHYROSXOFMNFSJTNJYZGJDLSVOPDOEKVRB9KOGHXRFPPLXPVANRKIRGLBCVHGMVMMNNBWFFXASURD`}
                 </p>
                 <Row>
-                  <Button
-                    full
-                    accent
-                    onClick={() => this.setState({ channel: "main" })}
-                  >
+                  <Button full accent onClick={() => this.confirmDeposit(50)}>
                     Deposited
                   </Button>
                 </Row>
@@ -140,24 +156,39 @@ export default class extends React.Component {
                 <Header {...this.state} title={`Channel Setup!`} />
 
                 <Row>
-                  <h5>Your Balance: 80 IOTA</h5>
-                  <h5>Partner Balance: 20 IOTA</h5>
-                  <h5>Remaining transactable: 0 IOTA</h5>
+                  <h5>
+                    Your Balance: {flash.deposit[userID === 0 ? 0 : 1]} IOTA
+                  </h5>
+                  <h5>
+                    Partner Balance: {flash.deposit[userID === 0 ? 1 : 0]} IOTA
+                  </h5>
+                  <h5>
+                    Remaining transactable:{" "}
+                    {flash.deposit.reduce((a, b) => a + b, 0)} IOTA
+                  </h5>
                 </Row>
                 <h4>Send IOTA:</h4>
                 <Row>
-                  <Field type={"number"} placeholder={"Enter amount in IOTA"} />
+                  <Field
+                    value={transfer}
+                    placeholder={"Enter amount in IOTA"}
+                    onChange={data =>
+                      this.setState({ transfer: data.target.value })}
+                  />
                   <div />
                 </Row>
                 <Row>
-                  <Button full>Send Transfer</Button>
-                  <Button full left>
-                    Request Transfer
+                  <Button
+                    full
+                    onClick={() =>
+                      this.sendTransaction(
+                        transfer,
+                        `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+                      )}
+                  >
+                    Send Transfer
                   </Button>
-                </Row>
-
-                <Row>
-                  <Button full accent>
+                  <Button full accent left>
                     Close Channel
                   </Button>
                 </Row>
@@ -184,7 +215,7 @@ const Field = styled.input`
   padding: 5px 0px;
   width: 100%;
   border: none;
-  color: white;
+  color: #222;
   border-bottom: 2px solid #222;
   &:focus {
     outline: none;
