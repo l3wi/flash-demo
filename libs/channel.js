@@ -111,6 +111,8 @@ export default class Channel {
 
     var digests = state.partialDigests
     const serverDigests = message.data.digests
+    console.log(digests)
+    console.log(serverDigests)
 
     let multisigs = digests.map((digest, index) => {
       let addy = multisig.composeAddress([digest, serverDigests[index]])
@@ -131,7 +133,7 @@ export default class Channel {
     console.log(iota.utils.addChecksum(multisigs[0].address))
 
     // Update root and remainder address
-    state.flash.remainderAddress = remainderAddress.address
+    state.flash.remainderAddress = remainderAddress
     state.flash.root = multisigs.shift()
 
     // Update root & remainder in state
@@ -143,14 +145,9 @@ export default class Channel {
     })
   }
 
-  // Send flash object with signed bundles
+  // Send flash object with partner
   static async shareFlash(flash) {
-    // if (!flash) {
-    //   var state = await store.get("state")
-    //   RTC.broadcastMessage({ cmd: "shareFlash", flash: state.flash })
-    // } else {
     RTC.broadcastMessage({ cmd: "shareFlash", flash })
-    // }
   }
 
   static async getNewBranch(userID, address, digests) {
@@ -217,16 +214,11 @@ export default class Channel {
     if (!digest) {
       digest = getNewDigest()
     }
-
     // Send digest to server and obtain new multisig address
-    // const response = await API("address", {
-    //   method: "POST",
-    //   body: JSON.stringify({
-    //     id: state.userID,
-    //     digest: digest
-    //   })
-    // })
+    RTC.broadcastMessage({ cmd: "newAddress", digest })
+  }
 
+  static async composeNewAddress(digest) {
     var addresses = multisig.composeAddress(digests)
     console.log(response)
 
@@ -238,7 +230,7 @@ export default class Channel {
   }
 
   // Initiate transaction from anywhere in the app.
-  static async composeTransfer(value, settlementAddress, id) {
+  static async composeTransfer(value, settlementAddress) {
     /// Check if Flash state exists
     await Channel.initFlash()
     // Get latest state from localstorage
@@ -288,12 +280,14 @@ export default class Channel {
         case "2":
           alert("Not enough funds")
           break
+        case "4":
+          alert("Incorrect bundle order")
+          break
         default:
           alert("An error occured. Please reset channel")
       }
       return false
     }
-    console.log("Unsigned", bundles)
 
     // Sign transfer
     const signedBundles = transfer.sign(
@@ -301,28 +295,21 @@ export default class Channel {
       state.userSeed,
       bundles
     )
-    console.log("Bundles", signedBundles)
+    console.log("Signed: ", signedBundles)
 
     // Update bundles in local state
     state.bundles = signedBundles
+    RTC.broadcastMessage({ cmd: "composeTransfer", signedBundles })
+  }
+  static async closeTransfer(bundles) {
+    const state = await store.get("state")
+    try {
+      const signedBundles = transfer.sign(
+        state.flash.root,
+        state.userSeed,
+        bundles
+      )
 
-    // Return signed bundles
-    const opts = {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      method: "POST",
-      body: JSON.stringify({
-        id: state.userID,
-        bundles: signedBundles,
-        item: id
-      })
-    }
-    console.log(opts)
-
-    // const res = await API("purchase", opts)
-    if (res.bundles) {
       transfer.applyTransfers(
         state.flash.root,
         state.flash.deposit,
@@ -330,23 +317,26 @@ export default class Channel {
         state.flash.outputs,
         state.flash.remainderAddress,
         state.flash.transfers,
-        res.bundles
+        signedBundles
       )
       // Save updated state
       await store.set("state", state)
-
-      // Check is purchases exists
-      if (!purchases) var purchases = []
-      // Push the purchase recipt to the browser
-      purchases.push({ ...res, value })
-      // save purchases for reload
-      store.set("purchases", purchases)
-    } else {
-      console.error(res)
+      console.log("Signed Bundles: ", signedBundles)
+      return signedBundles
+    } catch (e) {
+      console.log("Error: ", e)
+      switch (e.message) {
+        case "2":
+          alert("Not enough funds")
+          break
+        case "4":
+          alert("Incorrect bundle order")
+          break
+        default:
+          alert("An error occured. Please reset channel")
+      }
+      return e
     }
-
-    // Return recipt to be used by the calling function
-    return res
   }
 
   // Update bundles in local state by applying the diff
@@ -466,6 +456,9 @@ export default class Channel {
       const state = await store.get("state")
       Channel.flash = new Flash({ ...state.flash })
     } else {
+      const state = await store.get("state")
+      state.flash = flash
+      store.set("state", state)
       Channel.flash = new Flash({ ...flash })
     }
   }
