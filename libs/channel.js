@@ -1,4 +1,4 @@
-import RTC from "./rtc"
+import RTC, { events } from "./rtc"
 import shortid from "shortid"
 import Flash from "./flash/flash.js"
 import multisig from "./flash/multisig"
@@ -107,8 +107,6 @@ export default class Channel {
 
     var digests = state.partialDigests
     const serverDigests = message.data.digests
-    console.log(digests)
-    console.log(serverDigests)
 
     let multisigs = digests.map((digest, index) => {
       let addy = multisig.composeAddress([digest, serverDigests[index]])
@@ -135,10 +133,6 @@ export default class Channel {
     // Update root & remainder in state
     await store.set("state", state)
     Channel.shareFlash(state.flash)
-    // Create a flash instance
-    Channel.flash = new Flash({
-      ...state.flash
-    })
   }
 
   // Send flash object with partner
@@ -148,25 +142,54 @@ export default class Channel {
 
   static async getNewBranch(userID, address, digests) {
     console.log("Branch Event", "Digests: ", digests)
-
-    const opts = {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      method: "POST",
-      body: JSON.stringify({
-        id: userID,
-        address: address.address,
-        digests: digests
+    // Request New Branch
+    RTC.broadcastMessage({
+      cmd: "getBranch",
+      address: address.address,
+      digests
+    })
+    // Subscribe once to a get branch emitter.
+    return new Promise((res, rej) => {
+      events.once("message", async message => {
+        if (message.data.cmd === "returnbranch") console.log()
+        res(await Channel.applyBranch(digests, message.data.digests, address))
       })
-    }
-    console.log("Sending: ", opts.body)
-    // Send digests to server and obtain new multisig addresses
-    // const response = await API("branch", opts)
+    })
+  }
 
-    console.log("Server Digests: ", response)
-    const serverDigests = response.digests
+  static async returnbranch(digests, address) {
+    var state = await store.get("state")
+
+    let myDigests = digests.map(() =>
+      multisig.getDigest(state.userSeed, state.index++, state.security)
+    )
+
+    // // compose multisigs, write to remainderAddress and root
+    // let multisigs = digests.map((digest, i) => {
+    //   let addy = multisig.composeAddress([digest, myDigests[i]])
+    //   addy.index = myDigests[i].index
+    //   addy.security = myDigests[i].security
+    //   return addy
+    // })
+    // for (let i = 1; i < multisigs.length; i++) {
+    //   multisigs[i - 1].children.push(multisigs[i])
+    // }
+    // let node = state.flash.root
+    // while (node.address != address) {
+    //   node = node.children[node.children.length - 1]
+    // }
+    // node.children.push(multisigs[0])
+    console.log(myDigests)
+    RTC.broadcastMessage({
+      cmd: "returnbranch",
+      digests: myDigests
+    })
+
+    return myDigests
+  }
+
+  static async applyBranch(digests, serverDigests, address) {
+    var state = await store.get("state")
     let multisigs = digests.map((digest, index) => {
       let addy = multisig.composeAddress([digest, serverDigests[index]])
       addy.index = digest.index
@@ -204,31 +227,29 @@ export default class Channel {
   }
 
   // Obtain address by sending digest, update multisigs in state
-  static async getNewAddress(digest) {
-    const state = await store.get("state")
+  // static async getNewAddress(digest) {
+  //   const state = await store.get("state")
 
-    if (!digest) {
-      digest = getNewDigest()
-    }
-    // Send digest to server and obtain new multisig address
-    RTC.broadcastMessage({ cmd: "newAddress", digest })
-  }
+  //   if (!digest) {
+  //     digest = getNewDigest()
+  //   }
+  //   // Send digest to server and obtain new multisig address
+  //   RTC.broadcastMessage({ cmd: "newAddress", digest })
+  // }
 
-  static async composeNewAddress(digest) {
-    var addresses = multisig.composeAddress(digests)
-    console.log(response)
+  // static async composeNewAddress(digest) {
+  //   var addresses = multisig.composeAddress(digests)
+  //   console.log(response)
 
-    // Check to see if response is valid
-    if (typeof addresses.address !== "string")
-      return alert(":( something went wrong")
+  //   // Check to see if response is valid
+  //   if (typeof addresses.address !== "string")
+  //     return alert(":( something went wrong")
 
-    return addresses
-  }
+  //   return addresses
+  // }
 
   // Initiate transaction from anywhere in the app.
   static async composeTransfer(value, settlementAddress) {
-    /// Check if Flash state exists
-    await Channel.initFlash()
     // Get latest state from localstorage
     const state = await store.get("state")
 
@@ -250,7 +271,7 @@ export default class Channel {
     try {
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
-        [Presets.ADDRESS, Presets.ADDRESS],
+        [Presets.ADDRESS, null],
         flash.stakes,
         flash.deposit,
         0,
@@ -301,17 +322,39 @@ export default class Channel {
     state.bundles = signedBundles
     await store.set("state", state)
     RTC.broadcastMessage({ cmd: "composeTransfer", signedBundles })
+    // Wait for RTC response
+    return new Promise((res, rej) => {
+      events.once("message", async message => {
+        if (message.data.cmd === "returnTransfer") {
+          transfer.applyTransfers(
+            flash.root,
+            flash.deposit,
+            flash.stakes,
+            flash.outputs,
+            flash.remainderAddress,
+            flash.transfers,
+            message.data.signedBundles
+          )
+          state.bundles = signedBundles
+          console.log("Recieved Completed Bundles: ", signedBundles)
+          state.flash = flash
+          state.bundles = message.data.signedBundles
+          await store.set("state", state)
+          res(state)
+        }
+      })
+    })
   }
 
-  static async closeTransfer(bundles) {
-    const state = await store.get("state")
+  static closeTransfer = async bundles => {
     try {
+      const state = await store.get("state")
+      console.log(state)
       const signedBundles = transfer.sign(
         state.flash.root,
         state.userSeed,
         bundles
       )
-
       transfer.applyTransfers(
         state.flash.root,
         state.flash.deposit,
@@ -326,6 +369,7 @@ export default class Channel {
       // Save updated state
       await store.set("state", state)
       console.log("Signed Bundles: ", signedBundles)
+      RTC.broadcastMessage({ cmd: "returnTransfer", signedBundles })
       return state
     } catch (e) {
       console.log("Error: ", e)
@@ -354,13 +398,12 @@ export default class Channel {
     store.set("state", state)
   }
 
-  static async close() {
-    /// Check if Flash state exists
-    await Channel.initFlash()
-
+  static close = async () => {
     // Get latest state from localstorage
     const state = await store.get("state")
-
+    if (!state.flash.root) {
+      return console.log()
+    }
     // TODO: check/generate tree
     let toUse = multisig.updateLeafToRoot(state.flash.root)
     if (toUse.generate != 0) {
@@ -413,23 +456,50 @@ export default class Channel {
     // Update bundles in local state
     state.bundles = signedBundles
 
-    // Return signed bundles
-    const opts = {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      method: "POST",
-      body: JSON.stringify({
-        id: state.userID,
-        bundles: signedBundles,
-        item: null
-      })
-    }
-    console.log(opts)
     // const res = await API("close", opts)
+    RTC.broadcastMessage({
+      cmd: "closeChannel",
+      signedBundles
+    })
 
-    if (res.bundles) {
+    // Wait for RTC response
+    return new Promise((res, rej) => {
+      events.once("message", async message => {
+        if (message.data.cmd === "returnClose") {
+          // Apply the transfer to the state
+          transfer.applyTransfers(
+            flash.root,
+            flash.deposit,
+            flash.stakes,
+            flash.outputs,
+            flash.remainderAddress,
+            flash.transfers,
+            message.data.signedBundles
+          )
+
+          state.bundles = message.data.signedBundles
+          //Save the State
+          await store.set("state", state)
+          // Attach the bundles with PoW
+          var result = await Attach.POWClosedBundle(state.bundles)
+          console.log(result)
+          res(result)
+        }
+      })
+    })
+  }
+
+  static closeChannel = async bundles => {
+    const state = await store.get("state")
+    console.log(state)
+
+    try {
+      const signedBundles = transfer.sign(
+        state.flash.root,
+        state.userSeed,
+        bundles
+      )
+
       transfer.applyTransfers(
         state.flash.root,
         state.flash.deposit,
@@ -437,19 +507,28 @@ export default class Channel {
         state.flash.outputs,
         state.flash.remainderAddress,
         state.flash.transfers,
-        res.bundles
+        signedBundles
       )
+      state.bundles = signedBundles
+      console.log(state)
       // Save updated state
       await store.set("state", state)
-    } else {
-      return console.error(e)
-    }
-
-    console.log(res)
-    if (!res.error) {
-      var result = await Attach.POWClosedBundle(res.bundles)
-      console.log(result)
-      return result
+      console.log("Closing Bundles: ", signedBundles)
+      RTC.broadcastMessage({ cmd: "returnClose", signedBundles })
+      return state
+    } catch (e) {
+      console.log("Error: ", e)
+      switch (e.message) {
+        case "2":
+          alert("Not enough funds")
+          break
+        case "4":
+          alert("Incorrect bundle order")
+          break
+        default:
+          alert("An error occured. Please reset channel")
+      }
+      return e
     }
   }
 

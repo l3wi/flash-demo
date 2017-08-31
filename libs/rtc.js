@@ -5,7 +5,7 @@ var Peer
 if (isClient) {
   Peer = require("peerjs")
 }
-const events = new EventEmitter()
+export const events = new EventEmitter()
 let peer
 let connections = []
 

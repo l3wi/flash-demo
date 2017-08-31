@@ -194,7 +194,6 @@ function applyTransfers(
   history,
   transfers
 ) {
-  debugger
   // Validate the transfers array
   // for (const transfer of transfers) {
   //   if (!IOTACrypto.utils.inputValidator.isTransfersArray(transfer)) {
