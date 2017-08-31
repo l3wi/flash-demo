@@ -11,6 +11,7 @@ export default class MyDocument extends Document {
         <Head>
           <title>Flash - Instant payment channels</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <script src={"/static/curl.min.js"} />
 
           {styleTags}
         </Head>
