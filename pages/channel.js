@@ -69,7 +69,9 @@ export default class extends React.Component {
       if (message.data.cmd === "startSetup") {
         Channel.signSetup(message)
       } else if (message.data.cmd === "signSetup") {
-        Channel.closeSetup(message)
+        var flash = await Channel.closeSetup(message)
+        console.log
+        this.setState({ flash })
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
         this.setState({ flash: message.data.flash })
@@ -161,7 +163,9 @@ export default class extends React.Component {
 
                 <h2>Deposit 50 IOTA into this multisig address:</h2>
                 <p>
-                  {flash.remainderAddress && flash.remainderAddress.address}
+                  {console.log(flash)}
+                  {flash.remainderAddress &&
+                    `${flash.remainderAddress.address}`}
                 </p>
                 <Row>
                   <Button full accent onClick={() => this.confirmDeposit(50)}>
