@@ -61,8 +61,12 @@ export default class extends React.Component {
     var Events = await RTC.initChannel(this.props.id)
     RTC.connectToPeers(this.props.id)
 
-    Events.on("message", message => {
-      console.log(`${message.connection.peer}:`, message.data)
+    Events.on("message", async message => {
+      console.log(
+        `${message.connection.peer}:`,
+        message.data,
+        JSON.stringify(message.data).length
+      )
       if (message.data.cmd === "startSetup") {
         Channel.signSetup(message)
       } else if (message.data.cmd === "signSetup") {
@@ -70,6 +74,9 @@ export default class extends React.Component {
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
         this.setState({ flash: message.data.flash })
+      } else if (message.data.cmd === "composeTransfer") {
+        var state = await Channel.closeTransfer(message.data.signedBundles)
+        this.setState({ ...state })
       }
     })
     Events.on("peerLeft", message => {
