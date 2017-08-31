@@ -1,7 +1,6 @@
 import React from "react"
 import styled from "styled-components"
 import { Layout, LeftContent, RightContent } from "../components/layout"
-import ChannelInterface from "../components/channel"
 import Setup from "../components/channelSetup"
 
 import Header from "../components/channel/header"
