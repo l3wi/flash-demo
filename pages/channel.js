@@ -93,15 +93,21 @@ export default class extends React.Component {
 
   sendTransaction = (value, address) => {
     console.log("Creating transactions")
-    Channel.composeTransfer(value, address)
+    Channel.composeTransfer(parseInt(value), address)
   }
 
   confirmDeposit = async amount => {
     var state = await store.get("state")
-    state.flash.deposit[this.state.userID === "0" ? 1 : 0] = amount
+    state.flash.deposit[this.state.userID] = amount
     state.flash.balance += amount
     Channel.shareFlash(state.flash)
+    await store.set("state", state)
     this.setState({ channel: "main", flash: state.flash })
+  }
+
+  confirmTransaction = (value, address) => {
+    console.log("Creating transactions")
+    Channel.composeTransfer(parseInt(value), address)
   }
 
   setChannel = (address, deposits) => {
@@ -110,6 +116,7 @@ export default class extends React.Component {
 
   render() {
     var { form, peer, setup, channel, flash, userID, transfer } = this.state
+    if (!flash) var flash = { deposit: [] }
     console.log(this.state)
     if (!setup) {
       return (
