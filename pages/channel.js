@@ -45,7 +45,7 @@ export default class extends React.Component {
     channel: "share",
     flash: {},
     userID: 0,
-    transfer: 0,
+    transfer: "",
     title: `Waiting for peer to connect...`
   }
 
@@ -76,6 +76,10 @@ export default class extends React.Component {
       } else if (message.data.cmd === "composeTransfer") {
         var state = await Channel.closeTransfer(message.data.signedBundles)
         this.setState({ ...state })
+      } else if (message.data.cmd === "getBranch") {
+        Channel.returnbranch(message.data.digests, message.data.address)
+      } else if (message.data.cmd === "closeChannel") {
+        Channel.closeChannel(message.data.signedBundles)
       }
     })
     Events.on("peerLeft", message => {
@@ -88,18 +92,25 @@ export default class extends React.Component {
       this.setState({
         peer: true,
         channel: "deposit",
-        userID: message.connection.peer.slice(-1)
+        userID: message.connection.peer.slice(-1) === "0" ? 1 : 0
       })
 
-      if (message.connection.peer.slice(-1) !== 0) {
+      if (message.connection.peer.slice(-1) !== "0") {
         Channel.startSetup()
       }
     })
   }
 
-  sendTransaction = (value, address) => {
+  sendTransaction = async (value, address) => {
     console.log("Creating transactions")
-    Channel.composeTransfer(parseInt(value), address)
+    var state = await Channel.composeTransfer(parseInt(value), address)
+    console.log(state)
+    this.setState({ flash: state.flash })
+  }
+  closeChannel = async () => {
+    console.log("Closing Channel")
+    var state = await Channel.close()
+    console.log(state)
   }
 
   confirmDeposit = async amount => {
@@ -109,11 +120,6 @@ export default class extends React.Component {
     Channel.shareFlash(state.flash)
     await store.set("state", state)
     this.setState({ channel: "main", flash: state.flash })
-  }
-
-  confirmTransaction = (value, address) => {
-    console.log("Creating transactions")
-    Channel.composeTransfer(parseInt(value), address)
   }
 
   setChannel = (address, deposits) => {
@@ -155,7 +161,7 @@ export default class extends React.Component {
 
                 <h2>Deposit 50 IOTA into this multisig address:</h2>
                 <p>
-                  {`SFDYSHYROSXOFMNFSJTNJYZGJDLSVOPDOEKVRB9KOGHXRFPPLXPVANRKIRGLBCVHGMVMMNNBWFFXASURD`}
+                  {flash.remainderAddress && flash.remainderAddress.address}
                 </p>
                 <Row>
                   <Button full accent onClick={() => this.confirmDeposit(50)}>
@@ -201,7 +207,7 @@ export default class extends React.Component {
                   >
                     Send Transfer
                   </Button>
-                  <Button full accent left>
+                  <Button full accent left onClick={() => this.closeChannel()}>
                     Close Channel
                   </Button>
                 </Row>
