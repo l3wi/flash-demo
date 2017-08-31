@@ -26,8 +26,7 @@ export default class Channel {
     signersCount = Channel.SIGNERS_COUNT,
     treeDepth = Channel.TREE_DEPTH,
     balance = 0,
-    deposit = Array(Channel.SIGNERS_COUNT).fill(0),
-    stakes = Array(Channel.SIGNERS_COUNT).fill(0.5)
+    deposit = Array(Channel.SIGNERS_COUNT).fill(0)
   ) {
     // Escape the function when server rendering
     if (!isWindow()) return false
@@ -48,7 +47,6 @@ export default class Channel {
         signersCount: signersCount,
         balance: balance,
         deposit: deposit,
-        stakes: stakes,
         outputs: {},
         transfers: []
       }
@@ -85,7 +83,6 @@ export default class Channel {
         signersCount: Channel.SIGNERS_COUNT,
         balance: 0,
         deposit: Array(Channel.SIGNERS_COUNT).fill(0),
-        stakes: Array(Channel.SIGNERS_COUNT).fill(0.5),
         outputs: {},
         transfers: []
       }
@@ -133,6 +130,7 @@ export default class Channel {
     // Update root & remainder in state
     await store.set("state", state)
     Channel.shareFlash(state.flash)
+    return state.flash
   }
 
   // Send flash object with partner
@@ -163,22 +161,6 @@ export default class Channel {
     let myDigests = digests.map(() =>
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
-
-    // // compose multisigs, write to remainderAddress and root
-    // let multisigs = digests.map((digest, i) => {
-    //   let addy = multisig.composeAddress([digest, myDigests[i]])
-    //   addy.index = myDigests[i].index
-    //   addy.security = myDigests[i].security
-    //   return addy
-    // })
-    // for (let i = 1; i < multisigs.length; i++) {
-    //   multisigs[i - 1].children.push(multisigs[i])
-    // }
-    // let node = state.flash.root
-    // while (node.address != address) {
-    //   node = node.children[node.children.length - 1]
-    // }
-    // node.children.push(multisigs[0])
     console.log(myDigests)
     RTC.broadcastMessage({
       cmd: "returnbranch",
@@ -226,28 +208,6 @@ export default class Channel {
     return digest
   }
 
-  // Obtain address by sending digest, update multisigs in state
-  // static async getNewAddress(digest) {
-  //   const state = await store.get("state")
-
-  //   if (!digest) {
-  //     digest = getNewDigest()
-  //   }
-  //   // Send digest to server and obtain new multisig address
-  //   RTC.broadcastMessage({ cmd: "newAddress", digest })
-  // }
-
-  // static async composeNewAddress(digest) {
-  //   var addresses = multisig.composeAddress(digests)
-  //   console.log(response)
-
-  //   // Check to see if response is valid
-  //   if (typeof addresses.address !== "string")
-  //     return alert(":( something went wrong")
-
-  //   return addresses
-  // }
-
   // Initiate transaction from anywhere in the app.
   static async composeTransfer(value, settlementAddress) {
     // Get latest state from localstorage
@@ -271,8 +231,7 @@ export default class Channel {
     try {
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
-        [Presets.ADDRESS, null],
-        flash.stakes,
+        [Presets.ADDRESS, Presets.ADDRESS],
         flash.deposit,
         0,
         [
@@ -282,11 +241,11 @@ export default class Channel {
           }
         ]
       )
+      debugger
       bundles = transfer.compose(
         flash.balance,
         flash.deposit,
         flash.outputs,
-        flash.stakes,
         toUse.multisig,
         flash.remainderAddress,
         flash.transfers,
@@ -329,7 +288,6 @@ export default class Channel {
           transfer.applyTransfers(
             flash.root,
             flash.deposit,
-            flash.stakes,
             flash.outputs,
             flash.remainderAddress,
             flash.transfers,
@@ -358,7 +316,6 @@ export default class Channel {
       transfer.applyTransfers(
         state.flash.root,
         state.flash.deposit,
-        state.flash.stakes,
         state.flash.outputs,
         state.flash.remainderAddress,
         state.flash.transfers,
@@ -425,7 +382,6 @@ export default class Channel {
         flash.balance,
         flash.deposit,
         flash.outputs,
-        flash.stakes,
         flash.root,
         flash.remainderAddress,
         flash.transfers,
@@ -470,7 +426,6 @@ export default class Channel {
           transfer.applyTransfers(
             flash.root,
             flash.deposit,
-            flash.stakes,
             flash.outputs,
             flash.remainderAddress,
             flash.transfers,
@@ -503,7 +458,6 @@ export default class Channel {
       transfer.applyTransfers(
         state.flash.root,
         state.flash.deposit,
-        state.flash.stakes,
         state.flash.outputs,
         state.flash.remainderAddress,
         state.flash.transfers,
