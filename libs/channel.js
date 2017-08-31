@@ -91,17 +91,13 @@ export default class Channel {
       }
     }
     const digests = message.data.digests
-    var flash = new Flash(state.flash)
 
-    let myDigests = digests.map(() =>
-      multisig.getDigest(
-        state.userSeed,
-        flash.state.index++,
-        flash.state.security
-      )
+    state.partialDigests = digests.map(() =>
+      multisig.getDigest(state.userSeed, state.index++, state.security)
     )
 
-    RTC.broadcastMessage({ cmd: "signSetup", digests: myDigests })
+    RTC.broadcastMessage({ cmd: "signSetup", digests: state.partialDigests })
+    await store.set("state", state)
   }
 
   // Will only work with one partner. Easy to add N
@@ -189,7 +185,7 @@ export default class Channel {
   // Get a new digest and update index in state
   static async getNewDigest() {
     // Fetch state from localStorage
-    const state = store.get("state")
+    const state = await store.get("state")
 
     // Create new digest
     const digest = multisig.getDigest(
@@ -235,10 +231,11 @@ export default class Channel {
     await Channel.initFlash()
     // Get latest state from localstorage
     const state = await store.get("state")
-    var purchases = await store.get("purchases")
 
     // TODO: check/generate tree
-    if (!state.flash.root) return
+    if (!state.flash.root) {
+      return
+    }
     let toUse = multisig.updateLeafToRoot(state.flash.root)
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
@@ -253,7 +250,7 @@ export default class Channel {
     try {
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
-        [Presets.ADDRESS, null],
+        [Presets.ADDRESS, Presets.ADDRESS],
         flash.stakes,
         flash.deposit,
         0,
@@ -295,12 +292,17 @@ export default class Channel {
       state.userSeed,
       bundles
     )
+
+    // const signedBundles.map((b,i) => b.filter(tx => tx.value < 0).map(tx => tx.signatureFragment))
+
     console.log("Signed: ", signedBundles)
 
     // Update bundles in local state
     state.bundles = signedBundles
+    await store.set("state", state)
     RTC.broadcastMessage({ cmd: "composeTransfer", signedBundles })
   }
+
   static async closeTransfer(bundles) {
     const state = await store.get("state")
     try {
@@ -319,10 +321,12 @@ export default class Channel {
         state.flash.transfers,
         signedBundles
       )
+      state.bundles = signedBundles
+      console.log(state)
       // Save updated state
       await store.set("state", state)
       console.log("Signed Bundles: ", signedBundles)
-      return signedBundles
+      return state
     } catch (e) {
       console.log("Error: ", e)
       switch (e.message) {
