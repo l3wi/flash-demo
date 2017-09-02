@@ -219,7 +219,6 @@ function applyTransfers(root, deposit, outputs, remainder, history, transfers) {
 }
 
 function getMultisigs(root, transfers) {
-  if (transfers.length > 1) debugger
   let node = root
   let firstTransfer = transfers[0].find(tx => tx.value < 0)
   while (node.address != firstTransfer.address && node.children.length != 0) {
