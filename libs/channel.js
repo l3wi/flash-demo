@@ -1,8 +1,8 @@
 import RTC, { events } from "./rtc"
 import shortid from "shortid"
-import Flash from "./flash/flash.js"
-import multisig from "./flash/multisig"
-import transfer from "./flash/transfer"
+import Flash from "../git_modules/flash/lib/flash.js"
+import multisig from "../git_modules/flash/lib/multisig"
+import transfer from "../git_modules/flash/lib/transfer"
 import { Attach, iota } from "./iota"
 import Presets from "./presets"
 
