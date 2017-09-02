@@ -149,21 +149,50 @@ export default class Channel {
     // Subscribe once to a get branch emitter.
     return new Promise((res, rej) => {
       events.once("message", async message => {
-        if (message.data.cmd === "returnbranch") console.log()
-        res(await Channel.applyBranch(digests, message.data.digests, address))
+        if (message.data.cmd === "returnBranch") {
+          const newAddress = await Channel.applyBranch(
+            digests,
+            message.data.digests,
+            address
+          )
+          console.log(message.data.digests)
+          res(newAddress)
+        }
       })
     })
   }
 
-  static async returnbranch(digests, address) {
+  static async returnBranch(digests, address) {
     var state = await store.get("state")
 
     let myDigests = digests.map(() =>
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
+    {
+      // compose multisigs, write to remainderAddress and root
+      let multisigs = digests.map((digest, i) => {
+        let addy = multisig.composeAddress([digest, myDigests[i]])
+        addy.index = myDigests[i].index
+        addy.security = myDigests[i].security
+        return addy
+      })
+      for (let i = 1; i < multisigs.length; i++) {
+        multisigs[i - 1].children.push(multisigs[i])
+      }
+      let node = multisig.getMultisig(state.flash.root, address)
+      if (!node)
+        RTC.broadcastMessage({
+          cmd: "returnBranch",
+          error: "Multisig not found"
+        })
+      node.children.push(multisigs[0])
+    }
+
+    await store.set("state", state)
+
     console.log(myDigests)
     RTC.broadcastMessage({
-      cmd: "returnbranch",
+      cmd: "returnBranch",
       digests: myDigests
     })
 
@@ -221,10 +250,13 @@ export default class Channel {
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
       const digests = await Promise.all(
-        Array(toUse.generate).fill().map(() => Channel.getNewDigest())
+        Array(toUse.generate)
+          .fill()
+          .map(() => Channel.getNewDigest())
       )
       await Channel.getNewBranch(state.userID, toUse.multisig, digests)
     }
+
     // Compose transfer
     const flash = state.flash
     let bundles
@@ -241,7 +273,6 @@ export default class Channel {
           }
         ]
       )
-      debugger
       bundles = transfer.compose(
         flash.balance,
         flash.deposit,
@@ -305,14 +336,16 @@ export default class Channel {
   }
 
   static closeTransfer = async bundles => {
+    const state = await store.get("state")
+    console.log(state)
+
     try {
-      const state = await store.get("state")
-      console.log(state)
       const signedBundles = transfer.sign(
         state.flash.root,
         state.userSeed,
         bundles
       )
+
       transfer.applyTransfers(
         state.flash.root,
         state.flash.deposit,
@@ -366,7 +399,9 @@ export default class Channel {
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
       const digests = await Promise.all(
-        Array(toUse.generate).fill().map(() => Channel.getNewDigest())
+        Array(toUse.generate)
+          .fill()
+          .map(() => Channel.getNewDigest())
       )
       await Channel.getNewBranch(state.userID, toUse.multisig, digests)
     }

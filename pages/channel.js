@@ -8,7 +8,7 @@ import Header from "../components/channel/header"
 import RTC from "../libs/rtc"
 import Channel from "../libs/channel"
 
-const SideBar = () =>
+const SideBar = () => (
   <RightContent>
     <h3>Channel History</h3>
     <History>
@@ -24,13 +24,10 @@ const SideBar = () =>
         "You confirmed the transfer of 50"
       ]
         .reverse()
-        .map(item =>
-          <Item>
-            {item}
-          </Item>
-        )}
+        .map(item => <Item>{item}</Item>)}
     </History>
   </RightContent>
+)
 
 export default class extends React.Component {
   static async getInitialProps({ query }) {
@@ -42,7 +39,7 @@ export default class extends React.Component {
     form: 0,
     address: "",
     peer: false,
-    channel: "share",
+    channel: "confirm",
     flash: {},
     userID: 0,
     transfer: "",
@@ -70,16 +67,17 @@ export default class extends React.Component {
         Channel.signSetup(message)
       } else if (message.data.cmd === "signSetup") {
         var flash = await Channel.closeSetup(message)
-        console.log
         this.setState({ flash })
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
         this.setState({ flash: message.data.flash })
       } else if (message.data.cmd === "composeTransfer") {
+        // Get diff and set the state
+        // transfers.diff()
         var state = await Channel.closeTransfer(message.data.signedBundles)
         this.setState({ ...state })
       } else if (message.data.cmd === "getBranch") {
-        Channel.returnbranch(message.data.digests, message.data.address)
+        Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
         Channel.closeChannel(message.data.signedBundles)
       }
@@ -103,12 +101,17 @@ export default class extends React.Component {
     })
   }
 
+  confirmTransaction = async (value, address) => {
+    this.sendTransaction(value, address)
+  }
+
   sendTransaction = async (value, address) => {
     console.log("Creating transactions")
     var state = await Channel.composeTransfer(parseInt(value), address)
     console.log(state)
     this.setState({ flash: state.flash })
   }
+
   closeChannel = async () => {
     console.log("Closing Channel")
     var state = await Channel.close()
@@ -144,7 +147,7 @@ export default class extends React.Component {
       return (
         <Layout right={setup && SideBar()}>
           <LeftContent noBg={!setup} active={form === 1}>
-            {channel === "share" &&
+            {channel === "share" && (
               <div>
                 <Header
                   {...this.state}
@@ -156,14 +159,42 @@ export default class extends React.Component {
                 <p>
                   {/* {window && window.localStorage ? window.location.href : null} */}
                 </p>
-              </div>}
-            {channel === "deposit" &&
+              </div>
+            )}
+            {channel === "confirm" && (
+              <div>
+                <Header {...this.state} title={`Recieve 50Ki`} />
+
+                <h2 />
+                <p>Do you want to confirm or deny this transaction?</p>
+                <Row>
+                  <Button
+                    full
+                    accent
+                    onClick={() =>
+                      this.confirmTransaction(
+                        this.state.transaction.value,
+                        this.state.transaction.address
+                      )}
+                  >
+                    Confirm Transaction
+                  </Button>
+                  <Button
+                    full
+                    left
+                    onClick={() => this.confirmTransaction(0, false)}
+                  >
+                    Deny Transaction
+                  </Button>
+                </Row>
+              </div>
+            )}
+            {channel === "deposit" && (
               <div>
                 <Header {...this.state} title={`Waiting for deposits`} />
 
                 <h2>Deposit 50 IOTA into this multisig address:</h2>
                 <p>
-                  {console.log(flash)}
                   {flash.remainderAddress &&
                     `${flash.remainderAddress.address}`}
                 </p>
@@ -172,9 +203,10 @@ export default class extends React.Component {
                     Deposited
                   </Button>
                 </Row>
-              </div>}
+              </div>
+            )}
 
-            {channel === "main" &&
+            {channel === "main" && (
               <div>
                 <Header {...this.state} title={`Channel Setup!`} />
 
@@ -215,7 +247,8 @@ export default class extends React.Component {
                     Close Channel
                   </Button>
                 </Row>
-              </div>}
+              </div>
+            )}
           </LeftContent>
         </Layout>
       )
@@ -261,7 +294,7 @@ const Button = styled.button`
 const AnimatedLeftBox = styled.span`
   position: absolute;
   width: 100%;
-  transition: all .5s ease;
+  transition: all 0.5s ease;
   transform: ${props =>
     props.active ? "translateY(0px)" : "translateY(20px)"};
   visibility: ${props => (props.active ? "visible" : "hidden")};
@@ -277,7 +310,7 @@ const History = styled.div`
   }
   flex: 1;
   &:before {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 14px;
     width: 90%;
@@ -291,5 +324,5 @@ const History = styled.div`
 `
 const Item = styled.p`
   padding-bottom: 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, .5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 `

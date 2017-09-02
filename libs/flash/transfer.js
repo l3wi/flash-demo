@@ -29,15 +29,11 @@ const TransferErrors = {
  * @returns {array} transfers
  */
 function prepare(settlement, deposits, fromIndex, destinations) {
-  // total amount transacted this round
   const total = destinations.reduce((acc, tx) => acc + tx.value, 0)
-  // reject if there isn't enough deposit for user
   if (total > deposits[fromIndex]) {
     throw new Error(TransferErrors.INSUFFICIENT_FUNDS)
   }
-  // copy destinations
   const transfer = helpers.deepClone(destinations)
-  // add deposit release to outputs
   settlement.map((s, i) => {
     if (i != fromIndex) {
       const current = transfer.find(tx => tx.address == s)
@@ -52,7 +48,6 @@ function prepare(settlement, deposits, fromIndex, destinations) {
       }
     }
   })
-  // return the positive ones
   return transfer.filter(tx => tx.value > 0)
 }
 
@@ -101,12 +96,10 @@ function compose(
     return transfer
   })
   const bundles = []
-  // get the multisigs to use to generate the bundles
   let multisigs = close ? getMinimumBranch(root) : getLastBranch(root)
   if (multisigs[0].bundles.length == MAX_USES) {
     throw new Error(TransferErrors.ADDRESS_OVERUSE)
   }
-  // Find highest parent multisig that hasn't passed to child
   for (let i = 0; i < multisigs.length - 1; i++) {
     if (
       multisigs[i].bundles.find(bundle =>
@@ -118,7 +111,6 @@ function compose(
       break
     }
   }
-  // If there are no multisigs left, throw error
   if (multisigs.length == 0) {
     throw new Error(TransferErrors.ADDRESS_OVERUSE)
   }
@@ -161,7 +153,6 @@ function compose(
  * @returns {array} transfers
  */
 function close(settlement, deposits) {
-  // add deposit release to outputs
   return settlement
     .filter(tx => tx)
     .map((s, i) => {
@@ -178,7 +169,6 @@ function close(settlement, deposits) {
  * @param {array} transfers
  */
 function applyTransfers(root, deposit, outputs, remainder, history, transfers) {
-  // validate the signatures
   if (
     transfers.filter(
       transfer =>
@@ -199,25 +189,19 @@ function applyTransfers(root, deposit, outputs, remainder, history, transfers) {
     throw new Error(TransferErrors.ADDRESS_NOT_FOUND)
   }
   try {
-    // getDiff doesn't fail (because negative output diff)
     let diff = getDiff(root, remainder, history, transfers)
-    // get the total amount of remaining deposits
     let remaining = deposit.reduce((a, b) => a + b, 0)
-    // get the total amount of increase in outputs
     let total = diff
       .filter(v => v.value > 0 && v.value != remaining)
       .reduce((acc, tx) => acc + tx.value, 0)
-    // You can't spend more than you have in deposits
     if (total > remaining) {
       throw new Error(TransferErrors.INSUFFICIENT_FUNDS)
     }
     const depositTotal = deposit.reduce((acc, d) => acc + d, 0)
-    const depositCopy = deposit.map(d => total * d / depositTotal)
-    // subtract this from teposits
+    const depositDiff = deposit.map(d => total * d / depositTotal)
     for (const i in deposit) {
-      deposit[i] = depositCopy[i]
+      deposit[i] -= depositDiff[i]
     }
-    // add to outputs
     for (let i = 0; i < diff.length; i++) {
       if (diff[i].address in outputs) {
         outputs[diff[i].address] += diff[i].value
@@ -225,11 +209,9 @@ function applyTransfers(root, deposit, outputs, remainder, history, transfers) {
         outputs[diff[i].address] = diff[i].value
       }
     }
-    // append transfers to multisigs' bundles
     transfers.map((transfer, i) => {
       multisigs[i].bundles.push(transfer)
     })
-    // and add the output transfer to the state transfers (for ease of use later);
     history.push(transfers[transfers.length - 1])
   } catch (e) {
     throw e
@@ -237,7 +219,7 @@ function applyTransfers(root, deposit, outputs, remainder, history, transfers) {
 }
 
 function getMultisigs(root, transfers) {
-  // Traverse to first address of transfers
+  if (transfers.length > 1) debugger
   let node = root
   let firstTransfer = transfers[0].find(tx => tx.value < 0)
   while (node.address != firstTransfer.address && node.children.length != 0) {
@@ -246,7 +228,6 @@ function getMultisigs(root, transfers) {
   if (node.address != firstTransfer.address) {
     throw new Error(TransferErrors.ADDRESS_NOT_FOUND)
   }
-  // Organize into multisig tree
   let multisigs = []
   let i = 0
   multisigs.push(node)
@@ -254,12 +235,14 @@ function getMultisigs(root, transfers) {
     node = node.children.find(
       m => m.address == transfers[i].find(tx => tx.value < 0).address
     )
+    if (!node) {
+      throw new Error(TransferErrors.ADDRESS_NOT_FOUND)
+    }
+
     if (node.bundles.length == MAX_USES) {
       throw new Error(TransferErrors.ADDRESS_OVERUSE)
     }
-    if (typeof node == undefined) {
-      throw new Error(TransferErrors.ADDRESS_NOT_FOUND)
-    }
+
     multisigs.push(node)
   }
   return multisigs
