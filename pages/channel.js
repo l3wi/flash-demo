@@ -8,23 +8,13 @@ import Header from "../components/channel/header"
 import RTC from "../libs/rtc"
 import Channel from "../libs/channel"
 
+const history = ["Waiting for a partner..."]
+
 const SideBar = () => (
   <RightContent>
     <h3>Channel History</h3>
     <History>
-      {[
-        "Waiting for a mate...",
-        "Mate connected.",
-        "Signing addresses",
-        "Deposit address generated",
-        "1st deposit complete",
-        "2nd deposit complete",
-        "Channel is now setup",
-        "Partner has initiated a transfer of 50 to themself",
-        "You confirmed the transfer of 50"
-      ]
-        .reverse()
-        .map(item => <Item>{item}</Item>)}
+      {history.reverse().map((item, i) => <Item key={i}>{item}</Item>)}
     </History>
   </RightContent>
 )
@@ -37,9 +27,11 @@ export default class extends React.Component {
   state = {
     setup: true,
     form: 0,
-    address: "",
+    address:
+      "GQMHDLS9XPSNURUCPKKJJTULZRPH9WSKUKQQQPJOY9CPRCNAUSIFWCLHVDSUHJJCPMQDARUIFFXKXFVQD",
     peer: false,
-    channel: "confirm",
+    pendingTransfer: false,
+    channel: "share",
     flash: {},
     userID: 0,
     transfer: "",
@@ -58,11 +50,7 @@ export default class extends React.Component {
     RTC.connectToPeers(this.props.id)
 
     Events.on("message", async message => {
-      console.log(
-        `${message.connection.peer}:`,
-        message.data,
-        JSON.stringify(message.data).length
-      )
+      console.log(`${message.connection.peer}:`, message.data)
       if (message.data.cmd === "startSetup") {
         Channel.signSetup(message)
       } else if (message.data.cmd === "signSetup") {
@@ -71,24 +59,49 @@ export default class extends React.Component {
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
         this.setState({ flash: message.data.flash })
-      } else if (message.data.cmd === "composeTransfer") {
+        history.push("Deposit address generated")
+      } else if (message.data.cmd === "requestTransfer") {
+        history.push(`Recieved transfer for ${message.data.value}`)
         // Get diff and set the state
-        // transfers.diff()
-        var state = await Channel.closeTransfer(message.data.signedBundles)
-        this.setState({ ...state })
+        this.setState({
+          channel: "confirm",
+          pendingTransfer: {
+            value: message.data.value,
+            address: message.data.address,
+            request: true
+          }
+        })
+      } else if (message.data.cmd === "composeTransfer") {
+        history.push(`Recieved transfer for ${message.data.value}`)
+        // Get diff and set the state
+        this.setState({
+          channel: "confirm",
+          pendingTransfer: {
+            value: message.data.value,
+            address: message.data.settlementAddress,
+            bundles: message.data.signedBundles
+          }
+        })
       } else if (message.data.cmd === "getBranch") {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
         Channel.closeChannel(message.data.signedBundles)
+        history.push(`Closing Channel`)
+      } else if (message.data.cmd === "error") {
+        history.push(`${message.data.error}`)
+
+        alert(message.data.error)
       }
     })
     Events.on("peerLeft", message => {
       console.log(`Peer Left`)
+      history.push("Partner Disconnected")
       this.setState({ peer: false })
     })
     Events.on("peerJoined", message => {
       console.log(`Peer Joined`)
       console.log(message.connection.peer)
+      history.push("Partner Connected")
       this.setState({
         peer: true,
         channel: "deposit",
@@ -101,24 +114,53 @@ export default class extends React.Component {
     })
   }
 
-  confirmTransaction = async (value, address) => {
-    this.sendTransaction(value, address)
+  confirmTransaction = async transaction => {
+    console.log(transaction)
+    if (transaction.request) {
+      this.setState({ channel: "main" })
+      return this.sendTransaction(
+        transaction.value,
+        `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+      )
+    }
+    if (!transaction) {
+      this.setState({ channel: "main" })
+      return RTC.broadcastMessage({
+        cmd: "error",
+        error: "Transaction Denied."
+      })
+    }
+
+    var state = await Channel.closeTransfer(transaction.bundles)
+    this.setState({ ...state, channel: "main" })
   }
 
   sendTransaction = async (value, address) => {
-    console.log("Creating transactions")
-    var state = await Channel.composeTransfer(parseInt(value), address)
-    console.log(state)
+    history.push(`Creating transaction for ${parseInt(value)}`)
+    var state = await Channel.composeTransfer(
+      parseInt(value),
+      address,
+      this.state.userID
+    )
     this.setState({ flash: state.flash })
   }
 
+  request = (value, address) => {
+    return RTC.broadcastMessage({
+      cmd: "requestTransfer",
+      value,
+      address
+    })
+  }
+
   closeChannel = async () => {
-    console.log("Closing Channel")
+    history.push("Closing Channel")
     var state = await Channel.close()
     console.log(state)
   }
 
   confirmDeposit = async amount => {
+    history.push(`Confirmed deposit of ${amount}`)
     var state = await store.get("state")
     state.flash.deposit[this.state.userID] = amount
     state.flash.balance += amount
@@ -132,13 +174,23 @@ export default class extends React.Component {
   }
 
   render() {
-    var { form, peer, setup, channel, flash, userID, transfer } = this.state
+    var {
+      form,
+      peer,
+      setup,
+      channel,
+      address,
+      flash,
+      userID,
+      transfer,
+      pendingTransfer
+    } = this.state
     if (!flash) var flash = { deposit: [] }
     console.log(this.state)
-    if (!setup) {
+    if (setup) {
       return (
-        <Layout right={setup && SideBar()}>
-          <LeftContent noBg={!setup} active={form === 1}>
+        <Layout right={!setup && SideBar()}>
+          <LeftContent noBg={setup} active={form === 1}>
             <Setup setChannel={this.setChannel} />
           </LeftContent>
         </Layout>
@@ -161,9 +213,22 @@ export default class extends React.Component {
                 </p>
               </div>
             )}
+            {channel === "loading" && (
+              <div>
+                <Header {...this.state} {...this.props} title={`Loading...`} />
+                <p>
+                  {/* {window && window.localStorage ? window.location.href : null} */}
+                </p>
+              </div>
+            )}
             {channel === "confirm" && (
               <div>
-                <Header {...this.state} title={`Recieve 50Ki`} />
+                <Header
+                  {...this.state}
+                  title={`${pendingTransfer.address == address
+                    ? "Recieve"
+                    : "Send"} ${pendingTransfer.value}i`}
+                />
 
                 <h2 />
                 <p>Do you want to confirm or deny this transaction?</p>
@@ -171,18 +236,14 @@ export default class extends React.Component {
                   <Button
                     full
                     accent
-                    onClick={() =>
-                      this.confirmTransaction(
-                        this.state.transaction.value,
-                        this.state.transaction.address
-                      )}
+                    onClick={() => this.confirmTransaction(pendingTransfer)}
                   >
                     Confirm Transaction
                   </Button>
                   <Button
                     full
                     left
-                    onClick={() => this.confirmTransaction(0, false)}
+                    onClick={() => this.confirmTransaction(false)}
                   >
                     Deny Transaction
                   </Button>
@@ -191,18 +252,35 @@ export default class extends React.Component {
             )}
             {channel === "deposit" && (
               <div>
-                <Header {...this.state} title={`Waiting for deposits`} />
-
-                <h2>Deposit 50 IOTA into this multisig address:</h2>
-                <p>
-                  {flash.remainderAddress &&
-                    `${flash.remainderAddress.address}`}
-                </p>
-                <Row>
-                  <Button full accent onClick={() => this.confirmDeposit(50)}>
-                    Deposited
-                  </Button>
-                </Row>
+                <Header
+                  {...this.state}
+                  title={
+                    !flash.remainderAddress ? (
+                      `Generating the deposit address`
+                    ) : (
+                      `Waiting for deposits`
+                    )
+                  }
+                />
+                {flash.remainderAddress ? (
+                  <div>
+                    <h2>Deposit 50 IOTA into this multisig address:</h2>
+                    <p>{flash.remainderAddress.address}</p>
+                    <Row>
+                      <Button
+                        full
+                        accent
+                        onClick={() => this.confirmDeposit(50)}
+                      >
+                        Deposited
+                      </Button>
+                    </Row>
+                  </div>
+                ) : (
+                  <div>
+                    <h2>Loading</h2>
+                  </div>
+                )}
               </div>
             )}
 
@@ -236,10 +314,15 @@ export default class extends React.Component {
                   <Button
                     full
                     onClick={() =>
-                      this.sendTransaction(
-                        transfer,
-                        `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
-                      )}
+                      userID === 0
+                        ? this.sendTransaction(
+                            transfer,
+                            `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+                          )
+                        : this.request(
+                            transfer,
+                            `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+                          )}
                   >
                     Send Transfer
                   </Button>
