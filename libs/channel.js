@@ -138,7 +138,7 @@ export default class Channel {
     RTC.broadcastMessage({ cmd: "shareFlash", flash })
   }
 
-  static async getNewBranch(userID, address, digests) {
+  static async getNewBranch(address, digests) {
     console.log("Branch Event", "Digests: ", digests)
     // Request New Branch
     RTC.broadcastMessage({
@@ -238,7 +238,7 @@ export default class Channel {
   }
 
   // Initiate transaction from anywhere in the app.
-  static async composeTransfer(value, settlementAddress) {
+  static async composeTransfer(value, settlementAddress, index) {
     // Get latest state from localstorage
     const state = await store.get("state")
 
@@ -254,7 +254,7 @@ export default class Channel {
           .fill()
           .map(() => Channel.getNewDigest())
       )
-      await Channel.getNewBranch(state.userID, toUse.multisig, digests)
+      await Channel.getNewBranch(toUse.multisig, digests)
     }
 
     // Compose transfer
@@ -265,7 +265,7 @@ export default class Channel {
       let newTansfers = transfer.prepare(
         [Presets.ADDRESS, Presets.ADDRESS],
         flash.deposit,
-        0,
+        index,
         [
           {
             address: settlementAddress,
@@ -304,17 +304,28 @@ export default class Channel {
       bundles
     )
 
-    // const signedBundles.map((b,i) => b.filter(tx => tx.value < 0).map(tx => tx.signatureFragment))
-
+    // const signatures = signedBundles.map(bundle => {
+    //   const address = bundle.find(tx => tx.value < 0).address
+    //   return bundle
+    //     .filter(tx => tx.address == address)
+    //     .map(tx => tx.signatureMessageFragment)
+    //     .filter(s => !IOTACrypto.utils.inputValidator.isNinesTrytes(s))
+    // })
     console.log("Signed: ", signedBundles)
 
     // Update bundles in local state
     state.bundles = signedBundles
     await store.set("state", state)
-    RTC.broadcastMessage({ cmd: "composeTransfer", signedBundles })
+    RTC.broadcastMessage({
+      cmd: "composeTransfer",
+      signedBundles,
+      value,
+      settlementAddress,
+      index
+    })
     // Wait for RTC response
     return new Promise((res, rej) => {
-      events.once("message", async message => {
+      events.on("message", async message => {
         if (message.data.cmd === "returnTransfer") {
           transfer.applyTransfers(
             flash.root,
@@ -403,7 +414,7 @@ export default class Channel {
           .fill()
           .map(() => Channel.getNewDigest())
       )
-      await Channel.getNewBranch(state.userID, toUse.multisig, digests)
+      await Channel.getNewBranch(toUse.multisig, digests)
     }
     console.log(state)
     // Compose transfer
