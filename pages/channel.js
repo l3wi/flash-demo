@@ -109,7 +109,9 @@ export default class extends React.Component {
       })
 
       if (message.connection.peer.slice(-1) !== "0") {
-        Channel.startSetup()
+        Channel.startSetup(
+          `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+        )
       }
     })
   }
@@ -211,6 +213,18 @@ export default class extends React.Component {
                 <Header {...this.state} {...this.props} title={`Loading...`} />
                 <p>
                   {/* {window && window.localStorage ? window.location.href : null} */}
+                </p>
+              </div>
+            )}
+            {channel === "closed" && (
+              <div>
+                <Header
+                  {...this.state}
+                  {...this.props}
+                  title={`Channel has been closed`}
+                />
+                <p>
+                  {`See the link below to view the closing transaction that has been attached to the network`}
                 </p>
               </div>
             )}
