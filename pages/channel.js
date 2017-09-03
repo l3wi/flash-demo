@@ -211,9 +211,7 @@ export default class extends React.Component {
             {channel === "loading" && (
               <div>
                 <Header {...this.state} {...this.props} title={`Loading...`} />
-                <p>
-                  {/* {window && window.localStorage ? window.location.href : null} */}
-                </p>
+                <Spinner {...this.props} src={"/static/loading-dark.svg"} />
               </div>
             )}
             {channel === "closed" && (
@@ -410,4 +408,13 @@ const History = styled.div`
 const Item = styled.p`
   padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+`
+const Spinner = styled.img`
+  height: 5rem !important;
+  width: 5rem;
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  margin-bottom: -2.5rem;
+  margin-left: -2.5rem;
 `
