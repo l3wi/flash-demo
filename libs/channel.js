@@ -5,6 +5,7 @@ import multisig from "./flash/multisig"
 import transfer from "./flash/transfer"
 import { Attach, iota } from "./iota"
 import Presets from "./presets"
+const IOTACrypto = require("iota.crypto.js")
 
 export default class Channel {
   // Security level
@@ -20,6 +21,7 @@ export default class Channel {
 
   // Initiate the local state and store it localStorage
   static async startSetup(
+    userIndex = 0,
     userID = shortid.generate(),
     index = 0,
     security = Channel.SECURITY,
@@ -37,6 +39,7 @@ export default class Channel {
 
     // Initialize state object
     const state = {
+      userIndex: userIndex,
       userID: userID,
       userSeed: userSeed,
       index: index,
@@ -73,6 +76,7 @@ export default class Channel {
   static async signSetup(message) {
     // Create the state object for the others
     const state = {
+      userIndex: message.connection.peer.slice(-1) === "0" ? 1 : 0,
       userID: shortid.generate(),
       userSeed: seedGen(81),
       index: 0,
@@ -304,14 +308,24 @@ export default class Channel {
       bundles
     )
 
-    // const signatures = signedBundles.map(bundle => {
-    //   const address = bundle.find(tx => tx.value < 0).address
-    //   return bundle
-    //     .filter(tx => tx.address == address)
-    //     .map(tx => tx.signatureMessageFragment)
-    //     .filter(s => !IOTACrypto.utils.inputValidator.isNinesTrytes(s))
-    // })
-    console.log("Signed: ", signedBundles)
+    const signatures = signedBundles.map((bundle, id) => {
+      const address = bundle.find(tx => tx.value < 0).address
+      return bundle
+        .map((tx, i) => {
+          return {
+            signature: tx.signatureMessageFragment,
+            address: tx.address,
+            bundle: id,
+            tx: i
+          }
+        })
+        .filter(
+          s =>
+            !IOTACrypto.utils.inputValidator.isNinesTrytes(s.signature) &&
+            s.address == address
+        )
+    })
+    console.log("Signed: ", signatures)
 
     // Update bundles in local state
     state.bundles = signedBundles
@@ -325,25 +339,103 @@ export default class Channel {
     })
     // Wait for RTC response
     return new Promise((res, rej) => {
+      // Wait for messages back
+      let sigs = Array(2).fill()
+      sigs[state.userIndex] = signatures
       events.on("message", async message => {
-        if (message.data.cmd === "returnTransfer") {
-          transfer.applyTransfers(
-            flash.root,
-            flash.deposit,
-            flash.outputs,
-            flash.remainderAddress,
-            flash.transfers,
-            message.data.signedBundles
-          )
-          state.bundles = signedBundles
-          console.log("Recieved Completed Bundles: ", signedBundles)
-          state.flash = flash
-          state.bundles = message.data.signedBundles
-          await store.set("state", state)
-          res(state)
+        if (message.data.cmd === "returnSignature") {
+          // Add user signatures into the correct spot in the array
+          sigs[message.data.index] = message.data.signatures
+          //
+          if (sigs.find(sig => !sig)) {
+            console.log("Waiting for all slots to be filled")
+          } else {
+            console.log(sigs)
+            var finalBundles = bundles
+            // Construct the signed bundles
+            sigs.map(user => {
+              user.map(bundle => {
+                bundle.map(
+                  tx =>
+                    (finalBundles[tx.bundle][
+                      tx.tx
+                    ].signatureMessageFragment = finalBundles[tx.bundle][
+                      tx.tx
+                    ].signatureMessageFragment +=
+                      tx.signature)
+                )
+              })
+            })
+
+            console.log(finalBundles)
+            transfer.applyTransfers(
+              flash.root,
+              flash.deposit,
+              flash.outputs,
+              flash.remainderAddress,
+              flash.transfers,
+              finalBundles
+            )
+            state.bundles = signedBundles
+            console.log("Recieved Completed Bundles: ", signedBundles)
+            state.flash = flash
+            state.bundles = message.data.signedBundles
+            await store.set("state", state)
+            res(state)
+          }
         }
       })
     })
+  }
+
+  static signTransfer = async bundles => {
+    const state = await store.get("state")
+    console.log(state)
+
+    try {
+      const signedBundles = transfer.sign(
+        state.flash.root,
+        state.userSeed,
+        bundles
+      )
+
+      const signatures = signedBundles.map((bundle, id) => {
+        const address = bundle.find(tx => tx.value < 0).address
+        return bundle
+          .map((tx, i) => {
+            return {
+              signature: tx.signatureMessageFragment,
+              address: tx.address,
+              bundle: id,
+              tx: i
+            }
+          })
+          .filter(
+            s =>
+              !IOTACrypto.utils.inputValidator.isNinesTrytes(s.signature) &&
+              s.address == address
+          )
+      })
+      console.log("Signatures: ", signatures)
+      RTC.broadcastMessage({
+        cmd: "returnSignature",
+        signatures,
+        index: state.userIndex
+      })
+    } catch (e) {
+      console.log("Error: ", e)
+      switch (e.message) {
+        case "2":
+          alert("Not enough funds")
+          break
+        case "4":
+          alert("Incorrect bundle order")
+          break
+        default:
+          alert("An error occured. Please reset channel")
+      }
+      return e
+    }
   }
 
   static closeTransfer = async bundles => {

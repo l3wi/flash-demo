@@ -115,14 +115,6 @@ export default class extends React.Component {
   }
 
   confirmTransaction = async transaction => {
-    console.log(transaction)
-    if (transaction.request) {
-      this.setState({ channel: "main" })
-      return this.sendTransaction(
-        transaction.value,
-        `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
-      )
-    }
     if (!transaction) {
       this.setState({ channel: "main" })
       return RTC.broadcastMessage({
@@ -130,8 +122,9 @@ export default class extends React.Component {
         error: "Transaction Denied."
       })
     }
+    console.log(transaction)
 
-    var state = await Channel.closeTransfer(transaction.bundles)
+    var state = await Channel.signTransfer(transaction.bundles)
     this.setState({ ...state, channel: "main" })
   }
 
@@ -187,7 +180,7 @@ export default class extends React.Component {
     } = this.state
     if (!flash) var flash = { deposit: [] }
     console.log(this.state)
-    if (setup) {
+    if (!setup) {
       return (
         <Layout right={!setup && SideBar()}>
           <LeftContent noBg={setup} active={form === 1}>
@@ -314,15 +307,10 @@ export default class extends React.Component {
                   <Button
                     full
                     onClick={() =>
-                      userID === 0
-                        ? this.sendTransaction(
-                            transfer,
-                            `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
-                          )
-                        : this.request(
-                            transfer,
-                            `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
-                          )}
+                      this.sendTransaction(
+                        transfer,
+                        `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+                      )}
                   >
                     Send Transfer
                   </Button>
