@@ -7,6 +7,10 @@ import { Attach, iota } from "./iota"
 import Presets from "./presets"
 const IOTACrypto = require("iota.crypto.js")
 
+shortid.characters(
+  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@"
+)
+
 export default class Channel {
   // Security level
   static SECURITY = 2
@@ -359,10 +363,10 @@ export default class Channel {
                   tx =>
                     (finalBundles[tx.bundle][
                       tx.tx
-                    ].signatureMessageFragment = finalBundles[tx.bundle][
-                      tx.tx
-                    ].signatureMessageFragment +=
-                      tx.signature)
+                    ].signatureMessageFragment = IOTACrypto.signing.signatureFragment(
+                      finalBundles[tx.bundle][tx.tx].signatureMessageFragment,
+                      tx.signature
+                    ))
                 )
               })
             })

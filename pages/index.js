@@ -3,7 +3,9 @@ import styled from "styled-components"
 import { Layout, LeftContent, RightContent } from "../components/layout"
 import { Link, Router } from "../routes"
 import shortid from "shortid"
-
+shortid.characters(
+  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@"
+)
 export default class extends React.Component {
   state = {
     form: 0
@@ -74,7 +76,7 @@ const Button = styled.button`
 const AnimatedLeftBox = styled.span`
   position: absolute;
   padding: 10px;
-  transition: all .5s ease;
+  transition: all 0.5s ease;
   transform: ${props =>
     props.active ? "translateY(0px)" : "translateY(20px)"};
   visibility: ${props => (props.active ? "visible" : "hidden")};
