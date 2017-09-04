@@ -5,6 +5,7 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js"
+    , "postinstall": "git submodule update --init --recursive"
   },
   "dependencies": {
     "babel-polyfill": "^6.23.0",
