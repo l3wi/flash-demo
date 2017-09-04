@@ -2016,9 +2016,9 @@ invert-kv@^1.0.0:
   dependencies:
     crypto-js "^3.1.9-1"
 
-"iota.flash.js@git+https://github.com/iotaledger/iota.flash.js.git":
+"iota.flash.js@git+https://github.com/iotaledger/iota.flash.js.git#master":
   version "0.0.1"
-  resolved "git+https://github.com/iotaledger/iota.flash.js.git#5eb3c9d0ce4e97e1dc88209f71e4e2618c29edf0"
+  resolved "git+https://github.com/iotaledger/iota.flash.js.git#ee0c4d85b844ff6ca0e349c08e670314ec96872e"
   dependencies:
     iota.crypto.js "github:iotaledger/iota.crypto.js"
 
