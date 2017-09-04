@@ -100,7 +100,7 @@ export default class Channel {
     state.partialDigests = digests.map(() =>
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
-
+    console.log(state)
     RTC.broadcastMessage({ cmd: "signSetup", digests: state.partialDigests })
     await store.set("state", state)
   }
@@ -306,85 +306,58 @@ export default class Channel {
     }
 
     // Sign transfer
-    const signedBundles = transfer.sign(
+    const signatures = transfer.sign(
       state.flash.root,
       state.userSeed,
-      bundles
+      bundles,
+      state.userIndex
     )
 
-    const signatures = signedBundles.map((bundle, id) => {
-      const address = bundle.find(tx => tx.value < 0).address
-      return bundle
-        .map((tx, i) => {
-          return {
-            signature: tx.signatureMessageFragment,
-            address: tx.address,
-            bundle: id,
-            tx: i
-          }
-        })
-        .filter(
-          s =>
-            !IOTACrypto.utils.inputValidator.isNinesTrytes(s.signature) &&
-            s.address == address
-        )
-    })
     console.log("Signed: ", signatures)
 
-    // Update bundles in local state
-    state.bundles = signedBundles
-    await store.set("state", state)
     RTC.broadcastMessage({
       cmd: "composeTransfer",
-      signedBundles,
+      bundles,
       value,
       settlementAddress,
       index
     })
     // Wait for RTC response
     return new Promise((res, rej) => {
-      // Wait for messages back
+      // Make counter for users
       let sigs = Array(2).fill()
-      sigs[state.userIndex] = signatures
+      // Sign your bundle initially
+      let signedBundles = transfer.appliedSignatures(bundles, signatures)
+      console.log(signedBundles)
+      // Start listening for messages
       events.on("message", async message => {
         if (message.data.cmd === "returnSignature") {
           // Add user signatures into the correct spot in the array
-          sigs[message.data.index] = message.data.signatures
-          //
+          signedBundles = transfer.appliedSignatures(
+            signedBundles,
+            message.data.signatures
+          )
+          // Mark off these sigs from the counter
+          sigs[message.data.index] = true
           if (sigs.find(sig => !sig)) {
             console.log("Waiting for all slots to be filled")
           } else {
-            console.log(sigs)
-            var finalBundles = bundles
-            // Construct the signed bundles
-            sigs.map(user => {
-              user.map(bundle => {
-                bundle.map(
-                  tx =>
-                    (finalBundles[tx.bundle][
-                      tx.tx
-                    ].signatureMessageFragment = IOTACrypto.signing.signatureFragment(
-                      finalBundles[tx.bundle][tx.tx].signatureMessageFragment,
-                      tx.signature
-                    ))
-                )
-              })
-            })
-
-            console.log(finalBundles)
             transfer.applyTransfers(
               flash.root,
               flash.deposit,
               flash.outputs,
               flash.remainderAddress,
               flash.transfers,
-              finalBundles
+              signedBundles
             )
+            console.log("Completed Bundles: ", signedBundles)
+            // Save state
             state.bundles = signedBundles
-            console.log("Recieved Completed Bundles: ", signedBundles)
             state.flash = flash
-            state.bundles = message.data.signedBundles
             await store.set("state", state)
+
+            // Needs a share flash.
+            RTC.broadcastMessage({ cmd: "shareFlash", flash: state.flash })
             res(state)
           }
         }
@@ -394,114 +367,31 @@ export default class Channel {
 
   static signTransfer = async bundles => {
     const state = await store.get("state")
-    console.log(state)
+    console.log(bundles)
 
-    try {
-      const signedBundles = transfer.sign(
-        state.flash.root,
-        state.userSeed,
-        bundles
-      )
+    const signatures = transfer.sign(
+      state.flash.root,
+      state.userSeed,
+      bundles,
+      state.userIndex
+    )
 
-      const signatures = signedBundles.map((bundle, id) => {
-        const address = bundle.find(tx => tx.value < 0).address
-        return bundle
-          .map((tx, i) => {
-            return {
-              signature: tx.signatureMessageFragment,
-              address: tx.address,
-              bundle: id,
-              tx: i
-            }
-          })
-          .filter(
-            s =>
-              !IOTACrypto.utils.inputValidator.isNinesTrytes(s.signature) &&
-              s.address == address
-          )
-      })
-      console.log("Signatures: ", signatures)
-      RTC.broadcastMessage({
-        cmd: "returnSignature",
-        signatures,
-        index: state.userIndex
-      })
-    } catch (e) {
-      console.log("Error: ", e)
-      switch (e.message) {
-        case "2":
-          alert("Not enough funds")
-          break
-        case "4":
-          alert("Incorrect bundle order")
-          break
-        default:
-          alert("An error occured. Please reset channel")
-      }
-      return e
-    }
-  }
-
-  static closeTransfer = async bundles => {
-    const state = await store.get("state")
-    console.log(state)
-
-    try {
-      const signedBundles = transfer.sign(
-        state.flash.root,
-        state.userSeed,
-        bundles
-      )
-
-      transfer.applyTransfers(
-        state.flash.root,
-        state.flash.deposit,
-        state.flash.outputs,
-        state.flash.remainderAddress,
-        state.flash.transfers,
-        signedBundles
-      )
-      state.bundles = signedBundles
-      console.log(state)
-      // Save updated state
-      await store.set("state", state)
-      console.log("Signed Bundles: ", signedBundles)
-      RTC.broadcastMessage({ cmd: "returnTransfer", signedBundles })
-      return state
-    } catch (e) {
-      console.log("Error: ", e)
-      switch (e.message) {
-        case "2":
-          alert("Not enough funds")
-          break
-        case "4":
-          alert("Incorrect bundle order")
-          break
-        default:
-          alert("An error occured. Please reset channel")
-      }
-      return e
-    }
-  }
-
-  // Update bundles in local state by applying the diff
-  static applyTransferDiff(diff) {
-    // Get state
-    const state = store.get("state")
-
-    // Apply diff to bundles in state
-    ///state.bundles = TODO: bundles with applied diff;
-
-    store.set("state", state)
+    console.log("Signatures: ", signatures)
+    RTC.broadcastMessage({
+      cmd: "returnSignature",
+      signatures,
+      index: state.userIndex
+    })
   }
 
   static close = async () => {
     // Get latest state from localstorage
     const state = await store.get("state")
-    if (!state.flash.root) {
-      return console.log()
-    }
+
     // TODO: check/generate tree
+    if (!state.flash.root) {
+      return
+    }
     let toUse = multisig.updateLeafToRoot(state.flash.root)
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
@@ -512,12 +402,11 @@ export default class Channel {
       )
       await Channel.getNewBranch(toUse.multisig, digests)
     }
-    console.log(state)
+
     // Compose transfer
     const flash = state.flash
     let bundles
     try {
-      // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.close([Presets.ADDRESS, null], flash.deposit)
 
       bundles = transfer.compose(
@@ -541,91 +430,65 @@ export default class Channel {
       }
       return false
     }
-    console.log("Unsigned", bundles)
+
+    console.log("Bundles: ", bundles)
 
     // Sign transfer
-    const signedBundles = transfer.sign(
+    const signatures = transfer.sign(
       state.flash.root,
       state.userSeed,
-      bundles
+      bundles,
+      state.userIndex
     )
-    console.log("Bundles", signedBundles)
 
-    // Update bundles in local state
-    state.bundles = signedBundles
+    console.log("Signed: ", signatures)
 
-    // const res = await API("close", opts)
     RTC.broadcastMessage({
       cmd: "closeChannel",
-      signedBundles
+      bundles
     })
-
     // Wait for RTC response
     return new Promise((res, rej) => {
-      events.once("message", async message => {
-        if (message.data.cmd === "returnClose") {
-          // Apply the transfer to the state
-          transfer.applyTransfers(
-            flash.root,
-            flash.deposit,
-            flash.outputs,
-            flash.remainderAddress,
-            flash.transfers,
-            message.data.signedBundles
+      // Make counter for users
+      let sigs = Array(2).fill()
+      // Sign your bundle initially
+      let signedBundles = transfer.appliedSignatures(bundles, signatures)
+      console.log(signedBundles)
+      // Start listening for messages
+      events.on("message", async message => {
+        if (message.data.cmd === "returnSignature") {
+          // Add user signatures into the correct spot in the array
+          signedBundles = transfer.appliedSignatures(
+            signedBundles,
+            message.data.signatures
           )
+          // Mark off these sigs from the counter
+          sigs[message.data.index] = true
+          if (sigs.find(sig => !sig)) {
+            console.log("Waiting for all slots to be filled")
+          } else {
+            transfer.applyTransfers(
+              flash.root,
+              flash.deposit,
+              flash.outputs,
+              flash.remainderAddress,
+              flash.transfers,
+              signedBundles
+            )
+            console.log("Completed Bundles: ", signedBundles)
+            // Save state
+            state.bundles = signedBundles
+            state.flash = flash
+            await store.set("state", state)
 
-          state.bundles = message.data.signedBundles
-          //Save the State
-          await store.set("state", state)
-          // Attach the bundles with PoW
-          var result = await Attach.POWClosedBundle(state.bundles)
-          console.log(result)
-          res(result)
+            var result = await Attach.POWClosedBundle(state.bundles)
+            console.log(result)
+            RTC.broadcastMessage({ cmd: "channelClosed", result })
+            res(result)
+          }
         }
       })
     })
-  }
-
-  static closeChannel = async bundles => {
-    const state = await store.get("state")
-    console.log(state)
-
-    try {
-      const signedBundles = transfer.sign(
-        state.flash.root,
-        state.userSeed,
-        bundles
-      )
-
-      transfer.applyTransfers(
-        state.flash.root,
-        state.flash.deposit,
-        state.flash.outputs,
-        state.flash.remainderAddress,
-        state.flash.transfers,
-        signedBundles
-      )
-      state.bundles = signedBundles
-      console.log(state)
-      // Save updated state
-      await store.set("state", state)
-      console.log("Closing Bundles: ", signedBundles)
-      RTC.broadcastMessage({ cmd: "returnClose", signedBundles })
-      return state
-    } catch (e) {
-      console.log("Error: ", e)
-      switch (e.message) {
-        case "2":
-          alert("Not enough funds")
-          break
-        case "4":
-          alert("Incorrect bundle order")
-          break
-        default:
-          alert("An error occured. Please reset channel")
-      }
-      return e
-    }
   }
 
   // Update bundles in local state by applying the diff
