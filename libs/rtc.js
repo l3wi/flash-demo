@@ -83,10 +83,17 @@ export default class RTC {
       })
     })
     conn.on("data", data => {
-      events.emit("message", {
-        connection: conn,
-        data: JSON.parse(data)
-      })
+      if (JSON.parse(data).return) {
+        events.emit("return", {
+          connection: conn,
+          data: JSON.parse(data)
+        })
+      } else {
+        events.emit("message", {
+          connection: conn,
+          data: JSON.parse(data)
+        })
+      }
     })
   }
 

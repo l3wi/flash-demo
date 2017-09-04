@@ -156,7 +156,7 @@ export default class Channel {
     })
     // Subscribe once to a get branch emitter.
     return new Promise((res, rej) => {
-      events.once("message", async message => {
+      events.once("return", async message => {
         if (message.data.cmd === "returnBranch") {
           const newAddress = await Channel.applyBranch(
             digests,
@@ -164,6 +164,7 @@ export default class Channel {
             address
           )
           console.log(message.data.digests)
+
           res(newAddress)
         }
       })
@@ -201,8 +202,10 @@ export default class Channel {
     console.log(myDigests)
     RTC.broadcastMessage({
       cmd: "returnBranch",
-      digests: myDigests
+      digests: myDigests,
+      return: true
     })
+    events.removeListener("return")
 
     return myDigests
   }
@@ -246,7 +249,7 @@ export default class Channel {
   }
 
   // Initiate transaction from anywhere in the app.
-  static async composeTransfer(value, settlementAddress, index) {
+  static async composeTransfer(value, settlementAddress) {
     // Get latest state from localstorage
     const state = await store.get("state")
 
@@ -273,7 +276,7 @@ export default class Channel {
       let newTansfers = transfer.prepare(
         [Presets.ADDRESS, Presets.ADDRESS],
         flash.deposit,
-        index,
+        state.userIndex,
         [
           {
             address: settlementAddress,
@@ -320,7 +323,7 @@ export default class Channel {
       bundles,
       value,
       settlementAddress,
-      index
+      index: state.userIndex
     })
     // Wait for RTC response
     return new Promise((res, rej) => {
@@ -328,9 +331,8 @@ export default class Channel {
       let sigs = Array(2).fill()
       // Sign your bundle initially
       let signedBundles = transfer.appliedSignatures(bundles, signatures)
-      console.log(signedBundles)
       // Start listening for messages
-      events.on("message", async message => {
+      events.on("return", async message => {
         if (message.data.cmd === "returnSignature") {
           // Add user signatures into the correct spot in the array
           signedBundles = transfer.appliedSignatures(
@@ -358,6 +360,7 @@ export default class Channel {
 
             // Needs a share flash.
             RTC.broadcastMessage({ cmd: "shareFlash", flash: state.flash })
+            events.removeListener("return")
             res(state)
           }
         }
@@ -379,6 +382,7 @@ export default class Channel {
     console.log("Signatures: ", signatures)
     RTC.broadcastMessage({
       cmd: "returnSignature",
+      return: true,
       signatures,
       index: state.userIndex
     })
@@ -445,7 +449,8 @@ export default class Channel {
 
     RTC.broadcastMessage({
       cmd: "closeChannel",
-      bundles
+      bundles,
+      index: state.userIndex
     })
     // Wait for RTC response
     return new Promise((res, rej) => {
@@ -455,7 +460,7 @@ export default class Channel {
       let signedBundles = transfer.appliedSignatures(bundles, signatures)
       console.log(signedBundles)
       // Start listening for messages
-      events.on("message", async message => {
+      events.on("return", async message => {
         if (message.data.cmd === "returnSignature") {
           // Add user signatures into the correct spot in the array
           signedBundles = transfer.appliedSignatures(
@@ -467,14 +472,26 @@ export default class Channel {
           if (sigs.find(sig => !sig)) {
             console.log("Waiting for all slots to be filled")
           } else {
-            transfer.applyTransfers(
-              flash.root,
-              flash.deposit,
-              flash.outputs,
-              flash.remainderAddress,
-              flash.transfers,
-              signedBundles
-            )
+            try {
+              transfer.applyTransfers(
+                flash.root,
+                flash.deposit,
+                flash.outputs,
+                flash.remainderAddress,
+                flash.transfers,
+                signedBundles
+              )
+            } catch (e) {
+              console.log("Error: ", e)
+              switch (e.message) {
+                case "4":
+                  alert("Signature Error")
+                  break
+                default:
+                  alert("An error occured. 😂")
+              }
+              return false
+            }
             console.log("Completed Bundles: ", signedBundles)
             // Save state
             state.bundles = signedBundles
@@ -484,6 +501,7 @@ export default class Channel {
             var result = await Attach.POWClosedBundle(state.bundles)
             console.log(result)
             RTC.broadcastMessage({ cmd: "channelClosed", result })
+            events.removeListener("return")
             res(result)
           }
         }
