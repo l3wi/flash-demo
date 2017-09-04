@@ -5,40 +5,6 @@ export var iota = new IOTA({
   provider: Presets.IOTA
 })
 
-// Get node info
-export const getNodeInfo = async () => {
-  return new Promise(function(resolve, reject) {
-    iota.api.getNodeInfo(function(error, success) {
-      if (error) {
-        console.error(error)
-        resolve(null)
-      } else {
-        console.log(success)
-        resolve(success)
-      }
-    })
-  })
-}
-
-export const fund = async address => {
-  const opts = {
-    method: "POST",
-    body: JSON.stringify({
-      address: address
-    })
-  }
-  console.log(opts)
-  let responseJson
-  try {
-    let response = await fetch("https://faucet.tangle.works", opts)
-    responseJson = await response.json()
-    console.log(responseJson)
-  } catch (error) {
-    console.error(error)
-  }
-  return await Attach.sendTrytes(responseJson)
-}
-
 export class Attach {
   static bundleToTrytes(bundle) {
     var bundleTrytes = []
