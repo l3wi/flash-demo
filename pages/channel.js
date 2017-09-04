@@ -79,13 +79,13 @@ export default class extends React.Component {
           pendingTransfer: {
             value: message.data.value,
             address: message.data.settlementAddress,
-            bundles: message.data.signedBundles
+            bundles: message.data.bundles
           }
         })
       } else if (message.data.cmd === "getBranch") {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
-        Channel.closeChannel(message.data.signedBundles)
+        Channel.signTransfer(message.data.bundles)
         history.push(`Closing Channel`)
       } else if (message.data.cmd === "error") {
         history.push(`${message.data.error}`)
@@ -109,9 +109,7 @@ export default class extends React.Component {
       })
 
       if (message.connection.peer.slice(-1) !== "0") {
-        Channel.startSetup(
-          `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
-        )
+        Channel.startSetup()
       }
     })
   }
