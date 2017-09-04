@@ -116,6 +116,7 @@ export default class Channel {
     let multisigs = digests.map((digest, index) => {
       let addy = multisig.composeAddress([digest, serverDigests[index]])
       addy.index = digest.index
+      addy.signingIndex = 0
       addy.securitySum = digest.security + serverDigests[index].security
       addy.security = digest.security
       return addy
@@ -215,6 +216,7 @@ export default class Channel {
     let multisigs = digests.map((digest, index) => {
       let addy = multisig.composeAddress([digest, serverDigests[index]])
       addy.index = digest.index
+      addy.signingIndex = state.userIndex * digest.security 
       addy.securitySum = digest.security + serverDigests[index].security
       addy.security = digest.security
       return addy
