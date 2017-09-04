@@ -201,9 +201,7 @@ export default class extends React.Component {
                 />
 
                 <h2>Share this room link with your partner:</h2>
-                <p>
-                  {/* {window && window.localStorage ? window.location.href : null} */}
-                </p>
+                {/* <p>{window ? window.location.href : null}</p> */}
               </div>
             )}
             {channel === "loading" && (
@@ -281,7 +279,7 @@ export default class extends React.Component {
                   </div>
                 ) : (
                   <div>
-                    <h2>Loading</h2>
+                    <Spinner {...this.props} src={"/static/loading-dark.svg"} />
                   </div>
                 )}
               </div>
