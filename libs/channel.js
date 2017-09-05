@@ -77,7 +77,7 @@ export default class Channel {
   }
 
   // Sets up other users
-  static async signSetup(message) {
+  static async signSetup(message, settlementAddress) {
     // Create the state object for the others
     const state = {
       userIndex: message.connection.peer.slice(-1) === "0" ? 1 : 0,
@@ -101,12 +101,12 @@ export default class Channel {
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
     console.log(state)
-    RTC.broadcastMessage({ cmd: "signSetup", digests: state.partialDigests })
+    RTC.broadcastMessage({ cmd: "signSetup", digests: state.partialDigests, address: settlementAddress })
     await store.set("state", state)
   }
 
   // Will only work with one partner. Easy to add N
-  static async closeSetup(message) {
+  static async closeSetup(message, address) {
     console.log("Server Digests: ", message.data.digests)
     var state = await store.get("state")
 
@@ -134,6 +134,7 @@ export default class Channel {
 
     // Update root and remainder address
     state.flash.remainderAddress = remainderAddress
+    state.flash.outputs = [address, message.data.address]
     state.flash.root = multisigs.shift()
 
     // Update root & remainder in state
@@ -164,8 +165,6 @@ export default class Channel {
             message.data.digests,
             address
           )
-          console.log(message.data.digests)
-
           res(newAddress)
         }
       })
