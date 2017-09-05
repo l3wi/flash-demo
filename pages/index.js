@@ -2,10 +2,7 @@ import React from "react"
 import styled from "styled-components"
 import { Layout, SingleBox } from "../components/layout"
 import { Link, Router } from "../routes"
-import shortid from "shortid"
-shortid.characters(
-  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@"
-)
+
 export default class extends React.Component {
   state = {
     form: 0
@@ -19,7 +16,7 @@ export default class extends React.Component {
 
   startChannel = (address, transactions, deposit) => {
     this.setState({ form: 0 })
-    const channelID = shortid.generate()
+    const channelID = seedGen(10)
     setTimeout(() => {
       Router.pushRoute(`/channel/${channelID}`)
     }, 500)
@@ -79,3 +76,20 @@ const AnimatedLeftBox = styled.span`
   visibility: ${props => (props.active ? "visible" : "hidden")};
   opacity: ${props => (props.active ? "1" : "0")};
 `
+// Generate a random seed. Higher security needed
+const seedGen = length => {
+  var charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ9876543210qwertyuiopasdfghjklzxcvbnm"
+  var i
+  var result = ""
+  if (window.crypto && window.crypto.getRandomValues) {
+    var values = new Uint32Array(length)
+    window.crypto.getRandomValues(values)
+    for (i = 0; i < length; i++) {
+      result += charset[values[i] % charset.length]
+    }
+    return result
+  } else
+    throw new Error(
+      "Your browser is outdated and can't generate secure random numbers"
+    )
+}
