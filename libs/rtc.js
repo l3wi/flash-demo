@@ -116,8 +116,9 @@ export default class RTC {
 }
 
 const signalingServer = {
-  host: "localhost",
-  port: 3000,
+  host:
+    process.env.NODE_ENV === "production" ? "flash.tangle.works" : "localhost",
+  port: process.env.HOST ? 443 : 3000,
   path: "/peerjs"
 }
 Object.freeze(signalingServer)
