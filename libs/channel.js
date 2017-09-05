@@ -101,12 +101,16 @@ export default class Channel {
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
     console.log(state)
-    RTC.broadcastMessage({ cmd: "signSetup", digests: state.partialDigests, address: settlementAddress })
+    RTC.broadcastMessage({
+      cmd: "signSetup",
+      digests: state.partialDigests,
+      address: settlementAddress
+    })
     await store.set("state", state)
   }
 
   // Will only work with one partner. Easy to add N
-  static async closeSetup(message, address) {
+  static async closeSetup(message, address, depositRequired) {
     console.log("Server Digests: ", message.data.digests)
     var state = await store.get("state")
 
@@ -136,6 +140,7 @@ export default class Channel {
     state.flash.remainderAddress = remainderAddress
     state.flash.outputs = [address, message.data.address]
     state.flash.root = multisigs.shift()
+    state.flash.depositRequired = depositRequired
 
     // Update root & remainder in state
     await store.set("state", state)
