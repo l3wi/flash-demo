@@ -295,15 +295,20 @@ export default class extends React.Component {
 
                   <Row>
                     <h5>
-                      Your Balance: {flash.deposit[userID === 0 ? 0 : 1]} IOTA
-                    </h5>
-                    <h5>
-                      Partner Balance: {flash.deposit[userID === 0 ? 1 : 0]}{" "}
+                      Your Balance:{" "}
+                      {flash.transfers.length > 0 ? (
+                        flash.transfers[flash.transfers.length - 1].find(
+                          tx => tx.address === this.state.address
+                        ).value / 2
+                      ) : (
+                        0
+                      )}{" "}
                       IOTA
                     </h5>
+
                     <h5>
-                      Remaining transactable:{" "}
-                      {flash.deposit.reduce((a, b) => a + b, 0)} IOTA
+                      Remaining Deposit:{" "}
+                      {flash.deposit.reduce((a, b) => a + b, 0) / 2} IOTA
                     </h5>
                   </Row>
                   <h4>Send IOTA:</h4>
