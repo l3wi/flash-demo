@@ -7,11 +7,12 @@ export const SingleBox = props => <MainBox {...props}>{props.children}</MainBox>
 
 const Main = styled.div`
   display: flex;
-  flex-direction: row;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   color: white;
-  height: 100vh;
+  min-height: 100vh;
   padding-top: 10rem;
+  padding-bottom: 5rem;
   box-sizing: border-box;
   background: linear-gradient(135deg, #693866 0%, #381a36 70%);
   @media screen and (max-width: 640px) {
