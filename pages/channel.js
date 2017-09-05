@@ -133,7 +133,7 @@ export default class extends React.Component {
   closeChannel = async () => {
     history.push("Closing Channel")
     var state = await Channel.close()
-    this.setState({ channel: "closed" })
+    this.setState({ channel: "closed", finalBundle: state[0][0].bundle })
 
     console.log(state)
   }
@@ -217,6 +217,13 @@ export default class extends React.Component {
                   <p>
                     {`See the link below to view the closing transaction that has been attached to the network`}
                   </p>
+                  <a
+                    target={"_blank"}
+                    href={`https://tanglertestnet.codebuffet.co/search/?kind=bundle&hash=${this
+                      .state.finalBundle}`}
+                  >
+                    View Transaction
+                  </a>
                 </div>
               )}
               {channel === "confirm" && (
@@ -298,7 +305,10 @@ export default class extends React.Component {
                   <Row>
                     <h5>
                       Your Balance:{" "}
-                      {flash.transfers.length > 0 ? (
+                      {flash.transfers.length > 0 &&
+                      flash.transfers[flash.transfers.length - 1].find(
+                        tx => tx.address === this.state.address
+                      ) ? (
                         flash.transfers[flash.transfers.length - 1].find(
                           tx => tx.address === this.state.address
                         ).value / 2
