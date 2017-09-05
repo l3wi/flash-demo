@@ -130,7 +130,7 @@ export default class Channel {
 
     // Update root and remainder address
     state.flash.remainderAddress = remainderAddress
-    state.flash.outputs = [address, message.data.address]
+    state.flash.settlementAddresses = [address, message.data.address]
     state.flash.root = multisigs.shift()
     state.flash.depositRequired = depositRequired
 
@@ -274,41 +274,6 @@ export default class Channel {
       let transfers
       // Map over the tx's and add the totals on
       console.log(settlementAddress)
-      // if (flash.transfers.length > 0) {
-      //   transfers = Object.assign(
-      //     [],
-      //     flash.transfers[flash.transfers.length - 1]
-      //       .filter(
-      //         tx =>
-      //           tx.address === flash.outputs[0] ||
-      //           tx.address === flash.outputs[1]
-      //       )
-      //       .map(tx => {
-      //         console.log(tx)
-      //         if (tx.address === settlementAddress) {
-      //           return {
-      //             address: tx.address,
-      //             value: tx.value / 2 + value
-      //           }
-      //         } else {
-      //           return {
-      //             address: tx.address,
-      //             value: tx.value / 2
-      //           }
-      //         }
-      //       })
-      //   )
-      //   // If the tx doesn't exist yet add it in instead of skipping it
-      //   if (
-      //     !transfers.map(tx => tx).find(tx => tx.address === settlementAddress)
-      //   ) {
-      //     transfers.push({
-      //       value: value,
-      //       address: settlementAddress
-      //     })
-      //   }
-      // } else {
-      // no transfers so add one
       transfers = [
         {
           value: value,
@@ -320,7 +285,7 @@ export default class Channel {
       console.log(transfers)
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
-        flash.outputs,
+        flash.settlementAddresses,
         flash.deposit,
         state.userIndex,
         transfers
@@ -400,7 +365,12 @@ export default class Channel {
             await store.set("state", state)
 
             // Needs a share flash.
-            RTC.broadcastMessage({ cmd: "shareFlash", flash: state.flash })
+            RTC.broadcastMessage({
+              cmd: "returnSignature",
+              return: true,
+              signatures,
+              index: state.userIndex
+            })
             events.removeListener("return")
             res(state)
           }
@@ -409,6 +379,7 @@ export default class Channel {
     })
   }
 
+  // Sign transfer an wait for it to be returned.
   static signTransfer = async bundles => {
     const state = await store.get("state")
     console.log(bundles)
@@ -426,6 +397,44 @@ export default class Channel {
       return: true,
       signatures,
       index: state.userIndex
+    })
+    return new Promise((res, rej) => {
+      // Make counter for users
+      let sigs = Array(2).fill()
+      // Sign your bundle initially
+      let signedBundles = transfer.appliedSignatures(bundles, signatures)
+      // Start listening for messages
+      events.on("return", async message => {
+        if (message.data.cmd === "returnSignature") {
+          // Add user signatures into the correct spot in the array
+          signedBundles = transfer.appliedSignatures(
+            signedBundles,
+            message.data.signatures
+          )
+          // Mark off these sigs from the counter
+          sigs[message.data.index] = true
+          if (sigs.find(sig => !sig)) {
+            console.log("Waiting for all slots to be filled")
+          } else {
+            transfer.applyTransfers(
+              state.flash.root,
+              state.flash.deposit,
+              state.flash.outputs,
+              state.flash.remainderAddress,
+              state.flash.transfers,
+              signedBundles
+            )
+            console.log("Completed Bundles: ", signedBundles)
+            // Save state
+            state.bundles = signedBundles
+            await store.set("state", state)
+
+            // Needs a share flash.
+            events.removeListener("return")
+            res(state)
+          }
+        }
+      })
     })
   }
 

@@ -54,9 +54,9 @@ export default class extends React.Component {
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
         this.setState({ flash: message.data.flash })
-        history.push("Deposit address generated")
+        history.unshift("Deposit address generated")
       } else if (message.data.cmd === "composeTransfer") {
-        history.push(`Recieved transfer for ${message.data.value}`)
+        history.unshift(`Recieved transfer for ${message.data.value}`)
         // Get diff and set the state
         this.setState({
           channel: "confirm",
@@ -70,10 +70,10 @@ export default class extends React.Component {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
         Channel.signTransfer(message.data.bundles)
-        history.push(`Closing Channel`)
+        history.unshift(`Closing Channel`)
         this.setState({ channel: "closed" })
       } else if (message.data.cmd === "error") {
-        history.push(`${message.data.error}`)
+        history.unshift(`${message.data.error}`)
         alert(message.data.error)
       }
     })
@@ -114,7 +114,7 @@ export default class extends React.Component {
 
   sendTransaction = async (value, address) => {
     this.setState({ channel: "loading" }, async () => {
-      history.push(`Creating transaction for ${parseInt(value)}`)
+      history.unshift(`Creating transaction for ${parseInt(value)}`)
       var state = await Channel.composeTransfer(
         parseInt(value),
         address,
@@ -144,7 +144,7 @@ export default class extends React.Component {
   }
 
   confirmDeposit = async amount => {
-    history.push(`Confirmed deposit of ${amount}`)
+    history.unshift(`Confirmed deposit of ${amount}`)
     var state = await store.get("state")
     state.flash.deposit[this.state.userID] = amount
     state.flash.balance += amount
@@ -347,7 +347,7 @@ export default class extends React.Component {
                       onClick={() =>
                         this.sendTransaction(
                           transfer,
-                          flash.outputs[userID === 0 ? 1 : 0]
+                          flash.settlementAddresses[userID === 0 ? 1 : 0]
                         )}
                     >
                       Send Transfer
