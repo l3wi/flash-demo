@@ -45,7 +45,11 @@ export default class extends React.Component {
       if (message.data.cmd === "startSetup") {
         this.setState({ currentMessage: message })
       } else if (message.data.cmd === "signSetup") {
-        var flash = await Channel.closeSetup(message, this.state.address)
+        var flash = await Channel.closeSetup(
+          message,
+          this.state.address,
+          this.state.deposits
+        )
         this.setState({ flash })
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
@@ -144,7 +148,7 @@ export default class extends React.Component {
 
   setChannel = (address, deposits) => {
     if (this.state.currentMessage) this.saveAddress(address)
-    this.setState({ setup: true, address, deposits })
+    this.setState({ setup: true, address, deposits: parseInt(deposits) })
   }
 
   // IF you are recieving the signing request return after you've added your settlement addresss
@@ -256,7 +260,8 @@ export default class extends React.Component {
                   />
                   {flash.remainderAddress ? (
                     <div>
-                      <h2>Deposit 50 IOTA into this multisig address:</h2>
+                      <h2>{`Deposit ${this.state.flash
+                        .depositRequired} IOTA into this multisig address:`}</h2>
                       <p style={{ maxWidth: "25rem" }}>
                         {flash.remainderAddress.address}
                       </p>
@@ -264,7 +269,10 @@ export default class extends React.Component {
                         <Button
                           full
                           accent
-                          onClick={() => this.confirmDeposit(50)}
+                          onClick={() =>
+                            this.confirmDeposit(
+                              this.state.flash.depositRequired
+                            )}
                         >
                           Deposited
                         </Button>
@@ -314,7 +322,7 @@ export default class extends React.Component {
                       onClick={() =>
                         this.sendTransaction(
                           transfer,
-                          `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+                          flash.outputs[userID === 0 ? 1 : 0]
                         )}
                     >
                       Send Transfer
