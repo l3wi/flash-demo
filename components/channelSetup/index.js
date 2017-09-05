@@ -21,13 +21,9 @@ export default class extends React.Component {
     //     "Need more than 3 transaction to make a Flash channel worth while."
     //   )
 
-    if (deposit < 0)
-      return alert(
-        "The whole point is to send IOTA. Deposits must be larger than 0"
-      )
-
     if (address.length !== 81 && address.length !== 90)
       return alert("Address not long enough")
+
     this.setState({ form: 0 })
 
     setTimeout(() => {
@@ -53,16 +49,21 @@ export default class extends React.Component {
           {`Flash requires a maximum number of transactions to be defined 
             before hand. Try 100 to start.`}
         </p> */}
-        <div>
-          <Field
-            type="text"
-            value={deposit}
-            onChange={data => this.setState({ deposit: data.target.value })}
-            placeholder={`Enter your inital deposit amount`}
-          />
-        </div>
-        <p
-        >{`Specify the amount that you will deposit into the channel to use for transfering. Your partner will have to deposit the same amount.`}</p>
+        {!this.props.currentMessage && (
+          <div>
+            <div>
+              <Field
+                type="text"
+                value={deposit}
+                onChange={data => this.setState({ deposit: data.target.value })}
+                placeholder={`Enter your inital deposit amount`}
+              />
+            </div>
+            <p
+            >{`Specify the amount that you will deposit into the channel to use for transfering. Your partner will have to deposit the same amount.`}</p>
+          </div>
+        )}
+
         <div>
           <Field
             type="text"

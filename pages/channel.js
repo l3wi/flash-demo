@@ -17,10 +17,9 @@ export default class extends React.Component {
   }
 
   state = {
-    setup: true,
+    setup: false,
     form: 0,
-    address:
-      "GQMHDLS9XPSNURUCPKKJJTULZRPH9WSKUKQQQPJOY9CPRCNAUSIFWCLHVDSUHJJCPMQDARUIFFXKXFVQD",
+    address: "",
     peer: false,
     pendingTransfer: false,
     channel: "share",
@@ -44,7 +43,7 @@ export default class extends React.Component {
     Events.on("message", async message => {
       console.log(`${message.connection.peer}:`, message.data)
       if (message.data.cmd === "startSetup") {
-        Channel.signSetup(message, this.state.address)
+        this.setState({ currentMessage: message })
       } else if (message.data.cmd === "signSetup") {
         var flash = await Channel.closeSetup(message, this.state.address)
         this.setState({ flash })
@@ -144,7 +143,14 @@ export default class extends React.Component {
   }
 
   setChannel = (address, deposits) => {
+    if (this.state.currentMessage) this.saveAddress(address)
     this.setState({ setup: true, address, deposits })
+  }
+
+  // IF you are recieving the signing request return after you've added your settlement addresss
+  saveAddress = address => {
+    var flash = Channel.signSetup(this.state.currentMessage, address)
+    this.setState({ flash })
   }
 
   render() {
@@ -163,9 +169,9 @@ export default class extends React.Component {
     console.log(this.state)
     if (!setup) {
       return (
-        <Layout right={!setup && SideBar()}>
-          <SingleBox noBg={setup} active={form === 1}>
-            <Setup setChannel={this.setChannel} />
+        <Layout>
+          <SingleBox noBg={!setup} active={form === 1}>
+            <Setup setChannel={this.setChannel} {...this.state} />
           </SingleBox>
         </Layout>
       )
@@ -334,11 +340,56 @@ export default class extends React.Component {
               </History>
             </Right>
           </SingleBox>
+          {setup && (
+            <Info>
+              <h2>What is Flash?</h2>
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                Curabitur sit amet dolor scelerisque, fringilla quam in, luctus
+                dui. Vivamus ac dapibus felis. Vivamus id sem in orci rhoncus
+                consectetur.
+              </p>
+              <p>
+                Donec eu sagittis metus. Duis bibendum dui in arcu ultricies, in
+                pharetra tellus vehicula. Donec fringilla rhoncus efficitur.
+                Fusce eu augue dignissim, pulvinar dolor ut, lacinia dui.
+                Vestibulum in eleifend tortor. Aliquam a eleifend libero. Nulla
+                finibus rutrum justo, nec tempor tellus cursus vel. Nulla
+                consectetur ante vitae nisl sodales, lacinia ullamcorper libero
+                vestibulum. Maecenas tempor leo et mi fermentum posuere.
+              </p>
+            </Info>
+          )}
+          {setup && (
+            <Info>
+              <h2>How does it work</h2>
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                Curabitur sit amet dolor scelerisque, fringilla quam in, luctus
+                dui. Vivamus ac dapibus felis. Vivamus id sem in orci rhoncus
+                consectetur.
+              </p>
+              <p>
+                Donec eu sagittis metus. Duis bibendum dui in arcu ultricies, in
+                pharetra tellus vehicula. Donec fringilla rhoncus efficitur.
+                Fusce eu augue dignissim, pulvinar dolor ut, lacinia dui.
+                Vestibulum in eleifend tortor. Aliquam a eleifend libero. Nulla
+                finibus rutrum justo, nec tempor tellus cursus vel. Nulla
+                consectetur ante vitae nisl sodales, lacinia ullamcorper libero
+                vestibulum. Maecenas tempor leo et mi fermentum posuere.
+              </p>
+            </Info>
+          )}
         </Layout>
       )
     }
   }
 }
+
+const Info = styled.div`
+  max-width: 50rem;
+  margin: 4rem 2rem 0;
+`
 
 const Left = styled.div`
   position: relative;
