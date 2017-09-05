@@ -220,7 +220,7 @@ export default class Channel {
     let multisigs = digests.map((digest, index) => {
       let addy = multisig.composeAddress([digest, serverDigests[index]])
       addy.index = digest.index
-      addy.signingIndex = state.userIndex * digest.security 
+      addy.signingIndex = state.userIndex * digest.security
       addy.securitySum = digest.security + serverDigests[index].security
       addy.security = digest.security
       return addy
@@ -278,17 +278,60 @@ export default class Channel {
     const flash = state.flash
     let bundles
     try {
+      // empty transfers
+      let transfers
+      // Map over the tx's and add the totals on
+      console.log(settlementAddress)
+      // if (flash.transfers.length > 0) {
+      //   transfers = Object.assign(
+      //     [],
+      //     flash.transfers[flash.transfers.length - 1]
+      //       .filter(
+      //         tx =>
+      //           tx.address === flash.outputs[0] ||
+      //           tx.address === flash.outputs[1]
+      //       )
+      //       .map(tx => {
+      //         console.log(tx)
+      //         if (tx.address === settlementAddress) {
+      //           return {
+      //             address: tx.address,
+      //             value: tx.value / 2 + value
+      //           }
+      //         } else {
+      //           return {
+      //             address: tx.address,
+      //             value: tx.value / 2
+      //           }
+      //         }
+      //       })
+      //   )
+      //   // If the tx doesn't exist yet add it in instead of skipping it
+      //   if (
+      //     !transfers.map(tx => tx).find(tx => tx.address === settlementAddress)
+      //   ) {
+      //     transfers.push({
+      //       value: value,
+      //       address: settlementAddress
+      //     })
+      //   }
+      // } else {
+      // no transfers so add one
+      transfers = [
+        {
+          value: value,
+          address: settlementAddress
+        }
+      ]
+      // }
+
+      console.log(transfers)
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
-        [Presets.ADDRESS, Presets.ADDRESS],
+        flash.outputs,
         flash.deposit,
         state.userIndex,
-        [
-          {
-            address: settlementAddress,
-            value: value
-          }
-        ]
+        transfers
       )
       bundles = transfer.compose(
         flash.balance,
