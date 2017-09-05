@@ -16,8 +16,6 @@ export default class extends React.Component {
   }
 
   startChannel = (address, transactions, deposit) => {
-    this.setState({ form: 0 })
-
     // if (transactions <= 3)
     //   return alert(
     //     "Need more than 3 transaction to make a Flash channel worth while."
@@ -30,6 +28,7 @@ export default class extends React.Component {
 
     if (address.length !== 81 && address.length !== 90)
       return alert("Address not long enough")
+    this.setState({ form: 0 })
 
     setTimeout(() => {
       this.props.setChannel(address, deposit)
@@ -84,11 +83,6 @@ export default class extends React.Component {
   }
 }
 
-const Logo = styled.img`
-  height: 80px;
-  margin-top: -80px;
-`
-
 const Field = styled.input`
   background: none;
   font-size: 150%;
@@ -100,11 +94,14 @@ const Field = styled.input`
   &:focus {
     outline: none;
   }
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
 `
 const AnimatedLeftBox = styled.span`
   position: absolute;
   padding: 10px;
-  transition: all .5s ease;
+  transition: all 0.5s ease;
   transform: ${props =>
     props.active ? "translateY(0px)" : "translateY(20px)"};
   visibility: ${props => (props.active ? "visible" : "hidden")};
@@ -112,7 +109,7 @@ const AnimatedLeftBox = styled.span`
 `
 const Button = styled.button`
   padding: 15px 20px;
-  background: #d30c7b;
+  background: linear-gradient(135deg, #ef7564, #f06263);
   border: none;
   color: white;
   font-weight: 600;

@@ -1,23 +1,15 @@
 import React from "react"
 import styled from "styled-components"
-import { Layout, LeftContent, RightContent } from "../components/layout"
+import { Layout, SingleBox } from "../components/layout"
 import Setup from "../components/channelSetup"
 
 import Header from "../components/channel/header"
 
+import { isClient } from "../libs/utils"
 import RTC from "../libs/rtc"
 import Channel from "../libs/channel"
 
 const history = ["Waiting for a partner..."]
-
-const SideBar = () => (
-  <RightContent>
-    <h3>Channel History</h3>
-    <History>
-      {history.reverse().map((item, i) => <Item key={i}>{item}</Item>)}
-    </History>
-  </RightContent>
-)
 
 export default class extends React.Component {
   static async getInitialProps({ query }) {
@@ -52,25 +44,14 @@ export default class extends React.Component {
     Events.on("message", async message => {
       console.log(`${message.connection.peer}:`, message.data)
       if (message.data.cmd === "startSetup") {
-        Channel.signSetup(message)
+        Channel.signSetup(message, this.state.address)
       } else if (message.data.cmd === "signSetup") {
-        var flash = await Channel.closeSetup(message)
+        var flash = await Channel.closeSetup(message, this.state.address)
         this.setState({ flash })
       } else if (message.data.cmd === "shareFlash") {
         Channel.initFlash(message.data.flash)
         this.setState({ flash: message.data.flash })
         history.push("Deposit address generated")
-      } else if (message.data.cmd === "requestTransfer") {
-        history.push(`Recieved transfer for ${message.data.value}`)
-        // Get diff and set the state
-        this.setState({
-          channel: "confirm",
-          pendingTransfer: {
-            value: message.data.value,
-            address: message.data.address,
-            request: true
-          }
-        })
       } else if (message.data.cmd === "composeTransfer") {
         history.push(`Recieved transfer for ${message.data.value}`)
         // Get diff and set the state
@@ -163,7 +144,7 @@ export default class extends React.Component {
   }
 
   setChannel = (address, deposits) => {
-    this.setState({ setup: true })
+    this.setState({ setup: true, address, deposits })
   }
 
   render() {
@@ -183,157 +164,200 @@ export default class extends React.Component {
     if (!setup) {
       return (
         <Layout right={!setup && SideBar()}>
-          <LeftContent noBg={setup} active={form === 1}>
+          <SingleBox noBg={setup} active={form === 1}>
             <Setup setChannel={this.setChannel} />
-          </LeftContent>
+          </SingleBox>
         </Layout>
       )
     } else {
       return (
-        <Layout right={setup && SideBar()}>
-          <LeftContent noBg={!setup} active={form === 1}>
-            {channel === "share" && (
-              <div>
-                <Header
-                  {...this.state}
-                  {...this.props}
-                  title={`Waiting for peer to connect...`}
-                />
-
-                <h2>Share this room link with your partner:</h2>
-                {/* <p>{window ? window.location.href : null}</p> */}
-              </div>
-            )}
-            {channel === "loading" && (
-              <div>
-                <Header {...this.state} {...this.props} title={`Loading...`} />
-                <Spinner {...this.props} src={"/static/loading-dark.svg"} />
-              </div>
-            )}
-            {channel === "closed" && (
-              <div>
-                <Header
-                  {...this.state}
-                  {...this.props}
-                  title={`Channel has been closed`}
-                />
-                <p>
-                  {`See the link below to view the closing transaction that has been attached to the network`}
-                </p>
-              </div>
-            )}
-            {channel === "confirm" && (
-              <div>
-                <Header
-                  {...this.state}
-                  title={`${pendingTransfer.address == address
-                    ? "Recieve"
-                    : "Send"} ${pendingTransfer.value}i`}
-                />
-
-                <h2 />
-                <p>Do you want to confirm or deny this transaction?</p>
-                <Row>
-                  <Button
-                    full
-                    accent
-                    onClick={() => this.confirmTransaction(pendingTransfer)}
-                  >
-                    Confirm Transaction
-                  </Button>
-                  <Button
-                    full
-                    left
-                    onClick={() => this.confirmTransaction(false)}
-                  >
-                    Deny Transaction
-                  </Button>
-                </Row>
-              </div>
-            )}
-            {channel === "deposit" && (
-              <div>
-                <Header
-                  {...this.state}
-                  title={
-                    !flash.remainderAddress ? (
-                      `Generating the deposit address`
-                    ) : (
-                      `Waiting for deposits`
-                    )
-                  }
-                />
-                {flash.remainderAddress ? (
-                  <div>
-                    <h2>Deposit 50 IOTA into this multisig address:</h2>
-                    <p>{flash.remainderAddress.address}</p>
-                    <Row>
-                      <Button
-                        full
-                        accent
-                        onClick={() => this.confirmDeposit(50)}
-                      >
-                        Deposited
-                      </Button>
-                    </Row>
-                  </div>
-                ) : (
-                  <div>
-                    <Spinner {...this.props} src={"/static/loading-dark.svg"} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {channel === "main" && (
-              <div>
-                <Header {...this.state} title={`Channel Setup!`} />
-
-                <Row>
-                  <h5>
-                    Your Balance: {flash.deposit[userID === 0 ? 0 : 1]} IOTA
-                  </h5>
-                  <h5>
-                    Partner Balance: {flash.deposit[userID === 0 ? 1 : 0]} IOTA
-                  </h5>
-                  <h5>
-                    Remaining transactable:{" "}
-                    {flash.deposit.reduce((a, b) => a + b, 0)} IOTA
-                  </h5>
-                </Row>
-                <h4>Send IOTA:</h4>
-                <Row>
-                  <Field
-                    value={transfer}
-                    placeholder={"Enter amount in IOTA"}
-                    onChange={data =>
-                      this.setState({ transfer: data.target.value })}
+        <Layout>
+          <SingleBox noBg={!setup} active={form === 1} row wide>
+            <Left>
+              {channel === "share" && (
+                <div>
+                  <Header
+                    {...this.state}
+                    {...this.props}
+                    title={`Waiting for peer to connect...`}
                   />
-                  <div />
-                </Row>
-                <Row>
-                  <Button
-                    full
-                    onClick={() =>
-                      this.sendTransaction(
-                        transfer,
-                        `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
-                      )}
-                  >
-                    Send Transfer
-                  </Button>
-                  <Button full accent left onClick={() => this.closeChannel()}>
-                    Close Channel
-                  </Button>
-                </Row>
-              </div>
-            )}
-          </LeftContent>
+                  <p>Share this room link with your partner:</p>
+                  <p>{isClient ? window.location.href : null}</p>
+                </div>
+              )}
+              {channel === "loading" && (
+                <div>
+                  <Header
+                    {...this.state}
+                    {...this.props}
+                    title={`Loading...`}
+                  />
+                  <Spinner {...this.props} src={"/static/loading-dark.svg"} />
+                </div>
+              )}
+              {channel === "closed" && (
+                <div>
+                  <Header
+                    {...this.state}
+                    {...this.props}
+                    title={`Channel has been closed`}
+                  />
+                  <p>
+                    {`See the link below to view the closing transaction that has been attached to the network`}
+                  </p>
+                </div>
+              )}
+              {channel === "confirm" && (
+                <div>
+                  <Header
+                    {...this.state}
+                    title={`${pendingTransfer.address == address
+                      ? "Recieve"
+                      : "Send"} ${pendingTransfer.value}i`}
+                  />
+
+                  <h2 />
+                  <p>Do you want to confirm or deny this transaction?</p>
+                  <Row>
+                    <Button
+                      full
+                      accent
+                      onClick={() => this.confirmTransaction(pendingTransfer)}
+                    >
+                      Confirm Transaction
+                    </Button>
+                    <Button
+                      full
+                      left
+                      onClick={() => this.confirmTransaction(false)}
+                    >
+                      Deny Transaction
+                    </Button>
+                  </Row>
+                </div>
+              )}
+              {channel === "deposit" && (
+                <div>
+                  <Header
+                    {...this.state}
+                    title={
+                      !flash.remainderAddress ? (
+                        `Generating the deposit address`
+                      ) : (
+                        `Waiting for deposits`
+                      )
+                    }
+                  />
+                  {flash.remainderAddress ? (
+                    <div>
+                      <h2>Deposit 50 IOTA into this multisig address:</h2>
+                      <p style={{ maxWidth: "25rem" }}>
+                        {flash.remainderAddress.address}
+                      </p>
+                      <Row>
+                        <Button
+                          full
+                          accent
+                          onClick={() => this.confirmDeposit(50)}
+                        >
+                          Deposited
+                        </Button>
+                      </Row>
+                    </div>
+                  ) : (
+                    <div>
+                      <Spinner
+                        {...this.props}
+                        src={"/static/loading-dark.svg"}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {channel === "main" && (
+                <div>
+                  <Header {...this.state} title={`Channel Setup!`} />
+
+                  <Row>
+                    <h5>
+                      Your Balance: {flash.deposit[userID === 0 ? 0 : 1]} IOTA
+                    </h5>
+                    <h5>
+                      Partner Balance: {flash.deposit[userID === 0 ? 1 : 0]}{" "}
+                      IOTA
+                    </h5>
+                    <h5>
+                      Remaining transactable:{" "}
+                      {flash.deposit.reduce((a, b) => a + b, 0)} IOTA
+                    </h5>
+                  </Row>
+                  <h4>Send IOTA:</h4>
+                  <Row>
+                    <Field
+                      value={transfer}
+                      placeholder={"Enter amount in IOTA"}
+                      onChange={data =>
+                        this.setState({ transfer: data.target.value })}
+                    />
+                    <div />
+                  </Row>
+                  <Row>
+                    <Button
+                      full
+                      onClick={() =>
+                        this.sendTransaction(
+                          transfer,
+                          `PFIOSG9QAPULHVFGOFOLLMAXHUV9OERMB9GSJWHDJJRTYOHGQKIDVJUAFYX9IYWXQMZUAMEPAZNHXHXXE`
+                        )}
+                    >
+                      Send Transfer
+                    </Button>
+                    <Button
+                      full
+                      accent
+                      left
+                      onClick={() => this.closeChannel()}
+                    >
+                      Close Channel
+                    </Button>
+                  </Row>
+                </div>
+              )}
+            </Left>
+            <Right>
+              <h3>Channel History</h3>
+              <History>
+                {history
+                  .reverse()
+                  .map((item, i) => <Item key={i}>{item}</Item>)}
+              </History>
+            </Right>
+          </SingleBox>
         </Layout>
       )
     }
   }
 }
+
+const Left = styled.div`
+  position: relative;
+  flex: 1.7;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px 20px;
+  box-sizing: border-box;
+`
+
+const Right = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(232, 206, 230, 1);
+  padding: 10px 20px;
+  box-sizing: border-box;
+`
 
 const Row = styled.div`
   width: 100%;
@@ -359,7 +383,8 @@ const Field = styled.input`
 const Button = styled.button`
   flex: ${props => (props.full ? "1" : null)};
   padding: 15px 20px;
-  background: ${props => (props.accent ? "#d30c7b" : "#222")};
+  background: ${props =>
+    props.accent ? "linear-gradient(135deg, #ef7564, #f06263)" : "#222"};
   border: none;
   color: white;
   font-weight: 600;
@@ -381,7 +406,7 @@ const AnimatedLeftBox = styled.span`
 `
 
 const History = styled.div`
-  border-top: 2px solid white;
+  border-top: 2px solid #222;
   margin: 0 0 5px;
   overflow: scroll;
   &::-webkit-scrollbar {
@@ -391,19 +416,19 @@ const History = styled.div`
   &:before {
     content: "";
     position: absolute;
-    bottom: 14px;
-    width: 90%;
+    bottom: 0px;
+    width: 36%;
     height: 2rem;
     background: linear-gradient(
       to bottom,
-      rgba(180, 180, 180, 0),
-      rgba(180, 180, 180, 1)
+      rgba(232, 206, 230, 0),
+      rgba(232, 206, 230, 1)
     );
   }
 `
 const Item = styled.p`
   padding-bottom: 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(56, 26, 54, 0.2);
 `
 const Spinner = styled.img`
   height: 5rem !important;
