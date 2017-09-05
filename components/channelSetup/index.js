@@ -35,20 +35,6 @@ export default class extends React.Component {
     return (
       <AnimatedLeftBox active={form === 1}>
         <h2>Setup Channel</h2>
-        {/* <div>
-          <Field
-            type="text"
-            value={transactions}
-            onChange={data =>
-              this.setState({ transactions: data.target.value })}
-            placeholder={`Enter maxium transactions`}
-          />
-        </div>
-
-        <p>
-          {`Flash requires a maximum number of transactions to be defined 
-            before hand. Try 100 to start.`}
-        </p> */}
         {!this.props.currentMessage && (
           <div>
             <div>
