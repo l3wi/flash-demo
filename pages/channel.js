@@ -71,9 +71,9 @@ export default class extends React.Component {
       } else if (message.data.cmd === "closeChannel") {
         Channel.signTransfer(message.data.bundles)
         history.push(`Closing Channel`)
+        this.setState({ channel: "closed" })
       } else if (message.data.cmd === "error") {
         history.push(`${message.data.error}`)
-
         alert(message.data.error)
       }
     })
@@ -133,6 +133,8 @@ export default class extends React.Component {
   closeChannel = async () => {
     history.push("Closing Channel")
     var state = await Channel.close()
+    this.setState({ channel: "closed" })
+
     console.log(state)
   }
 
