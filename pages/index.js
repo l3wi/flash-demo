@@ -1,6 +1,6 @@
 import React from "react"
 import styled from "styled-components"
-import { Layout, LeftContent, RightContent } from "../components/layout"
+import { Layout, SingleBox } from "../components/layout"
 import { Link, Router } from "../routes"
 import shortid from "shortid"
 shortid.characters(
@@ -29,7 +29,7 @@ export default class extends React.Component {
     var { form } = this.state
     return (
       <Layout>
-        <LeftContent noBg active={form === 1}>
+        <SingleBox noBg active={form === 1}>
           <Logo src={"/static/iota.svg"} />
           <h2>IOTA Flash Channels</h2>
           <p
@@ -39,16 +39,13 @@ export default class extends React.Component {
       network without doing Proof of Work while remaining secure. `}
           </p>
           <Button onClick={() => this.startChannel()}>Start a channel</Button>
-        </LeftContent>
+        </SingleBox>
       </Layout>
     )
   }
 }
 
-const Logo = styled.img`
-  height: 80px;
-  margin-top: -80px;
-`
+const Logo = styled.img`height: 80px;`
 
 const Field = styled.input`
   background: none;
@@ -64,7 +61,7 @@ const Field = styled.input`
 `
 const Button = styled.button`
   padding: 15px 20px;
-  background: #d30c7b;
+  background: linear-gradient(135deg, #ef7564, #f06263);
   border: none;
   color: white;
   font-weight: 600;
