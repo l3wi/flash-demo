@@ -1,15 +1,10 @@
 import RTC, { events } from "./rtc"
-import shortid from "shortid"
 import Flash from "../git_modules/flash/lib/flash.js"
 import multisig from "../git_modules/flash/lib/multisig"
 import transfer from "../git_modules/flash/lib/transfer"
 import { Attach, iota } from "./iota"
 import Presets from "./presets"
 const IOTACrypto = require("iota.crypto.js")
-
-shortid.characters(
-  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@"
-)
 
 export default class Channel {
   // Security level
@@ -26,7 +21,6 @@ export default class Channel {
   // Initiate the local state and store it localStorage
   static async startSetup(
     userIndex = 0,
-    userID = shortid.generate(),
     index = 0,
     security = Channel.SECURITY,
     signersCount = Channel.SIGNERS_COUNT,
@@ -44,7 +38,6 @@ export default class Channel {
     // Initialize state object
     const state = {
       userIndex: userIndex,
-      userID: userID,
       userSeed: userSeed,
       index: index,
       security: security,
@@ -81,7 +74,6 @@ export default class Channel {
     // Create the state object for the others
     const state = {
       userIndex: message.connection.peer.slice(-1) === "0" ? 1 : 0,
-      userID: shortid.generate(),
       userSeed: seedGen(81),
       index: 0,
       security: Channel.SECURITY,
