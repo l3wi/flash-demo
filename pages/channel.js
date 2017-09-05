@@ -113,13 +113,15 @@ export default class extends React.Component {
   }
 
   sendTransaction = async (value, address) => {
-    history.push(`Creating transaction for ${parseInt(value)}`)
-    var state = await Channel.composeTransfer(
-      parseInt(value),
-      address,
-      this.state.userID
-    )
-    this.setState({ flash: state.flash })
+    this.setState({ channel: "loading" }, async () => {
+      history.push(`Creating transaction for ${parseInt(value)}`)
+      var state = await Channel.composeTransfer(
+        parseInt(value),
+        address,
+        this.state.userID
+      )
+      this.setState({ channel: "main", flash: state.flash })
+    })
   }
 
   request = (value, address) => {
@@ -133,8 +135,11 @@ export default class extends React.Component {
   closeChannel = async () => {
     history.push("Closing Channel")
     var state = await Channel.close()
-    this.setState({ channel: "closed", finalBundle: state[0][0].bundle })
-
+    this.setState({
+      channel: "closed",
+      flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
+    })
+    Channel.shareFlash(this.state.flash)
     console.log(state)
   }
 
@@ -217,13 +222,16 @@ export default class extends React.Component {
                   <p>
                     {`See the link below to view the closing transaction that has been attached to the network`}
                   </p>
-                  <a
-                    target={"_blank"}
-                    href={`https://tanglertestnet.codebuffet.co/search/?kind=bundle&hash=${this
-                      .state.finalBundle}`}
-                  >
-                    View Transaction
-                  </a>
+                  {flash.finalBundle ? (
+                    <a
+                      target={"_blank"}
+                      href={`https://tanglertestnet.codebuffet.co/search/?kind=bundle&hash=${flash.finalBundle}`}
+                    >
+                      View Transaction
+                    </a>
+                  ) : (
+                    <Spinner {...this.props} src={"/static/loading-dark.svg"} />
+                  )}
                 </div>
               )}
               {channel === "confirm" && (
