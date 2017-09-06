@@ -96,9 +96,53 @@ export default class Channel {
     RTC.broadcastMessage({
       cmd: "signSetup",
       digests: state.partialDigests,
-      address: settlementAddress
+      address: settlementAddress,
+      index: state.userIndex
     })
     await store.set("state", state)
+    return new Promise((res, rej) => {
+      // Create a digest object (2 people atm)
+      var allDigests = []
+      allDigests[state.userIndex] = state.partialDigests
+      events.on("return", async message => {
+        if (message.data.cmd === "returnSetup") {
+          allDigests[message.data.index] = message.data.digests
+
+          let multisigs = digests.map((digest, index) => {
+            let addy = multisig.composeAddress(
+              allDigests.map(userDigests => userDigests[index])
+            )
+            addy.index = digest.index
+            addy.signingIndex = state.userIndex * digest.security
+            addy.securitySum = allDigests
+              .map(userDigests => userDigests[index])
+              .reduce((acc, v) => acc + v.security, 0)
+            addy.security = digest.security
+            return addy
+          })
+
+          // Get remainder addy
+          const remainderAddress = multisigs.shift()
+
+          for (let i = 1; i < multisigs.length; i++) {
+            multisigs[i - 1].children.push(multisigs[i])
+          }
+
+          console.log(remainderAddress)
+          console.log(iota.utils.addChecksum(multisigs[0].address))
+
+          // Update root and remainder address
+          state.flash.remainderAddress = remainderAddress
+          state.flash.root = multisigs.shift()
+          state.flash.depositRequired = message.data.depositRequired
+          state.flash.settlementAddresses = message.data.settlementAddresses
+
+          // Update root & remainder in state
+          await store.set("state", state)
+          res(state.flash)
+        }
+      })
+    })
   }
 
   // Will only work with one partner. Easy to add N
@@ -130,13 +174,21 @@ export default class Channel {
 
     // Update root and remainder address
     state.flash.remainderAddress = remainderAddress
-    state.flash.settlementAddresses = [address, message.data.address]
     state.flash.root = multisigs.shift()
     state.flash.depositRequired = depositRequired
+    state.flash.settlementAddresses = [address, message.data.address]
 
     // Update root & remainder in state
     await store.set("state", state)
-    Channel.shareFlash(state.flash)
+
+    RTC.broadcastMessage({
+      cmd: "returnSetup",
+      return: true,
+      digests: state.partialDigests,
+      index: state.userIndex,
+      settlementAddresses: [address, message.data.address],
+      depositRequired
+    })
     return state.flash
   }
 
@@ -350,6 +402,7 @@ export default class Channel {
           if (sigs.find(sig => !sig)) {
             console.log("Waiting for all slots to be filled")
           } else {
+            console.log("Completed Bundles: ", signedBundles)
             transfer.applyTransfers(
               flash.root,
               flash.deposit,
@@ -358,7 +411,6 @@ export default class Channel {
               flash.transfers,
               signedBundles
             )
-            console.log("Completed Bundles: ", signedBundles)
             // Save state
             state.bundles = signedBundles
             state.flash = flash

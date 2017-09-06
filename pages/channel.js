@@ -51,9 +51,11 @@ export default class extends React.Component {
           this.state.deposits
         )
         this.setState({ flash })
-      } else if (message.data.cmd === "shareFlash") {
-        Channel.initFlash(message.data.flash)
-        this.setState({ flash: message.data.flash })
+      } else if (message.data.cmd === "deposited") {
+        this.confirmDeposit(
+          this.state.flash.depositRequired,
+          message.data.index
+        )
         history.unshift("Deposit address generated")
       } else if (message.data.cmd === "composeTransfer") {
         history.unshift(`Recieved transfer for ${message.data.value}`)
@@ -143,14 +145,18 @@ export default class extends React.Component {
     console.log(state)
   }
 
-  confirmDeposit = async amount => {
+  confirmDeposit = async (amount, index) => {
     history.unshift(`Confirmed deposit of ${amount}`)
     var state = await store.get("state")
-    state.flash.deposit[this.state.userID] = amount
+    state.flash.deposit[index] = amount
     state.flash.balance += amount
-    Channel.shareFlash(state.flash)
     await store.set("state", state)
-    this.setState({ channel: "main", flash: state.flash })
+    if (index === this.state.userID) {
+      RTC.broadcastMessage({ cmd: "deposited", index: this.state.userID })
+      this.setState({ channel: "main", flash: state.flash })
+    } else {
+      this.setState({ flash: state.flash })
+    }
   }
 
   setChannel = (address, deposits) => {
@@ -159,8 +165,8 @@ export default class extends React.Component {
   }
 
   // IF you are recieving the signing request return after you've added your settlement addresss
-  saveAddress = address => {
-    var flash = Channel.signSetup(this.state.currentMessage, address)
+  saveAddress = async address => {
+    var flash = await Channel.signSetup(this.state.currentMessage, address)
     this.setState({ flash })
   }
 
@@ -177,7 +183,6 @@ export default class extends React.Component {
       pendingTransfer
     } = this.state
     if (!flash) var flash = { deposit: [] }
-    console.log(this.state)
     if (!setup) {
       return (
         <Layout>
@@ -288,7 +293,8 @@ export default class extends React.Component {
                           accent
                           onClick={() =>
                             this.confirmDeposit(
-                              this.state.flash.depositRequired
+                              this.state.flash.depositRequired,
+                              this.state.userID
                             )}
                         >
                           Deposited
