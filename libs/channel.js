@@ -25,8 +25,8 @@ export default class Channel {
     security = Channel.SECURITY,
     signersCount = Channel.SIGNERS_COUNT,
     treeDepth = Channel.TREE_DEPTH,
-    balance = 0,
-    deposit = Array(Channel.SIGNERS_COUNT).fill(0)
+    balance = 2000,
+    deposit = Array(Channel.SIGNERS_COUNT).fill(1000)
   ) {
     // Escape the function when server rendering
     if (!isWindow()) return false
@@ -65,24 +65,76 @@ export default class Channel {
       digests: state.partialDigests,
       balance
     })
+    return new Promise((res, rej) => {
+      // Create a digest object (2 people atm)
+      var allDigests = []
+      allDigests[state.userIndex] = state.partialDigests
+      events.on("return", async message => {
+        if (message.data.cmd === "returnSetup") {
+          allDigests[message.data.index] = message.data.digests
 
-    await store.set("state", state)
+          let multisigs =  state.partialDigests.map((digest, index) => {
+            let addy = multisig.composeAddress(
+              allDigests.map(userDigests => userDigests[index])
+            )
+            addy.index = digest.index
+            addy.signingIndex = state.userIndex * digest.security
+            addy.securitySum = allDigests
+              .map(userDigests => userDigests[index])
+              .reduce((acc, v) => acc + v.security, 0)
+            addy.security = digest.security
+            return addy
+          })
+        // Get remainder addy
+        const remainderAddress = multisigs.shift()
+
+        for (let i = 1; i < multisigs.length; i++) {
+          multisigs[i - 1].children.push(multisigs[i])
+        }
+
+        console.log(remainderAddress)
+        console.log(iota.utils.addChecksum(multisigs[0].address))
+
+        // Update root and remainder address
+        state.flash.remainderAddress = remainderAddress
+        state.flash.root = multisigs.shift()
+        state.flash.settlementAddresses = [userSeed, message.data.address]
+
+   
+
+        RTC.broadcastMessage({
+          cmd: "returnSetup",
+          return: true,
+          digests: state.partialDigests,
+          index: state.userIndex,
+          settlementAddresses: [userSeed, message.data.address]
+        })
+        console.log(state) 
+          
+        // Update root & remainder in state
+        await store.set("state", state)     
+        events.removeListener("return")         
+        res(state.flash)
+       }
+      })
+    })
   }
 
   // Sets up other users
-  static async signSetup(message, settlementAddress) {
+  static async signSetup(message) {
+    const seedAddress = seedGen(81)
     // Create the state object for the others
     const state = {
       userIndex: message.connection.peer.slice(-1) === "0" ? 1 : 0,
-      userSeed: seedGen(81),
+      userSeed: seedAddress,
       index: 0,
       security: Channel.SECURITY,
       depth: Channel.TREE_DEPTH,
       bundles: [],
       flash: {
         signersCount: Channel.SIGNERS_COUNT,
-        balance: 0,
-        deposit: Array(Channel.SIGNERS_COUNT).fill(0),
+        balance: 2000,
+        deposit: Array(Channel.SIGNERS_COUNT).fill(1000),
         outputs: {},
         transfers: []
       }
@@ -94,12 +146,13 @@ export default class Channel {
     )
     console.log(state)
     RTC.broadcastMessage({
-      cmd: "signSetup",
+      cmd: "returnSetup",
+      return: true,
       digests: state.partialDigests,
-      address: settlementAddress,
+      address: seedAddress,
       index: state.userIndex
     })
-    await store.set("state", state)
+
     return new Promise((res, rej) => {
       // Create a digest object (2 people atm)
       var allDigests = []
@@ -134,62 +187,16 @@ export default class Channel {
           // Update root and remainder address
           state.flash.remainderAddress = remainderAddress
           state.flash.root = multisigs.shift()
-          state.flash.depositRequired = message.data.depositRequired
           state.flash.settlementAddresses = message.data.settlementAddresses
 
           // Update root & remainder in state
+          console.log(state)
           await store.set("state", state)
+          events.removeListener("return")                   
           res(state.flash)
         }
       })
     })
-  }
-
-  // Will only work with one partner. Easy to add N
-  static async closeSetup(message, address, depositRequired) {
-    console.log("Server Digests: ", message.data.digests)
-    var state = await store.get("state")
-
-    var digests = state.partialDigests
-    const serverDigests = message.data.digests
-
-    let multisigs = digests.map((digest, index) => {
-      let addy = multisig.composeAddress([digest, serverDigests[index]])
-      addy.index = digest.index
-      addy.signingIndex = 0
-      addy.securitySum = digest.security + serverDigests[index].security
-      addy.security = digest.security
-      return addy
-    })
-
-    // Get remainder addy
-    const remainderAddress = multisigs.shift()
-
-    for (let i = 1; i < multisigs.length; i++) {
-      multisigs[i - 1].children.push(multisigs[i])
-    }
-
-    console.log(remainderAddress)
-    console.log(iota.utils.addChecksum(multisigs[0].address))
-
-    // Update root and remainder address
-    state.flash.remainderAddress = remainderAddress
-    state.flash.root = multisigs.shift()
-    state.flash.depositRequired = depositRequired
-    state.flash.settlementAddresses = [address, message.data.address]
-
-    // Update root & remainder in state
-    await store.set("state", state)
-
-    RTC.broadcastMessage({
-      cmd: "returnSetup",
-      return: true,
-      digests: state.partialDigests,
-      index: state.userIndex,
-      settlementAddresses: [address, message.data.address],
-      depositRequired
-    })
-    return state.flash
   }
 
   // Send flash object with partner
@@ -197,24 +204,55 @@ export default class Channel {
     RTC.broadcastMessage({ cmd: "shareFlash", flash })
   }
 
-  static async getNewBranch(address, digests) {
+  static async getNewBranch(addressMultisig, digests) {
+    var state = await store.get("state")    
     console.log("Branch Event", "Digests: ", digests)
     // Request New Branch
     RTC.broadcastMessage({
       cmd: "getBranch",
-      address: address.address,
-      digests
+      address: addressMultisig.address,
+      digests,
+      index: state.userIndex
     })
+    
     // Subscribe once to a get branch emitter.
     return new Promise((res, rej) => {
-      events.once("return", async message => {
+      var allDigests = []
+      allDigests[state.userIndex] = digests
+      events.on("return", async message => {
         if (message.data.cmd === "returnBranch") {
-          const newAddress = await Channel.applyBranch(
+          allDigests[message.data.index] = message.data.digests
+          console.log(allDigests)
+          {
+          let multisigs = digests.map((digest, index) => {
+            let addy = multisig.composeAddress(
+              allDigests.map(userDigests => userDigests[index])
+            )
+            addy.index = digest.index
+            addy.signingIndex = state.userIndex * digest.security
+            addy.securitySum = allDigests
+              .map(userDigests => userDigests[index])
+              .reduce((acc, v) => acc + v.security, 0)
+            addy.security = digest.security
+            return addy
+          })
+
+          multisigs.unshift(addressMultisig)
+ 
+           for (let i = 1; i < multisigs.length; i++) {
+             multisigs[i - 1].children.push(multisigs[i])
+           }
+          }
+
+          RTC.broadcastMessage({
+            cmd: "returnBranch",
             digests,
-            message.data.digests,
-            address
-          )
-          res(newAddress)
+            return: true,
+            index: state.userIndex
+          })
+          await store.set("state", state)          
+          events.removeListener("return")         
+          res(addressMultisig)
         }
       })
     })
@@ -226,55 +264,46 @@ export default class Channel {
     let myDigests = digests.map(() =>
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
-    {
-      // compose multisigs, write to remainderAddress and root
-      let multisigs = digests.map((digest, i) => {
-        let addy = multisig.composeAddress([digest, myDigests[i]])
-        addy.index = myDigests[i].index
-        addy.security = myDigests[i].security
-        return addy
-      })
-      for (let i = 1; i < multisigs.length; i++) {
-        multisigs[i - 1].children.push(multisigs[i])
-      }
-      let node = multisig.getMultisig(state.flash.root, address)
-      if (!node)
-        RTC.broadcastMessage({
-          cmd: "returnBranch",
-          error: "Multisig not found"
-        })
-      node.children.push(multisigs[0])
-    }
 
-    await store.set("state", state)
-
-    console.log(myDigests)
+    console.log("Branch Digests: ", myDigests)
     RTC.broadcastMessage({
       cmd: "returnBranch",
       digests: myDigests,
-      return: true
-    })
-    events.removeListener("return")
-
-    return myDigests
-  }
-
-  static async applyBranch(digests, serverDigests, address) {
-    var state = await store.get("state")
-    let multisigs = digests.map((digest, index) => {
-      let addy = multisig.composeAddress([digest, serverDigests[index]])
-      addy.index = digest.index
-      addy.signingIndex = state.userIndex * digest.security
-      addy.securitySum = digest.security + serverDigests[index].security
-      addy.security = digest.security
-      return addy
+      return: true,
+      index: state.userIndex
     })
 
-    multisigs.unshift(address)
-    for (let i = 1; i < multisigs.length; i++) {
-      multisigs[i - 1].children.push(multisigs[i])
-    }
-    return address
+    return new Promise((res, rej) => {
+      var allDigests = []
+      allDigests[state.userIndex] = myDigests
+      events.on("return", async message => {
+        if (message.data.cmd === "returnBranch") {
+          allDigests[message.data.index] = message.data.digests
+          let multisigs = digests.map((digest, index) => {
+            let addy = multisig.composeAddress(
+              allDigests.map(userDigests => userDigests[index])
+            )
+            addy.index = digest.index
+            addy.signingIndex = state.userIndex * digest.security
+            addy.securitySum = allDigests
+              .map(userDigests => userDigests[index])
+              .reduce((acc, v) => acc + v.security, 0)
+            addy.security = digest.security
+            return addy
+          })
+          const addressMultisig = multisig.getMultisig(state.flash.root, address)
+          multisigs.unshift(addressMultisig)
+          
+          for(let i = 1; i < multisigs.length; i++) {
+            multisigs[i-1].children.push(multisigs[i]);
+          }
+
+          await store.set("state", state)
+          events.removeListener("return")        
+          res(addressMultisig)
+        }
+      })
+    })
   }
 
   // Get a new digest and update index in state

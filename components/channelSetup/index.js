@@ -21,21 +21,21 @@ export default class extends React.Component {
     //     "Need more than 3 transaction to make a Flash channel worth while."
     //   )
 
-    if (address.length !== 81 && address.length !== 90)
-      return alert("Address not long enough")
+    // if (address.length !== 81 && address.length !== 90)
+    //   return alert("Address not long enough")
 
     this.setState({ form: 0 })
 
     setTimeout(() => {
-      this.props.setChannel(address, deposit)
+      this.props.setChannel()
     }, 500)
   }
   render() {
     var { form, address, transactions, deposit } = this.state
     return (
       <AnimatedLeftBox active={form === 1}>
-        <h2>Setup Channel</h2>
-        {!this.props.currentMessage && (
+        <h2>Welcome to the Flash Channel demo</h2>
+        {/* {!this.props.currentMessage && (
           <div>
             <div>
               <Field
@@ -57,13 +57,17 @@ export default class extends React.Component {
             onChange={data => this.setState({ address: data.target.value })}
             placeholder={`Enter your settlement address`}
           />
-        </div>
+        </div> */}
         <p
-        >{`This is the address your final balance will be deposited into when the channel is complete`}</p>
+        >{`The demo uses a seed, a settlement address that has been generated on your behalf.
+        In a real world use case, you'll enter these yourself and specify the amount of IOTA 
+        you would like to transact in the channel.`}</p>
+         <p
+        >{`The channel will have 10,000 testnet IOTA deposited into it when it is opened.`}</p>
         <Button
-          onClick={() => this.startChannel(address, transactions, deposit)}
+          onClick={() => this.startChannel()}
         >
-          Launch Channel
+          Enter the Channel
         </Button>
       </AnimatedLeftBox>
     )

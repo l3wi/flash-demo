@@ -43,17 +43,10 @@ export default class extends React.Component {
     Events.on("message", async message => {
       console.log(`${message.connection.peer}:`, message.data)
       if (message.data.cmd === "startSetup") {
-        this.setState({ currentMessage: message })
-      } else if (message.data.cmd === "signSetup") {
-        var flash = await Channel.closeSetup(
-          message,
-          this.state.address,
-          this.state.deposits
-        )
+        var flash = await Channel.signSetup(message)
         this.setState({ flash })
       } else if (message.data.cmd === "deposited") {
         this.confirmDeposit(
-          this.state.flash.depositRequired,
           message.data.index
         )
         history.unshift("Deposit address generated")
@@ -68,6 +61,8 @@ export default class extends React.Component {
             bundles: message.data.bundles
           }
         })
+      } else if (message.data.cmd === "closedChannel") {
+        this.setState({flash: message.data.flash})
       } else if (message.data.cmd === "getBranch") {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
@@ -77,6 +72,7 @@ export default class extends React.Component {
       } else if (message.data.cmd === "error") {
         history.unshift(`${message.data.error}`)
         alert(message.data.error)
+        this.setState({channel: 'main'})
       }
     })
     Events.on("peerLeft", message => {
@@ -84,7 +80,7 @@ export default class extends React.Component {
       history.push("Partner Disconnected")
       this.setState({ peer: false })
     })
-    Events.on("peerJoined", message => {
+    Events.on("peerJoined", async message => {
       console.log(`Peer Joined`)
       console.log(message.connection.peer)
       history.push("Partner Connected")
@@ -95,7 +91,8 @@ export default class extends React.Component {
       })
 
       if (message.connection.peer.slice(-1) !== "0") {
-        Channel.startSetup()
+        var flash = await Channel.startSetup()
+        this.setState({flash})
       }
     })
   }
@@ -135,39 +132,29 @@ export default class extends React.Component {
   }
 
   closeChannel = async () => {
-    history.push("Closing Channel")
-    var state = await Channel.close()
-    this.setState({
-      channel: "closed",
-      flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
+    this.setState({ channel: "loading" }, async () => {
+      
+      history.push("Closing Channel")
+      var state = await Channel.close()
+      this.setState({
+        channel: "closed",
+        flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
+      })
+      RTC.broadcastMessage({cmd: "closedChannel", flash: this.state.flash})
     })
-    Channel.shareFlash(this.state.flash)
-    console.log(state)
   }
 
-  confirmDeposit = async (amount, index) => {
-    history.unshift(`Confirmed deposit of ${amount}`)
-    var state = await store.get("state")
-    state.flash.deposit[index] = amount
-    state.flash.balance += amount
-    await store.set("state", state)
+  confirmDeposit = async (index) => {
+    history.unshift(`Deposit of 1000 Completed`)
     if (index === this.state.userID) {
       RTC.broadcastMessage({ cmd: "deposited", index: this.state.userID })
-      this.setState({ channel: "main", flash: state.flash })
-    } else {
-      this.setState({ flash: state.flash })
+      this.setState({ channel: "main" })
     }
   }
 
   setChannel = (address, deposits) => {
-    if (this.state.currentMessage) this.saveAddress(address)
-    this.setState({ setup: true, address, deposits: parseInt(deposits) })
-  }
-
-  // IF you are recieving the signing request return after you've added your settlement addresss
-  saveAddress = async address => {
-    var flash = await Channel.signSetup(this.state.currentMessage, address)
-    this.setState({ flash })
+    // if (this.state.currentMessage) this.saveAddress(address)
+    this.setState({ setup: true})
   }
 
   render() {
@@ -225,7 +212,7 @@ export default class extends React.Component {
                     title={`Channel has been closed`}
                   />
                   <p>
-                    {`See the link below to view the closing transaction that has been attached to the network`}
+                    {`Once completed the link below will display the closing transaction that has been attached to the network`}
                   </p>
                   {flash.finalBundle ? (
                     <a
@@ -293,7 +280,6 @@ export default class extends React.Component {
                           accent
                           onClick={() =>
                             this.confirmDeposit(
-                              this.state.flash.depositRequired,
                               this.state.userID
                             )}
                         >
@@ -321,10 +307,10 @@ export default class extends React.Component {
                       Your Balance:{" "}
                       {flash.transfers.length > 0 &&
                       flash.transfers[flash.transfers.length - 1].find(
-                        tx => tx.address === this.state.address
+                        tx => tx.address === this.state.userSeed
                       ) ? (
                         flash.transfers[flash.transfers.length - 1].find(
-                          tx => tx.address === this.state.address
+                          tx => tx.address === this.state.userSeed
                         ).value / 2
                       ) : (
                         0
@@ -506,7 +492,7 @@ const History = styled.div`
   &:before {
     content: "";
     position: absolute;
-    bottom: 0px;
+    bottom: 5px;
     width: 36%;
     height: 2rem;
     background: linear-gradient(
