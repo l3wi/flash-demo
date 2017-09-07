@@ -105,8 +105,6 @@ export default class extends React.Component {
         error: "Transaction Denied."
       })
     }
-    console.log(transaction)
-
     var state = await Channel.signTransfer(transaction.bundles)
     this.setState({ ...state, channel: "main" })
   }
