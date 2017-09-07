@@ -100,8 +100,6 @@ export default class Channel {
         state.flash.root = multisigs.shift()
         state.flash.settlementAddresses = [userSeed, message.data.address]
 
-   
-
         RTC.broadcastMessage({
           cmd: "returnSetup",
           return: true,
@@ -110,7 +108,7 @@ export default class Channel {
           settlementAddresses: [userSeed, message.data.address]
         })
         console.log(state) 
-          
+
         // Update root & remainder in state
         await store.set("state", state)     
         events.removeListener("return")         
@@ -222,37 +220,35 @@ export default class Channel {
       events.on("return", async message => {
         if (message.data.cmd === "returnBranch") {
           allDigests[message.data.index] = message.data.digests
-          console.log(allDigests)
-          {
-          let multisigs = digests.map((digest, index) => {
-            let addy = multisig.composeAddress(
-              allDigests.map(userDigests => userDigests[index])
-            )
-            addy.index = digest.index
-            addy.signingIndex = state.userIndex * digest.security
-            addy.securitySum = allDigests
-              .map(userDigests => userDigests[index])
-              .reduce((acc, v) => acc + v.security, 0)
-            addy.security = digest.security
-            return addy
-          })
 
-          multisigs.unshift(addressMultisig)
- 
-           for (let i = 1; i < multisigs.length; i++) {
-             multisigs[i - 1].children.push(multisigs[i])
-           }
-          }
+            let multisigs = digests.map((digest, index) => {
+              let addy = multisig.composeAddress(
+                allDigests.map(userDigests => userDigests[index])
+              )
+              addy.index = digest.index
+              addy.signingIndex = state.userIndex * digest.security
+              addy.securitySum = allDigests
+                .map(userDigests => userDigests[index])
+                .reduce((acc, v) => acc + v.security, 0)
+              addy.security = digest.security
+              return addy
+            })
+            
+            multisigs.unshift(addressMultisig)
 
+            for(let i = 1; i < multisigs.length; i++) {
+              multisigs[i-1].children.push(multisigs[i]);
+            }    
+            
+            console.log("Address Mutlisig: ", addressMultisig)            
           RTC.broadcastMessage({
             cmd: "returnBranch",
             digests,
             return: true,
             index: state.userIndex
           })
-          await store.set("state", state)          
-          events.removeListener("return")         
-          res(addressMultisig)
+          events.removeListener("return")     
+          res(multisigs)
         }
       })
     })
@@ -279,28 +275,31 @@ export default class Channel {
       events.on("return", async message => {
         if (message.data.cmd === "returnBranch") {
           allDigests[message.data.index] = message.data.digests
-          let multisigs = digests.map((digest, index) => {
-            let addy = multisig.composeAddress(
-              allDigests.map(userDigests => userDigests[index])
-            )
-            addy.index = digest.index
-            addy.signingIndex = state.userIndex * digest.security
-            addy.securitySum = allDigests
-              .map(userDigests => userDigests[index])
-              .reduce((acc, v) => acc + v.security, 0)
-            addy.security = digest.security
-            return addy
-          })
-          const addressMultisig = multisig.getMultisig(state.flash.root, address)
-          multisigs.unshift(addressMultisig)
-          
-          for(let i = 1; i < multisigs.length; i++) {
-            multisigs[i-1].children.push(multisigs[i]);
-          }
+          let addressMultisig = {}
 
+            let multisigs = digests.map((digest, index) => {
+              let addy = multisig.composeAddress(
+                allDigests.map(userDigests => userDigests[index])
+              )
+              addy.index = digest.index
+              addy.signingIndex = state.userIndex * digest.security
+              addy.securitySum = allDigests
+                .map(userDigests => userDigests[index])
+                .reduce((acc, v) => acc + v.security, 0)
+              addy.security = digest.security
+              return addy
+            })
+            
+            addressMultisig = multisig.getMultisig(state.flash.root, address)
+            multisigs.unshift(addressMultisig)
+            
+            for(let i = 1; i < multisigs.length; i++) {
+              multisigs[i-1].children.push(multisigs[i]);
+            }
+            console.log("Address Mutlisig: ", addressMultisig)
           await store.set("state", state)
           events.removeListener("return")        
-          res(addressMultisig)
+          res(multisigs)
         }
       })
     })
@@ -346,15 +345,12 @@ export default class Channel {
       )
       await Channel.getNewBranch(toUse.multisig, digests)
     }
-
     // Compose transfer
-    const flash = state.flash
     let bundles
     try {
       // empty transfers
       let transfers
       // Map over the tx's and add the totals on
-      console.log(settlementAddress)
       transfers = [
         {
           value: value,
@@ -366,18 +362,18 @@ export default class Channel {
       console.log(transfers)
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
-        flash.settlementAddresses,
-        flash.deposit,
+        state.flash.settlementAddresses,
+        state.flash.deposit,
         state.userIndex,
         transfers
       )
       bundles = transfer.compose(
-        flash.balance,
-        flash.deposit,
-        flash.outputs,
+        state.flash.balance,
+        state.flash.deposit,
+        state.flash.outputs,
         toUse.multisig,
-        flash.remainderAddress,
-        flash.transfers,
+        state.flash.remainderAddress,
+        state.flash.transfers,
         newTansfers
       )
     } catch (e) {
@@ -410,7 +406,8 @@ export default class Channel {
       bundles,
       value,
       settlementAddress,
-      index: state.userIndex
+      index: state.userIndex,
+      multisig: toUse.multisig
     })
     // Wait for RTC response
     return new Promise((res, rej) => {
@@ -426,6 +423,8 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
+          console.log(state.flash)
+          
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
           if (sigs.find(sig => !sig)) {
@@ -433,16 +432,15 @@ export default class Channel {
           } else {
             console.log("Completed Bundles: ", signedBundles)
             transfer.applyTransfers(
-              flash.root,
-              flash.deposit,
-              flash.outputs,
-              flash.remainderAddress,
-              flash.transfers,
+              state.flash.root,
+              state.flash.deposit,
+              state.flash.outputs,
+              state.flash.remainderAddress,
+              state.flash.transfers,
               signedBundles
             )
             // Save state
             state.bundles = signedBundles
-            state.flash = flash
             await store.set("state", state)
 
             // Needs a share flash.
@@ -492,6 +490,9 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
+          console.log(state.flash.root)
+          console.log(message.data.multisig)
+          
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
           if (sigs.find(sig => !sig)) {
@@ -542,7 +543,7 @@ export default class Channel {
     const flash = state.flash
     let bundles
     try {
-      let newTansfers = transfer.close([Presets.ADDRESS, null], flash.deposit)
+      let newTansfers = transfer.close(flash.settlementAddresses, flash.deposit)
 
       bundles = transfer.compose(
         flash.balance,
@@ -638,20 +639,6 @@ export default class Channel {
         }
       })
     })
-  }
-
-  // Update bundles in local state by applying the diff
-  static async initFlash(flash) {
-    // Get state
-    if (!flash) {
-      const state = await store.get("state")
-      Channel.flash = new Flash({ ...state.flash })
-    } else {
-      const state = await store.get("state")
-      state.flash = flash
-      store.set("state", state)
-      Channel.flash = new Flash({ ...flash })
-    }
   }
 }
 
