@@ -204,7 +204,7 @@ export default class Channel {
 
   static async getNewBranch(addressMultisig, digests) {
     var state = await store.get("state")    
-    console.log("Branch Event", "Digests: ", digests)
+    console.log("Branch Event: ", addressMultisig)
     // Request New Branch
     RTC.broadcastMessage({
       cmd: "getBranch",
@@ -221,34 +221,36 @@ export default class Channel {
         if (message.data.cmd === "returnBranch") {
           allDigests[message.data.index] = message.data.digests
 
-            let multisigs = digests.map((digest, index) => {
-              let addy = multisig.composeAddress(
-                allDigests.map(userDigests => userDigests[index])
-              )
-              addy.index = digest.index
-              addy.signingIndex = state.userIndex * digest.security
-              addy.securitySum = allDigests
-                .map(userDigests => userDigests[index])
-                .reduce((acc, v) => acc + v.security, 0)
-              addy.security = digest.security
-              return addy
-            })
-            
-            multisigs.unshift(addressMultisig)
+          let multisigs = digests.map((digest, index) => {
+            let addy = multisig.composeAddress(
+              allDigests.map(userDigests => userDigests[index])
+            )
+            addy.index = digest.index
+            addy.signingIndex = state.userIndex * digest.security
+            addy.securitySum = allDigests
+              .map(userDigests => userDigests[index])
+              .reduce((acc, v) => acc + v.security, 0)
+            addy.security = digest.security
+            return addy
+          })
+          
+          multisigs.unshift(addressMultisig)
 
-            for(let i = 1; i < multisigs.length; i++) {
-              multisigs[i-1].children.push(multisigs[i]);
-            }    
+          for(let i = 1; i < multisigs.length; i++) {
+            multisigs[i-1].children.push(multisigs[i]);
+          }    
+          
+          console.log("Address Mutlisig: ", addressMultisig)    
+          events.removeListener("return") 
             
-            console.log("Address Mutlisig: ", addressMultisig)            
           RTC.broadcastMessage({
             cmd: "returnBranch",
             digests,
             return: true,
             index: state.userIndex
           })
-          events.removeListener("return")     
-          res(multisigs)
+          await store.set("state", state)          
+          res(addressMultisig)
         }
       })
     })
@@ -277,29 +279,31 @@ export default class Channel {
           allDigests[message.data.index] = message.data.digests
           let addressMultisig = {}
 
-            let multisigs = digests.map((digest, index) => {
-              let addy = multisig.composeAddress(
-                allDigests.map(userDigests => userDigests[index])
-              )
-              addy.index = digest.index
-              addy.signingIndex = state.userIndex * digest.security
-              addy.securitySum = allDigests
-                .map(userDigests => userDigests[index])
-                .reduce((acc, v) => acc + v.security, 0)
-              addy.security = digest.security
-              return addy
-            })
+          let multisigs = digests.map((digest, index) => {
+            console.log(digest.index)
+            let addy = multisig.composeAddress(
+              allDigests.map(userDigests => userDigests[index])
+            )
+            addy.index = digest.index
+            addy.signingIndex = state.userIndex * digest.security
+            addy.securitySum = allDigests
+              .map(userDigests => userDigests[index])
+              .reduce((acc, v) => acc + v.security, 0)
+            addy.security = digest.security
+            return addy
+          })
             
-            addressMultisig = multisig.getMultisig(state.flash.root, address)
-            multisigs.unshift(addressMultisig)
-            
-            for(let i = 1; i < multisigs.length; i++) {
-              multisigs[i-1].children.push(multisigs[i]);
-            }
-            console.log("Address Mutlisig: ", addressMultisig)
+          addressMultisig = multisig.getMultisig(state.flash.root, address)
+          multisigs.unshift(addressMultisig)
+          
+          for(let i = 1; i < multisigs.length; i++) {
+            multisigs[i-1].children.push(multisigs[i]);
+          }
+          console.log("Address Mutlisig: ", addressMultisig)
+
           await store.set("state", state)
           events.removeListener("return")        
-          res(multisigs)
+          res(addressMultisig)
         }
       })
     })
@@ -338,11 +342,11 @@ export default class Channel {
     let toUse = multisig.updateLeafToRoot(state.flash.root)
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
-      const digests = await Promise.all(
-        Array(toUse.generate)
-          .fill()
-          .map(() => Channel.getNewDigest())
-      )
+      var digests = []
+      for (let i = 0; i < toUse.generate; i++) {
+        const digest = await Channel.getNewDigest()
+        digests.push(digest)
+      }
       await Channel.getNewBranch(toUse.multisig, digests)
     }
     // Compose transfer
@@ -357,7 +361,6 @@ export default class Channel {
           address: settlementAddress
         }
       ]
-      // }
 
       console.log(transfers)
       // No settlement addresses and Index is 0 as we are alsways sending from the client
@@ -391,16 +394,20 @@ export default class Channel {
       return false
     }
 
+    console.log(state.index)
+    console.log(state.flash.root)
+    
     // Sign transfer
     const signatures = transfer.sign(
-      state.flash.root,
+      toUse.multisig,
       state.userSeed,
       bundles,
       state.userIndex
     )
 
     console.log("Signed: ", signatures)
-
+    console.log(state.flash)
+    
     RTC.broadcastMessage({
       cmd: "composeTransfer",
       bundles,
@@ -415,6 +422,7 @@ export default class Channel {
       let sigs = Array(2).fill()
       // Sign your bundle initially
       let signedBundles = transfer.appliedSignatures(bundles, signatures)
+      console.log(signedBundles)
       // Start listening for messages
       events.on("return", async message => {
         if (message.data.cmd === "returnSignature") {
@@ -423,7 +431,7 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
-          console.log(state.flash)
+          console.log(signedBundles)          
           
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
@@ -431,6 +439,7 @@ export default class Channel {
             console.log("Waiting for all slots to be filled")
           } else {
             console.log("Completed Bundles: ", signedBundles)
+
             transfer.applyTransfers(
               state.flash.root,
               state.flash.deposit,
@@ -450,6 +459,7 @@ export default class Channel {
               signatures,
               index: state.userIndex
             })
+      
             events.removeListener("return")
             res(state)
           }
@@ -461,7 +471,6 @@ export default class Channel {
   // Sign transfer an wait for it to be returned.
   static signTransfer = async bundles => {
     const state = await store.get("state")
-    console.log(bundles)
 
     const signatures = transfer.sign(
       state.flash.root,
@@ -471,6 +480,8 @@ export default class Channel {
     )
 
     console.log("Signatures: ", signatures)
+    console.log(state.flash.root)
+    
     RTC.broadcastMessage({
       cmd: "returnSignature",
       return: true,
@@ -490,8 +501,6 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
-          console.log(state.flash.root)
-          console.log(message.data.multisig)
           
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
