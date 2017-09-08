@@ -202,9 +202,15 @@ export default class Channel {
     RTC.broadcastMessage({ cmd: "shareFlash", flash })
   }
 
-  static async getNewBranch(addressMultisig, digests) {
+  static async getNewBranch(addressMultisig, generate) {
     var state = await store.get("state")    
-    console.log("Branch Event: ", addressMultisig)
+
+    var digests = Array(generate).fill().map((_, i) => {
+      console.log(state.index)        
+      return multisig.getDigest(state.userSeed, state.index++, state.security)
+    })
+    console.log("New branch digests: ", digests)
+  
     // Request New Branch
     RTC.broadcastMessage({
       cmd: "getBranch",
@@ -212,7 +218,8 @@ export default class Channel {
       digests,
       index: state.userIndex
     })
-    
+
+    await store.set("state", state)
     // Subscribe once to a get branch emitter.
     return new Promise((res, rej) => {
       var allDigests = []
@@ -259,12 +266,14 @@ export default class Channel {
   static async returnBranch(digests, address) {
     var state = await store.get("state")
 
-    let myDigests = digests.map(() =>
-      multisig.getDigest(state.userSeed, state.index++, state.security)
-    )
+    let myDigests = digests.map(() => {
+        console.log(state.index)        
+        return multisig.getDigest(state.userSeed, state.index++, state.security)
+      })
 
-    console.log("Branch Digests: ", myDigests)
-    RTC.broadcastMessage({
+      console.log("New branch digests: ", myDigests)
+
+      RTC.broadcastMessage({
       cmd: "returnBranch",
       digests: myDigests,
       return: true,
@@ -292,7 +301,8 @@ export default class Channel {
             addy.security = digest.security
             return addy
           })
-            
+          
+          // Because we only pass the string, we need to find the mutlisig object to start from
           addressMultisig = multisig.getMultisig(state.flash.root, address)
           multisigs.unshift(addressMultisig)
           
@@ -342,12 +352,7 @@ export default class Channel {
     let toUse = multisig.updateLeafToRoot(state.flash.root)
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
-      var digests = []
-      for (let i = 0; i < toUse.generate; i++) {
-        const digest = await Channel.getNewDigest()
-        digests.push(digest)
-      }
-      await Channel.getNewBranch(toUse.multisig, digests)
+      await Channel.getNewBranch(toUse.multisig, toUse.generate)
     }
     // Compose transfer
     let bundles
