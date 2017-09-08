@@ -99,6 +99,7 @@ export default class Channel {
         state.flash.remainderAddress = remainderAddress
         state.flash.root = multisigs.shift()
         state.flash.settlementAddresses = [userSeed, message.data.address]
+        state.index = message.data.digests.length
 
         RTC.broadcastMessage({
           cmd: "returnSetup",
@@ -355,6 +356,9 @@ export default class Channel {
     if (toUse.generate != 0) {
       // Tell the server to generate new addresses, attach to the multisig you give
       await Channel.getNewBranch(toUse.multisig, toUse.generate)
+      // state was modified
+      let modifiedState = await store.get("state")
+      state.index = modifiedState.index
     }
     // Compose transfer
     let bundles
