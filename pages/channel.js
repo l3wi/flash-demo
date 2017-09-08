@@ -46,9 +46,7 @@ export default class extends React.Component {
         var flash = await Channel.signSetup(message)
         this.setState({ flash })
       } else if (message.data.cmd === "deposited") {
-        this.confirmDeposit(
-          message.data.index
-        )
+        this.confirmDeposit(message.data.index)
         history.unshift("Deposit address generated")
       } else if (message.data.cmd === "composeTransfer") {
         history.unshift(`Recieved transfer for ${message.data.value}`)
@@ -62,7 +60,7 @@ export default class extends React.Component {
           }
         })
       } else if (message.data.cmd === "closedChannel") {
-        this.setState({flash: message.data.flash})
+        this.setState({ flash: message.data.flash })
       } else if (message.data.cmd === "getBranch") {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
@@ -72,7 +70,7 @@ export default class extends React.Component {
       } else if (message.data.cmd === "error") {
         history.unshift(`${message.data.error}`)
         alert(message.data.error)
-        this.setState({channel: 'main'})
+        this.setState({ channel: "main" })
       }
     })
     Events.on("peerLeft", message => {
@@ -92,7 +90,7 @@ export default class extends React.Component {
 
       if (message.connection.peer.slice(-1) !== "0") {
         var flash = await Channel.startSetup()
-        this.setState({flash})
+        this.setState({ flash })
       }
     })
   }
@@ -131,18 +129,17 @@ export default class extends React.Component {
 
   closeChannel = async () => {
     this.setState({ channel: "loading" }, async () => {
-      
       history.push("Closing Channel")
       var state = await Channel.close()
       this.setState({
         channel: "closed",
         flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
       })
-      RTC.broadcastMessage({cmd: "closedChannel", flash: this.state.flash})
+      RTC.broadcastMessage({ cmd: "closedChannel", flash: this.state.flash })
     })
   }
 
-  confirmDeposit = async (index) => {
+  confirmDeposit = async index => {
     history.unshift(`Deposit of 1000 Completed`)
     if (index === this.state.userID) {
       RTC.broadcastMessage({ cmd: "deposited", index: this.state.userID })
@@ -152,7 +149,7 @@ export default class extends React.Component {
 
   setChannel = (address, deposits) => {
     // if (this.state.currentMessage) this.saveAddress(address)
-    this.setState({ setup: true})
+    this.setState({ setup: true })
   }
 
   render() {
@@ -267,8 +264,8 @@ export default class extends React.Component {
                   />
                   {flash.remainderAddress ? (
                     <div>
-                      <h2>{`Deposit ${this.state.flash
-                        .depositRequired} IOTA into this multisig address:`}</h2>
+                      <h2
+                      >{`This demo automatically funds the flash channel with 2 Ki testnet tokens. `}</h2>
                       <p style={{ maxWidth: "25rem" }}>
                         {flash.remainderAddress.address}
                       </p>
@@ -276,12 +273,9 @@ export default class extends React.Component {
                         <Button
                           full
                           accent
-                          onClick={() =>
-                            this.confirmDeposit(
-                              this.state.userID
-                            )}
+                          onClick={() => this.confirmDeposit(this.state.userID)}
                         >
-                          Deposited
+                          Continue
                         </Button>
                       </Row>
                     </div>
@@ -363,7 +357,7 @@ export default class extends React.Component {
               </History>
             </Right>
           </SingleBox>
-          {setup && (
+          {/* {setup && (
             <Info>
               <h2>What is Flash?</h2>
               <p>
@@ -402,7 +396,7 @@ export default class extends React.Component {
                 vestibulum. Maecenas tempor leo et mi fermentum posuere.
               </p>
             </Info>
-          )}
+          )} */}
         </Layout>
       )
     }
