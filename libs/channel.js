@@ -241,12 +241,14 @@ export default class Channel {
             return addy
           })
           
-          multisigs.unshift(addressMultisig)
+          // multisigs.unshift(addressMultisig)
 
           for(let i = 1; i < multisigs.length; i++) {
             multisigs[i-1].children.push(multisigs[i]);
           }    
           
+          addressMultisig.children.push(multisigs[0])
+
           console.log("Address Mutlisig: ", addressMultisig)    
           events.removeListener("return") 
             
