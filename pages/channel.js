@@ -50,9 +50,17 @@ export default class extends React.Component {
         this.setState({ flash })
       } else if (message.data.cmd === "deposited") {
         this.confirmDeposit(message.data.index)
-        history.unshift("Deposit address generated")
+        this.updateHistory({
+          msg: "Deposit address generated",
+          type: "system",
+          time: Date.now()
+        })
       } else if (message.data.cmd === "composeTransfer") {
-        history.unshift(`Recieved transfer for ${message.data.value}`)
+        this.updateHistory({
+          msg: `Recieved transfer for ${message.data.value}`,
+          type: "system",
+          time: Date.now()
+        })
         // Get diff and set the state
         this.setState({
           channel: "confirm",
@@ -68,24 +76,39 @@ export default class extends React.Component {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "closeChannel") {
         Channel.signTransfer(message.data.bundles)
-        history.unshift(`Closing Channel`)
+        this.updateHistory({
+          msg: `Closing Channel`,
+          type: "system",
+          time: Date.now()
+        })
         this.setState({ channel: "closed" })
       } else if (message.data.cmd === "error") {
-        history.unshift(`${message.data.error}`)
+        this.updateHistory({
+          msg: `${message.data.error}`,
+          type: "system",
+          time: Date.now()
+        })
         alert(message.data.error)
         this.setState({ channel: "main" })
       }
     })
     Events.on("peerLeft", message => {
       console.log(`Peer Left`)
-      history.push("Partner Disconnected")
+      this.updateHistory({
+        msg: "Partner Disconnected",
+        type: "system",
+        time: Date.now()
+      })
       this.setState({ peer: false })
       RTC.connectToPeers(this.props.id)
     })
     Events.on("peerJoined", async message => {
       console.log(`Peer Joined`)
-      console.log(message.connection.peer)
-      history.push("Partner Connected")
+      this.updateHistory({
+        msg: "Partner Connected",
+        type: "system",
+        time: Date.now()
+      })
       this.setState({
         peer: true,
         channel: "deposit",
@@ -127,6 +150,11 @@ export default class extends React.Component {
         transfer: ""
       },
       async () => {
+        this.updateHistory({
+          msg: "Approving Transaction",
+          type: "system",
+          time: Date.now()
+        })
         var state = await Channel.signTransfer(transaction.bundles)
         this.setState({ ...state, channel: "main" })
       }
@@ -142,7 +170,11 @@ export default class extends React.Component {
         transfer: ""
       },
       async () => {
-        history.unshift(`Creating transaction for ${parseInt(value)}`)
+        this.updateHistory({
+          msg: `Creating transaction for ${parseInt(value)}`,
+          type: "system",
+          time: Date.now()
+        })
         var state = await Channel.composeTransfer(
           parseInt(value),
           address,
@@ -165,7 +197,11 @@ export default class extends React.Component {
     this.setState(
       { channel: "closed", title: "Closing the channel" },
       async () => {
-        history.push("Closing Channel")
+        this.updateHistory({
+          msg: "Closing Channel",
+          type: "system",
+          time: Date.now()
+        })
         var state = await Channel.close()
         this.setState({
           channel: "closed",
@@ -177,7 +213,11 @@ export default class extends React.Component {
   }
 
   confirmDeposit = async index => {
-    history.unshift(`Deposit of 1000 Completed`)
+    this.updateHistory({
+      msg: "Deposit Completed",
+      type: "system",
+      time: Date.now()
+    })
     if (index === this.state.userID) {
       RTC.broadcastMessage({ cmd: "deposited", index: this.state.userID })
       this.setState({ channel: "main" })
