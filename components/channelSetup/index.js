@@ -62,13 +62,9 @@ export default class extends React.Component {
         >{`The demo uses a seed, a settlement address that has been generated on your behalf.
         In a real world use case, you'll enter these yourself and specify the amount of IOTA 
         you would like to transact in the channel.`}</p>
-         <p
-        >{`The channel will have 10,000 testnet IOTA deposited into it when it is opened.`}</p>
-        <Button
-          onClick={() => this.startChannel()}
-        >
-          Enter the Channel
-        </Button>
+        <p
+        >{`The channel will have 2,000 IOTA from the testnet deposited into it when it is opened.`}</p>
+        <Button onClick={() => this.startChannel()}>Enter the Channel</Button>
       </AnimatedLeftBox>
     )
   }
