@@ -185,6 +185,9 @@ export default class extends React.Component {
 
   sendTransaction = async (value, address) => {
     if (value < 1) return alert("Please enter a positive value ")
+    if (value > this.state.flash.deposit.reduce((a, b) => a + b, 0) / 2)
+      return alert("You can not spend more than you have")
+
     this.setState(
       {
         channel: "loading",
@@ -590,7 +593,7 @@ const Right = styled.div`
   flex-direction: column;
   height: 100%;
   background: rgba(232, 206, 230, 1);
-  padding: 10px 20px;
+  padding: 10px 20px 20px;
   box-sizing: border-box;
   @media screen and (max-width: 640px) {
     width: 100%
