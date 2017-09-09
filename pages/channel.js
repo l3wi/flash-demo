@@ -399,7 +399,13 @@ export default class extends React.Component {
                       </p>
                       <p>
                         Deposit address for this channel:{" "}
-                        <span style={{ maxWidth: "25rem", fontSize: 10 }}>
+                        <span
+                          style={{
+                            maxWidth: "25rem",
+                            fontSize: 10,
+                            wordBreak: "break-word"
+                          }}
+                        >
                           {flash.depositAddress}
                         </span>{" "}
                       </p>
