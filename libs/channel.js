@@ -96,10 +96,12 @@ export default class Channel {
             multisigs[i - 1].children.push(multisigs[i])
           }
 
-          console.log(remainderAddress)
           console.log(iota.utils.addChecksum(multisigs[0].address))
 
           // Update root and remainder address
+          state.flash.depositAddress = iota.utils.addChecksum(
+            multisigs[0].address
+          )
           state.flash.remainderAddress = remainderAddress
           state.flash.root = multisigs.shift()
           state.flash.settlementAddresses = [userSeed, message.data.address]
@@ -188,6 +190,9 @@ export default class Channel {
           console.log(iota.utils.addChecksum(multisigs[0].address))
 
           // Update root and remainder address
+          state.flash.depositAddress = iota.utils.addChecksum(
+            multisigs[0].address
+          )
           state.flash.remainderAddress = remainderAddress
           state.flash.root = multisigs.shift()
           state.flash.settlementAddresses = message.data.settlementAddresses

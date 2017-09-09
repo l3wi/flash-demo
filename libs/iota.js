@@ -5,6 +5,19 @@ export var iota = new IOTA({
   provider: Presets.IOTA
 })
 
+export const fundChannel = async address => {
+  var transfers = [{ value: 2000, address }]
+  return new Promise(function(resolve, reject) {
+    iota.api.sendTransfer("TURTLE", 5, 9, transfers, (e, r) => {
+      if (e !== null) {
+        reject(e)
+      } else {
+        resolve(r)
+      }
+    })
+  })
+}
+
 export class Attach {
   static bundleToTrytes(bundle) {
     var bundleTrytes = []
