@@ -77,6 +77,7 @@ export default class extends React.Component {
       console.log(`Peer Left`)
       history.push("Partner Disconnected")
       this.setState({ peer: false })
+      RTC.connectToPeers(this.props.id)
     })
     Events.on("peerJoined", async message => {
       console.log(`Peer Joined`)
@@ -108,15 +109,22 @@ export default class extends React.Component {
   }
 
   sendTransaction = async (value, address) => {
-    this.setState({ channel: "loading" }, async () => {
-      history.unshift(`Creating transaction for ${parseInt(value)}`)
-      var state = await Channel.composeTransfer(
-        parseInt(value),
-        address,
-        this.state.userID
-      )
-      this.setState({ channel: "main", flash: state.flash })
-    })
+    this.setState(
+      {
+        channel: "loading",
+        title: "Sending transaction to partner",
+        transfer: ""
+      },
+      async () => {
+        history.unshift(`Creating transaction for ${parseInt(value)}`)
+        var state = await Channel.composeTransfer(
+          parseInt(value),
+          address,
+          this.state.userID
+        )
+        this.setState({ channel: "main", flash: state.flash })
+      }
+    )
   }
 
   request = (value, address) => {
@@ -128,15 +136,18 @@ export default class extends React.Component {
   }
 
   closeChannel = async () => {
-    this.setState({ channel: "loading" }, async () => {
-      history.push("Closing Channel")
-      var state = await Channel.close()
-      this.setState({
-        channel: "closed",
-        flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
-      })
-      RTC.broadcastMessage({ cmd: "closedChannel", flash: this.state.flash })
-    })
+    this.setState(
+      { channel: "closed", title: "Closing the channel" },
+      async () => {
+        history.push("Closing Channel")
+        var state = await Channel.close()
+        this.setState({
+          channel: "closed",
+          flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
+        })
+        RTC.broadcastMessage({ cmd: "closedChannel", flash: this.state.flash })
+      }
+    )
   }
 
   confirmDeposit = async index => {
@@ -148,12 +159,12 @@ export default class extends React.Component {
   }
 
   setChannel = (address, deposits) => {
-    // if (this.state.currentMessage) this.saveAddress(address)
     this.setState({ setup: true })
   }
 
   render() {
     var {
+      title,
       form,
       peer,
       setup,
@@ -180,22 +191,14 @@ export default class extends React.Component {
             <Left>
               {channel === "share" && (
                 <div>
-                  <Header
-                    {...this.state}
-                    {...this.props}
-                    title={`Waiting for peer to connect...`}
-                  />
+                  <Header {...this.state} {...this.props} title={title} />
                   <p>Share this room link with your partner:</p>
                   <p>{isClient ? window.location.href : null}</p>
                 </div>
               )}
               {channel === "loading" && (
                 <div>
-                  <Header
-                    {...this.state}
-                    {...this.props}
-                    title={`Loading...`}
-                  />
+                  <Header {...this.state} {...this.props} title={title} />
                   <Spinner {...this.props} src={"/static/loading-dark.svg"} />
                 </div>
               )}
@@ -204,7 +207,13 @@ export default class extends React.Component {
                   <Header
                     {...this.state}
                     {...this.props}
-                    title={`Channel has been closed`}
+                    title={
+                      flash.finalBundle ? (
+                        `Channel has been closed`
+                      ) : (
+                        `Closing the channel`
+                      )
+                    }
                   />
                   <p>
                     {`Once completed the link below will display the closing transaction that has been attached to the network`}
@@ -225,11 +234,8 @@ export default class extends React.Component {
                 <div>
                   <Header
                     {...this.state}
-                    title={`${pendingTransfer.address == address
-                      ? "Recieve"
-                      : "Send"} ${pendingTransfer.value}i`}
+                    title={`Recieve ${pendingTransfer.value}i`}
                   />
-
                   <h2 />
                   <p>Do you want to confirm or deny this transaction?</p>
                   <Row>
@@ -258,17 +264,24 @@ export default class extends React.Component {
                       !flash.remainderAddress ? (
                         `Generating the deposit address`
                       ) : (
-                        `Waiting for deposits`
+                        `Deposit address generated.`
                       )
                     }
                   />
                   {flash.remainderAddress ? (
                     <div>
-                      <h2
-                      >{`This demo automatically funds the flash channel with 2 Ki testnet tokens. `}</h2>
-                      <p style={{ maxWidth: "25rem" }}>
-                        {flash.remainderAddress.address}
+                      <p>
+                        In a normal Flash channel, you would deposit funds into
+                        the generated address before you begin transactions.
                       </p>
+                      <p>
+                        Deposit address for this channel:{" "}
+                        <span style={{ maxWidth: "25rem", fontSize: 10 }}>
+                          {flash.remainderAddress.address}
+                        </span>{" "}
+                      </p>
+                      <h3
+                      >{`This demo does not require you to deposit IOTA.`}</h3>
                       <Row>
                         <Button
                           full
@@ -311,7 +324,7 @@ export default class extends React.Component {
                     </h5>
 
                     <h5>
-                      Remaining Deposit:{" "}
+                      Remaining tokens:{" "}
                       {flash.deposit.reduce((a, b) => a + b, 0) / 2} IOTA
                     </h5>
                   </Row>
@@ -425,6 +438,10 @@ const Right = styled.div`
   background: rgba(232, 206, 230, 1);
   padding: 10px 20px;
   box-sizing: border-box;
+  @media screen and (max-width: 640px) {
+    width: 100%
+  }
+}
 `
 
 const Row = styled.div`
@@ -492,6 +509,9 @@ const History = styled.div`
       rgba(232, 206, 230, 0),
       rgba(232, 206, 230, 1)
     );
+    @media screen and (max-width: 640px) {
+      width: 100%;
+    }
   }
 `
 const Item = styled.p`

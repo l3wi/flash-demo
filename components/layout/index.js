@@ -17,6 +17,7 @@ const Main = styled.div`
   background: linear-gradient(135deg, #693866 0%, #381a36 70%);
   @media screen and (max-width: 640px) {
     flex-direction: column;
+    padding: 0rem;
   }
 `
 
@@ -39,5 +40,6 @@ const MainBox = styled.div`
   @media screen and (max-width: 640px) {
     min-width: 100vw;
     flex-direction: column;
+    height: 100vh;
   }
 `
