@@ -1,15 +1,15 @@
 import React from "react"
 import styled from "styled-components"
+import { Link, Router } from "../routes"
 import { Layout, SingleBox } from "../components/layout"
 import Setup from "../components/channelSetup"
 
 import Header from "../components/channel/header"
 
-import { isClient } from "../libs/utils"
+import { isClient, seedGen } from "../libs/utils"
 import RTC from "../libs/rtc"
 import Channel from "../libs/channel"
-
-const history = ["Waiting for a partner..."]
+import { fundChannel } from "../libs/iota"
 
 export default class extends React.Component {
   static async getInitialProps({ query }) {
@@ -17,6 +17,9 @@ export default class extends React.Component {
   }
 
   state = {
+    history: [
+      { msg: "Waiting for a partner...", type: "system", time: Date.now() }
+    ],
     setup: false,
     form: 0,
     address: "",
@@ -92,10 +95,23 @@ export default class extends React.Component {
       if (message.connection.peer.slice(-1) !== "0") {
         var flash = await Channel.startSetup()
         this.setState({ flash })
+        // var deposit = await fundChannel(flash.depositAddress)
+        this.updateHistory({
+          msg: "Channel funded from faucet",
+          type: "system",
+          time: Date.now()
+        })
+        RTC.broadcastMessage({ cmd: "funded" })
+        this.setState({ funded: true })
       }
     })
   }
 
+  updateHistory = data => {
+    var history = this.state.history
+    history.push(data)
+    this.setState({ history })
+  }
   confirmTransaction = async transaction => {
     if (!transaction) {
       this.setState({ channel: "main" })
@@ -168,12 +184,37 @@ export default class extends React.Component {
     }
   }
 
+  // Change screen to channel start
   setChannel = (address, deposits) => {
     this.setState({ setup: true })
   }
 
+  // Create new channel
+  startChannel = async (address, transactions, deposit) => {
+    this.setState({ form: 0 })
+    const channelID = seedGen(10)
+
+    setTimeout(() => {
+      Router.pushRoute(`/channel/${channelID}`)
+    }, 500)
+    await store.set("state", state)
+    this.setState({
+      setup: false,
+      form: 0,
+      address: "",
+      peer: false,
+      pendingTransfer: false,
+      channel: "share",
+      flash: {},
+      userID: 0,
+      transfer: "",
+      title: `Waiting for peer to connect...`
+    })
+  }
+
   render() {
     var {
+      history,
       title,
       form,
       peer,
@@ -228,16 +269,26 @@ export default class extends React.Component {
                   <p>
                     {`Once completed the link below will display the closing transaction that has been attached to the network`}
                   </p>
+                  <p>
+                    {flash.finalBundle ? (
+                      <a
+                        target={"_blank"}
+                        href={`https://tanglertestnet.codebuffet.co/search/?kind=bundle&hash=${flash.finalBundle}`}
+                      >
+                        View Transaction
+                      </a>
+                    ) : (
+                      <Spinner
+                        {...this.props}
+                        src={"/static/loading-dark.svg"}
+                      />
+                    )}
+                  </p>
                   {flash.finalBundle ? (
-                    <a
-                      target={"_blank"}
-                      href={`https://tanglertestnet.codebuffet.co/search/?kind=bundle&hash=${flash.finalBundle}`}
-                    >
-                      View Transaction
-                    </a>
-                  ) : (
-                    <Spinner {...this.props} src={"/static/loading-dark.svg"} />
-                  )}
+                    <Button full onClick={() => this.startChannel()}>
+                      Start new channel
+                    </Button>
+                  ) : null}
                 </div>
               )}
               {channel === "confirm" && (
@@ -278,7 +329,7 @@ export default class extends React.Component {
                       )
                     }
                   />
-                  {flash.remainderAddress ? (
+                  {flash.depositAddress ? (
                     <div>
                       <p>
                         In a normal Flash channel, you would deposit funds into
@@ -287,7 +338,7 @@ export default class extends React.Component {
                       <p>
                         Deposit address for this channel:{" "}
                         <span style={{ maxWidth: "25rem", fontSize: 10 }}>
-                          {flash.remainderAddress.address}
+                          {flash.depositAddress}
                         </span>{" "}
                       </p>
                       <h3
@@ -375,9 +426,9 @@ export default class extends React.Component {
             <Right>
               <h3>Channel History</h3>
               <History>
-                {history
-                  .reverse()
-                  .map((item, i) => <Item key={i}>{item}</Item>)}
+                {history.map((item, i) => (
+                  <Item key={item.time}>{item.msg}</Item>
+                ))}
               </History>
             </Right>
           </SingleBox>
@@ -434,7 +485,7 @@ const Info = styled.div`
 
 const Left = styled.div`
   position: relative;
-  flex: 1.7;
+  flex: 1.7 0;
   flex-direction: column;
   height: 100%;
   padding: 10px 20px;
@@ -509,21 +560,6 @@ const History = styled.div`
     display: none;
   }
   flex: 1;
-  &:before {
-    content: "";
-    position: absolute;
-    bottom: 5px;
-    width: 36%;
-    height: 2rem;
-    background: linear-gradient(
-      to bottom,
-      rgba(232, 206, 230, 0),
-      rgba(232, 206, 230, 1)
-    );
-    @media screen and (max-width: 640px) {
-      width: 100%;
-    }
-  }
 `
 const Item = styled.p`
   padding-bottom: 5px;
