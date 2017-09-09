@@ -10,6 +10,7 @@
   "dependencies": {
     "babel-polyfill": "^6.23.0",
     "curl.lib.js": "^1.0.14",
+    "date-fns": "^1.28.5",
     "eventemitter3": "^2.0.3",
     "iota.flash.js": "git+https://github.com/iotaledger/iota.flash.js.git#master",
     "iota.lib.js": "git+https://github.com/l3wi/iota.lib.js.git",

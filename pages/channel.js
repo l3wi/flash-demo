@@ -3,6 +3,7 @@ import styled from "styled-components"
 import { Link, Router } from "../routes"
 import { Layout, SingleBox } from "../components/layout"
 import Setup from "../components/channelSetup"
+import History from "../components/history"
 
 import Header from "../components/channel/header"
 
@@ -75,6 +76,12 @@ export default class extends React.Component {
         this.setState({ flash: message.data.flash })
       } else if (message.data.cmd === "getBranch") {
         Channel.returnBranch(message.data.digests, message.data.address)
+      } else if (message.data.cmd === "message") {
+        this.updateHistory({
+          msg: message.data.msg,
+          type: "partner",
+          time: Date.now()
+        })
       } else if (message.data.cmd === "closeChannel") {
         Channel.signTransfer(message.data.bundles)
         this.updateHistory({
@@ -138,6 +145,18 @@ export default class extends React.Component {
     history.push(data)
     this.setState({ history })
   }
+
+  sendMessage = () => {
+    if (!this.state.message) return
+    this.updateHistory({
+      msg: this.state.message,
+      type: "me",
+      time: Date.now()
+    })
+    RTC.broadcastMessage({ cmd: "message", msg: this.state.message })
+    this.setState({ message: "" })
+  }
+
   confirmTransaction = async transaction => {
     if (!transaction) {
       this.setState({ channel: "main" })
@@ -468,11 +487,16 @@ export default class extends React.Component {
             </Left>
             <Right>
               <h3>Channel History</h3>
-              <History>
-                {history.map((item, i) => (
-                  <Item key={item.time}>{item.msg}</Item>
-                ))}
-              </History>
+              <History messages={this.state.history} />
+              <Row>
+                <Input
+                  type={"text"}
+                  placeholder={"Send a message"}
+                  value={this.state.message}
+                  onChange={msg => this.setState({ message: msg.target.value })}
+                />
+                <Send onClick={() => this.sendMessage()}>Send</Send>
+              </Row>
             </Right>
           </SingleBox>
           {/* {setup && (
@@ -520,6 +544,25 @@ export default class extends React.Component {
     }
   }
 }
+
+const Input = styled.input`
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 16px;
+  border-bottom: 2px solid rgba(56, 26, 54, 0.2);
+  &:focus {
+    outline: none;
+  }
+`
+
+const Send = styled.button`
+  background: rgba(56, 26, 54, 0.6);
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  margin-left: 10px;
+`
 
 const Info = styled.div`
   max-width: 50rem;
@@ -595,19 +638,6 @@ const AnimatedLeftBox = styled.span`
   opacity: ${props => (props.active ? "1" : "0")};
 `
 
-const History = styled.div`
-  border-top: 2px solid #222;
-  margin: 0 0 5px;
-  overflow: scroll;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  flex: 1;
-`
-const Item = styled.p`
-  padding-bottom: 5px;
-  border-bottom: 1px solid rgba(56, 26, 54, 0.2);
-`
 const Spinner = styled.img`
   height: 5rem !important;
   width: 5rem;
