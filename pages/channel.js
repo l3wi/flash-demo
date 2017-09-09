@@ -40,6 +40,7 @@ export default class extends React.Component {
   }
 
   initChannel = async () => {
+    var started = false
     var Events = await RTC.initChannel(this.props.id)
     RTC.connectToPeers(this.props.id)
 
@@ -115,10 +116,12 @@ export default class extends React.Component {
         userID: message.connection.peer.slice(-1) === "0" ? 1 : 0
       })
 
-      if (message.connection.peer.slice(-1) !== "0") {
+      if (message.connection.peer.slice(-1) !== "0" && !started) {
         var flash = await Channel.startSetup()
+        started = true
         this.setState({ flash })
-        // var deposit = await fundChannel(flash.depositAddress)
+
+        var deposit = await fundChannel(flash.depositAddress)
         this.updateHistory({
           msg: "Channel funded from faucet",
           type: "system",
@@ -237,7 +240,7 @@ export default class extends React.Component {
     setTimeout(() => {
       Router.pushRoute(`/channel/${channelID}`)
     }, 500)
-    await store.set("state", state)
+    await store.set("state", null)
     this.setState({
       setup: false,
       form: 0,
