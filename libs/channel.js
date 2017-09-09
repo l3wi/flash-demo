@@ -31,6 +31,10 @@ export default class Channel {
     // Escape the function when server rendering
     if (!isWindow()) return false
 
+    // if (await store.get("state")) {
+    //   return console.log("Channel already initialised")
+    // }
+
     var userSeed = seedGen(81)
 
     console.log("Initialising Channel")
@@ -73,7 +77,7 @@ export default class Channel {
         if (message.data.cmd === "returnSetup") {
           allDigests[message.data.index] = message.data.digests
 
-          let multisigs =  state.partialDigests.map((digest, index) => {
+          let multisigs = state.partialDigests.map((digest, index) => {
             let addy = multisig.composeAddress(
               allDigests.map(userDigests => userDigests[index])
             )
@@ -85,36 +89,36 @@ export default class Channel {
             addy.security = digest.security
             return addy
           })
-        // Get remainder addy
-        const remainderAddress = multisigs.shift()
+          // Get remainder addy
+          const remainderAddress = multisigs.shift()
 
-        for (let i = 1; i < multisigs.length; i++) {
-          multisigs[i - 1].children.push(multisigs[i])
+          for (let i = 1; i < multisigs.length; i++) {
+            multisigs[i - 1].children.push(multisigs[i])
+          }
+
+          console.log(remainderAddress)
+          console.log(iota.utils.addChecksum(multisigs[0].address))
+
+          // Update root and remainder address
+          state.flash.remainderAddress = remainderAddress
+          state.flash.root = multisigs.shift()
+          state.flash.settlementAddresses = [userSeed, message.data.address]
+          state.index = message.data.digests.length
+
+          RTC.broadcastMessage({
+            cmd: "returnSetup",
+            return: true,
+            digests: state.partialDigests,
+            index: state.userIndex,
+            settlementAddresses: [userSeed, message.data.address]
+          })
+          console.log(state)
+
+          // Update root & remainder in state
+          await store.set("state", state)
+          events.removeListener("return")
+          res(state.flash)
         }
-
-        console.log(remainderAddress)
-        console.log(iota.utils.addChecksum(multisigs[0].address))
-
-        // Update root and remainder address
-        state.flash.remainderAddress = remainderAddress
-        state.flash.root = multisigs.shift()
-        state.flash.settlementAddresses = [userSeed, message.data.address]
-        state.index = message.data.digests.length
-
-        RTC.broadcastMessage({
-          cmd: "returnSetup",
-          return: true,
-          digests: state.partialDigests,
-          index: state.userIndex,
-          settlementAddresses: [userSeed, message.data.address]
-        })
-        console.log(state) 
-
-        // Update root & remainder in state
-        await store.set("state", state)     
-        events.removeListener("return")         
-        res(state.flash)
-       }
       })
     })
   }
@@ -191,7 +195,7 @@ export default class Channel {
           // Update root & remainder in state
           console.log(state)
           await store.set("state", state)
-          events.removeListener("return")                   
+          events.removeListener("return")
           res(state.flash)
         }
       })
@@ -204,14 +208,16 @@ export default class Channel {
   }
 
   static async getNewBranch(addressMultisig, generate) {
-    var state = await store.get("state")    
+    var state = await store.get("state")
 
-    var digests = Array(generate).fill().map((_, i) => {
-      console.log(state.index)        
-      return multisig.getDigest(state.userSeed, state.index++, state.security)
-    })
+    var digests = Array(generate)
+      .fill()
+      .map((_, i) => {
+        console.log(state.index)
+        return multisig.getDigest(state.userSeed, state.index++, state.security)
+      })
     console.log("New branch digests: ", digests)
-  
+
     // Request New Branch
     RTC.broadcastMessage({
       cmd: "getBranch",
@@ -241,25 +247,25 @@ export default class Channel {
             addy.security = digest.security
             return addy
           })
-          
+
           // multisigs.unshift(addressMultisig)
 
-          for(let i = 1; i < multisigs.length; i++) {
-            multisigs[i-1].children.push(multisigs[i]);
-          }    
-          
+          for (let i = 1; i < multisigs.length; i++) {
+            multisigs[i - 1].children.push(multisigs[i])
+          }
+
           addressMultisig.children.push(multisigs[0])
 
-          console.log("Address Mutlisig: ", addressMultisig)    
-          events.removeListener("return") 
-            
+          console.log("Address Mutlisig: ", addressMultisig)
+          events.removeListener("return")
+
           RTC.broadcastMessage({
             cmd: "returnBranch",
             digests,
             return: true,
             index: state.userIndex
           })
-          await store.set("state", state)          
+          await store.set("state", state)
           res(addressMultisig)
         }
       })
@@ -270,13 +276,13 @@ export default class Channel {
     var state = await store.get("state")
 
     let myDigests = digests.map(() => {
-        console.log(state.index)        
-        return multisig.getDigest(state.userSeed, state.index++, state.security)
-      })
+      console.log(state.index)
+      return multisig.getDigest(state.userSeed, state.index++, state.security)
+    })
 
-      console.log("New branch digests: ", myDigests)
+    console.log("New branch digests: ", myDigests)
 
-      RTC.broadcastMessage({
+    RTC.broadcastMessage({
       cmd: "returnBranch",
       digests: myDigests,
       return: true,
@@ -304,18 +310,18 @@ export default class Channel {
             addy.security = digest.security
             return addy
           })
-          
+
           // Because we only pass the string, we need to find the mutlisig object to start from
           addressMultisig = multisig.getMultisig(state.flash.root, address)
           multisigs.unshift(addressMultisig)
-          
-          for(let i = 1; i < multisigs.length; i++) {
-            multisigs[i-1].children.push(multisigs[i]);
+
+          for (let i = 1; i < multisigs.length; i++) {
+            multisigs[i - 1].children.push(multisigs[i])
           }
           console.log("Address Mutlisig: ", addressMultisig)
 
           await store.set("state", state)
-          events.removeListener("return")        
+          events.removeListener("return")
           res(addressMultisig)
         }
       })
@@ -407,7 +413,7 @@ export default class Channel {
 
     console.log(state.index)
     console.log(state.flash.root)
-    
+
     // Sign transfer
     const signatures = transfer.sign(
       toUse.multisig,
@@ -418,7 +424,7 @@ export default class Channel {
 
     console.log("Signed: ", signatures)
     console.log(state.flash)
-    
+
     RTC.broadcastMessage({
       cmd: "composeTransfer",
       bundles,
@@ -442,8 +448,8 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
-          console.log(signedBundles)          
-          
+          console.log(signedBundles)
+
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
           if (sigs.find(sig => !sig)) {
@@ -470,7 +476,7 @@ export default class Channel {
               signatures,
               index: state.userIndex
             })
-      
+
             events.removeListener("return")
             res(state)
           }
@@ -492,7 +498,7 @@ export default class Channel {
 
     console.log("Signatures: ", signatures)
     console.log(state.flash.root)
-    
+
     RTC.broadcastMessage({
       cmd: "returnSignature",
       return: true,
@@ -512,7 +518,7 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
-          
+
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
           if (sigs.find(sig => !sig)) {
