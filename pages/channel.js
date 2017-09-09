@@ -104,11 +104,21 @@ export default class extends React.Component {
         error: "Transaction Denied."
       })
     }
-    var state = await Channel.signTransfer(transaction.bundles)
-    this.setState({ ...state, channel: "main" })
+    this.setState(
+      {
+        channel: "loading",
+        title: "Responding with confimation",
+        transfer: ""
+      },
+      async () => {
+        var state = await Channel.signTransfer(transaction.bundles)
+        this.setState({ ...state, channel: "main" })
+      }
+    )
   }
 
   sendTransaction = async (value, address) => {
+    if (value < 1) return alert("Please enter a positive value ")
     this.setState(
       {
         channel: "loading",
@@ -331,6 +341,7 @@ export default class extends React.Component {
                   <h4>Send IOTA:</h4>
                   <Row>
                     <Field
+                      type="number"
                       value={transfer}
                       placeholder={"Enter amount in IOTA"}
                       onChange={data =>
