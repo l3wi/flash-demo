@@ -146,7 +146,8 @@ export default class extends React.Component {
     this.setState({ history })
   }
 
-  sendMessage = () => {
+  sendMessage = e => {
+    e.preventDefault()
     if (!this.state.message) return
     this.updateHistory({
       msg: this.state.message,
@@ -497,15 +498,15 @@ export default class extends React.Component {
             <Right>
               <h3>Channel History</h3>
               <History messages={this.state.history} />
-              <Row>
+              <Form onSubmit={e => this.sendMessage(e)}>
                 <Input
                   type={"text"}
                   placeholder={"Send a message"}
                   value={this.state.message}
                   onChange={msg => this.setState({ message: msg.target.value })}
                 />
-                <Send onClick={() => this.sendMessage()}>Send</Send>
-              </Row>
+                <Send type={`submit`}>Send</Send>
+              </Form>
             </Right>
           </SingleBox>
           {/* {setup && (
@@ -563,6 +564,14 @@ const Input = styled.input`
   &:focus {
     outline: none;
   }
+`
+const Form = styled.form`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: ${props => (props.border ? "2px solid #222" : "none")};
 `
 
 const Send = styled.button`
