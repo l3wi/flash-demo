@@ -79,7 +79,6 @@ const MyMessage = styled.p`
 `
 
 const Partner = styled.p`
-  height: 20px;
-  padding-bottom: 5px;
+  padding: 0rem 1rem 0.3rem;
   border-bottom: 1px solid rgba(56, 26, 54, 0.2);
 `
