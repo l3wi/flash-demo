@@ -67,13 +67,12 @@ export default class extends React.Component {
         this.setState({
           channel: "confirm",
           pendingTransfer: {
+            title: `Recieve ${message.data.value}i`,
             value: message.data.value,
             address: message.data.settlementAddress,
             bundles: message.data.bundles
           }
         })
-      } else if (message.data.cmd === "closedChannel") {
-        this.setState({ flash: message.data.flash })
       } else if (message.data.cmd === "getBranch") {
         Channel.returnBranch(message.data.digests, message.data.address)
       } else if (message.data.cmd === "message") {
@@ -83,21 +82,34 @@ export default class extends React.Component {
           time: Date.now()
         })
       } else if (message.data.cmd === "closeChannel") {
-        Channel.signTransfer(message.data.bundles)
         this.updateHistory({
-          msg: `Closing Channel`,
+          msg: `Recieved request to close`,
           type: "system",
           time: Date.now()
         })
-        this.setState({ channel: "closed" })
+        // Get diff and set the state
+        this.setState({
+          channel: "confirm",
+          pendingTransfer: {
+            close: true,
+            title: `Requesting to the Flash Channel`,
+            address: message.data.settlementAddress,
+            bundles: message.data.bundles
+          }
+        })
+      } else if (message.data.cmd === "closedChannel") {
+        this.setState({ flash: message.data.flash })
       } else if (message.data.cmd === "error") {
         this.updateHistory({
           msg: `${message.data.error}`,
           type: "system",
           time: Date.now()
         })
-        alert(message.data.error)
-        this.setState({ channel: "main" })
+        this.setState({
+          channel: "main",
+          alert: true,
+          alertText: message.data.error
+        })
       }
     })
     Events.on("peerLeft", message => {
@@ -179,15 +191,26 @@ export default class extends React.Component {
           time: Date.now()
         })
         var state = await Channel.signTransfer(transaction.bundles)
-        this.setState({ ...state, channel: "main" })
+        if (transaction.close) {
+          this.setState({ ...state, channel: "closed" })
+        } else {
+          this.setState({ ...state, channel: "main" })
+        }
       }
     )
   }
 
   sendTransaction = async (value, address) => {
-    if (value < 1) return alert("Please enter a positive value ")
+    if (value < 1)
+      return this.setState({
+        alert: true,
+        alertText: "Please enter a positive value "
+      })
     if (value > this.state.flash.deposit.reduce((a, b) => a + b, 0) / 2)
-      return alert("You can not spend more than you have")
+      return this.setState({
+        alert: true,
+        alertText: "You can not spend more than you have"
+      })
 
     this.setState(
       {
@@ -245,7 +268,6 @@ export default class extends React.Component {
       time: Date.now()
     })
     if (index === this.state.userID) {
-      RTC.broadcastMessage({ cmd: "deposited", index: this.state.userID })
       this.setState({ channel: "main" })
     }
   }
@@ -304,6 +326,16 @@ export default class extends React.Component {
     } else {
       return (
         <Layout>
+          <Alert alert={this.state.alert}>
+            <AlertBox>
+              <h2 style={{ zIndex: 300 }}>
+                {this.state.alertText && this.state.alertText}
+              </h2>
+              <Button
+                onClick={() => this.setState({ alert: false })}
+              >{`   Clear Notification  `}</Button>
+            </AlertBox>
+          </Alert>
           <SingleBox noBg={!setup} active={form === 1} row wide>
             <Left>
               {channel === "share" && (
@@ -359,26 +391,31 @@ export default class extends React.Component {
               )}
               {channel === "confirm" && (
                 <div>
-                  <Header
-                    {...this.state}
-                    title={`Recieve ${pendingTransfer.value}i`}
-                  />
+                  <Header {...this.state} title={pendingTransfer.title} />
                   <h2 />
-                  <p>Do you want to confirm or deny this transaction?</p>
+                  <p>Do you want to confirm or deny this action?</p>
                   <Row>
                     <Button
                       full
                       accent
                       onClick={() => this.confirmTransaction(pendingTransfer)}
                     >
-                      Confirm Transaction
+                      {pendingTransfer.close ? (
+                        `Close Channel`
+                      ) : (
+                        `Confirm Transaction`
+                      )}
                     </Button>
                     <Button
                       full
                       left
                       onClick={() => this.confirmTransaction(false)}
                     >
-                      Deny Transaction
+                      {pendingTransfer.close ? (
+                        `Deny Close`
+                      ) : (
+                        `Deny Transaction`
+                      )}
                     </Button>
                   </Row>
                 </div>
@@ -398,11 +435,11 @@ export default class extends React.Component {
                   {flash.depositAddress ? (
                     <div>
                       <p>
-                        In a normal Flash channel, you would deposit funds into
-                        the generated address before you begin transactions.
+                        {`In a normal Flash channel, you would deposit funds into
+                        the a multi-signature wallet before you begin transactions.`}
                       </p>
                       <p>
-                        Deposit address for this channel:{" "}
+                        Multisig address for this channel:{" "}
                         <span
                           style={{
                             maxWidth: "25rem",
@@ -457,8 +494,8 @@ export default class extends React.Component {
                     </h5>
 
                     <h5>
-                      Remaining tokens:{" "}
-                      {flash.deposit.reduce((a, b) => a + b, 0) / 2} IOTA
+                      Remaining spendable IOTA:{" "}
+                      {flash.deposit.reduce((a, b) => a + b, 0) / 2}
                     </h5>
                   </Row>
                   <h4>Send IOTA:</h4>
@@ -554,6 +591,42 @@ export default class extends React.Component {
     }
   }
 }
+const AlertBox = styled.div`
+  background: white;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #222;
+  padding: 2rem 4rem;
+  text-align: center;
+  &::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 25%;
+    background: rgba(232, 206, 230, 1);
+  }
+`
+
+const Alert = styled.div`
+  z-index: 200;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: ${props => (props.alert ? "1" : "0")};
+  visibility: ${props => (props.alert ? "visible" : "hidden")};
+  transition: all 0.4s ease;
+`
 
 const Input = styled.input`
   flex: 1;
