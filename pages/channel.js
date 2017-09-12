@@ -337,6 +337,7 @@ export default class extends React.Component {
             </AlertBox>
           </Alert>
           <SingleBox noBg={!setup} active={form === 1} row wide>
+            <WordLogo src={`/static/iota-white.png`} />
             <Left>
               {channel === "share" && (
                 <div>
@@ -591,6 +592,14 @@ export default class extends React.Component {
     }
   }
 }
+
+const WordLogo = styled.img`
+  position: absolute;
+  top: -3.6rem;
+  height: 3rem;
+  left: 1rem;
+`
+
 const AlertBox = styled.div`
   background: white;
   position: fixed;
