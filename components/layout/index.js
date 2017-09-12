@@ -1,9 +1,24 @@
 import React from "react"
 import styled from "styled-components"
 
-export const Layout = props => <Main>{props.children}</Main>
+export const Layout = props => (
+  <Main>
+    {props.children}
+    <Logo src={`/static/iota.svg`} />
+  </Main>
+)
 
 export const SingleBox = props => <MainBox {...props}>{props.children}</MainBox>
+
+const Logo = styled.img`
+  position: fixed;
+  bottom: -10%;
+  right: -10%;
+  height: 90%;
+  z-index: 0;
+  opacity: 0.05;
+  pointer-events: none;
+`
 
 const Main = styled.div`
   display: flex;
@@ -42,4 +57,5 @@ const MainBox = styled.div`
     flex-direction: column;
     height: 100vh;
   }
+  z-index: 2;
 `
