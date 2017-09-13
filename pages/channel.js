@@ -234,14 +234,6 @@ export default class extends React.Component {
     )
   }
 
-  request = (value, address) => {
-    return RTC.broadcastMessage({
-      cmd: "requestTransfer",
-      value,
-      address
-    })
-  }
-
   closeChannel = async () => {
     this.setState(
       { channel: "closed", title: "Closing the channel" },
@@ -726,16 +718,6 @@ const Button = styled.button`
   &:focus {
     outline: none;
   }
-`
-
-const AnimatedLeftBox = styled.span`
-  position: absolute;
-  width: 100%;
-  transition: all 0.5s ease;
-  transform: ${props =>
-    props.active ? "translateY(0px)" : "translateY(20px)"};
-  visibility: ${props => (props.active ? "visible" : "hidden")};
-  opacity: ${props => (props.active ? "1" : "0")};
 `
 
 const Spinner = styled.img`
