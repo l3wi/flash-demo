@@ -96,8 +96,6 @@ export default class Channel {
             multisigs[i - 1].children.push(multisigs[i])
           }
 
-          console.log(iota.utils.addChecksum(multisigs[0].address))
-
           // Update root and remainder address
           state.flash.depositAddress = iota.utils.addChecksum(
             multisigs[0].address
@@ -114,7 +112,6 @@ export default class Channel {
             index: state.userIndex,
             settlementAddresses: [userSeed, message.data.address]
           })
-          console.log(state)
 
           // Update root & remainder in state
           await store.set("state", state)
@@ -149,7 +146,7 @@ export default class Channel {
     state.partialDigests = digests.map(() =>
       multisig.getDigest(state.userSeed, state.index++, state.security)
     )
-    console.log(state)
+
     RTC.broadcastMessage({
       cmd: "returnSetup",
       return: true,
@@ -186,9 +183,6 @@ export default class Channel {
             multisigs[i - 1].children.push(multisigs[i])
           }
 
-          console.log(remainderAddress)
-          console.log(iota.utils.addChecksum(multisigs[0].address))
-
           // Update root and remainder address
           state.flash.depositAddress = iota.utils.addChecksum(
             multisigs[0].address
@@ -198,7 +192,6 @@ export default class Channel {
           state.flash.settlementAddresses = message.data.settlementAddresses
 
           // Update root & remainder in state
-          console.log(state)
           await store.set("state", state)
           events.removeListener("return")
           res(state.flash)
@@ -218,7 +211,6 @@ export default class Channel {
     var digests = Array(generate)
       .fill()
       .map((_, i) => {
-        console.log(state.index)
         return multisig.getDigest(state.userSeed, state.index++, state.security)
       })
     console.log("New branch digests: ", digests)
@@ -281,7 +273,6 @@ export default class Channel {
     var state = await store.get("state")
 
     let myDigests = digests.map(() => {
-      console.log(state.index)
       return multisig.getDigest(state.userSeed, state.index++, state.security)
     })
 
@@ -303,7 +294,6 @@ export default class Channel {
           let addressMultisig = {}
 
           let multisigs = digests.map((digest, index) => {
-            console.log(digest.index)
             let addy = multisig.composeAddress(
               allDigests.map(userDigests => userDigests[index])
             )
@@ -384,7 +374,6 @@ export default class Channel {
         }
       ]
 
-      console.log(transfers)
       // No settlement addresses and Index is 0 as we are alsways sending from the client
       let newTansfers = transfer.prepare(
         state.flash.settlementAddresses,
@@ -416,9 +405,6 @@ export default class Channel {
       return false
     }
 
-    console.log(state.index)
-    console.log(state.flash.root)
-
     // Sign transfer
     const signatures = transfer.sign(
       toUse.multisig,
@@ -428,7 +414,6 @@ export default class Channel {
     )
 
     console.log("Signed: ", signatures)
-    console.log(state.flash)
 
     RTC.broadcastMessage({
       cmd: "composeTransfer",
@@ -444,7 +429,6 @@ export default class Channel {
       let sigs = Array(2).fill()
       // Sign your bundle initially
       let signedBundles = transfer.appliedSignatures(bundles, signatures)
-      console.log(signedBundles)
       // Start listening for messages
       events.on("return", async message => {
         if (message.data.cmd === "returnSignature") {
@@ -453,7 +437,6 @@ export default class Channel {
             signedBundles,
             message.data.signatures
           )
-          console.log(signedBundles)
 
           // Mark off these sigs from the counter
           sigs[message.data.index] = true
@@ -502,7 +485,6 @@ export default class Channel {
     )
 
     console.log("Signatures: ", signatures)
-    console.log(state.flash.root)
 
     RTC.broadcastMessage({
       cmd: "returnSignature",
@@ -598,8 +580,6 @@ export default class Channel {
       return false
     }
 
-    console.log("Bundles: ", bundles)
-
     // Sign transfer
     const signatures = transfer.sign(
       state.flash.root,
@@ -608,7 +588,7 @@ export default class Channel {
       state.userIndex
     )
 
-    console.log("Signed: ", signatures)
+    console.log("Closing Bundles: ", signatures)
 
     RTC.broadcastMessage({
       cmd: "closeChannel",
@@ -621,7 +601,6 @@ export default class Channel {
       let sigs = Array(2).fill()
       // Sign your bundle initially
       let signedBundles = transfer.appliedSignatures(bundles, signatures)
-      console.log(signedBundles)
       // Start listening for messages
       events.on("return", async message => {
         if (message.data.cmd === "returnSignature") {
@@ -655,7 +634,7 @@ export default class Channel {
               }
               return false
             }
-            console.log("Completed Bundles: ", signedBundles)
+            console.log("Completed closing bundles: ", signedBundles)
             // Save state
             state.bundles = signedBundles
             state.flash = flash
