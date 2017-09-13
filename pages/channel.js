@@ -46,7 +46,7 @@ export default class extends React.Component {
     RTC.connectToPeers(this.props.id)
 
     Events.on("message", async message => {
-      console.log(`${message.connection.peer}:`, message.data)
+      // console.log(`${message.connection.peer}:`, message.data)
       if (message.data.cmd === "startSetup") {
         var flash = await Channel.signSetup(message)
         this.setState({ flash })
@@ -93,7 +93,6 @@ export default class extends React.Component {
           pendingTransfer: {
             close: true,
             title: `Requesting to the Flash Channel`,
-            address: message.data.settlementAddress,
             bundles: message.data.bundles
           }
         })
@@ -171,6 +170,8 @@ export default class extends React.Component {
   }
 
   confirmTransaction = async transaction => {
+    var close = transaction.close
+
     if (!transaction) {
       this.setState({ channel: "main" })
       return RTC.broadcastMessage({
@@ -180,7 +181,7 @@ export default class extends React.Component {
     }
     this.setState(
       {
-        channel: "loading",
+        channel: close ? "closed" : "loading",
         title: "Responding with confimation",
         transfer: ""
       },
@@ -191,7 +192,7 @@ export default class extends React.Component {
           time: Date.now()
         })
         var state = await Channel.signTransfer(transaction.bundles)
-        if (transaction.close) {
+        if (close) {
           this.setState({ ...state, channel: "closed" })
         } else {
           this.setState({ ...state, channel: "main" })
