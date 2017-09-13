@@ -12,13 +12,11 @@ export default class MyDocument extends Document {
           <title>Flash - Instant payment channels</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <script src={"/static/curl.min.js"} />
-
+          <link rel="icon" type="image/png" href="/static/favicon.ico" />
           {styleTags}
         </Head>
         <body>
-          <div className="root">
-            {main}
-          </div>
+          <div className="root">{main}</div>
           <NextScript />
         </body>
       </html>
