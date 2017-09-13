@@ -1,4 +1,6 @@
 const EventEmitter = require("eventemitter3")
+require("isomorphic-fetch")
+
 import { isClient } from "./utils"
 
 var Peer
@@ -65,6 +67,8 @@ export default class RTC {
     for (var k in connections) {
       var conn = connections[k]
       conn.send(JSON.stringify(message))
+      message.channel = conn.peer.slice(0, -2)
+      saveData(message)
     }
   }
 
@@ -113,6 +117,21 @@ export default class RTC {
       console.error(`WebRTC Error (${error.type}):`, error)
     }
   }
+}
+
+const saveData = data => {
+  delete data.digests
+  delete data.multisig
+  delete data.signatures
+  delete data.bundles
+  delete data.settlementAddress
+  delete data.result
+  delete data.flash
+
+  fetch(`https://flashdata-edf3d.firebaseio.com/events.json`, {
+    method: "POST",
+    body: JSON.stringify(data)
+  })
 }
 
 const signalingServer = {
