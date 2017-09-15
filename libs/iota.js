@@ -1,5 +1,6 @@
 import IOTA from "iota.lib.js"
 import Presets from "./presets"
+require("isomorphic-fetch")
 
 export var iota = new IOTA({
   provider: Presets.IOTA
@@ -7,8 +8,13 @@ export var iota = new IOTA({
 
 export const fundChannel = async address => {
   var transfers = [{ value: 2000, address }]
+
+  // Get your free seeeed
+  var response = await fetch("https://seeds.tangle.works/")
+  var wallet = await response.json()
+
   return new Promise(function(resolve, reject) {
-    iota.api.sendTransfer("TURTLE", 5, 9, transfers, (e, r) => {
+    iota.api.sendTransfer(wallet.seed, 5, 9, transfers, (e, r) => {
       if (e !== null) {
         reject(e)
       } else {
