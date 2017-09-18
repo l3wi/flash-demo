@@ -669,6 +669,10 @@ const Left = styled.div`
   height: 100%;
   padding: 10px 20px;
   box-sizing: border-box;
+  @media screen and (max-width: 640px) {
+    width: 100%;
+    min-height: 20rem;
+  }
 `
 
 const Right = styled.div`
@@ -680,7 +684,8 @@ const Right = styled.div`
   padding: 10px 20px 20px;
   box-sizing: border-box;
   @media screen and (max-width: 640px) {
-    width: 100%
+    width: 100%;
+    min-height: 20rem;
   }
 }
 `
