@@ -1,5 +1,5 @@
 import React from "react"
-import styled from "styled-components"
+import styled, { css } from "styled-components"
 
 export const Layout = props => (
   <Main>
@@ -56,6 +56,7 @@ const MainBox = styled.div`
     min-width: 100vw;
     flex-direction: column;
     height: 100vh;
+    ${props => (props.noBg ? css`padding: 1rem;` : null)};
   }
   z-index: 2;
 `

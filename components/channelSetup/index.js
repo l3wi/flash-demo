@@ -34,7 +34,7 @@ export default class extends React.Component {
     var { form, address, transactions, deposit } = this.state
     return (
       <AnimatedLeftBox active={form === 1}>
-        <h2>Welcome to the Flash Channel demo</h2>
+        <h2>Enter a Flash Channel</h2>
         {/* {!this.props.currentMessage && (
           <div>
             <div>
