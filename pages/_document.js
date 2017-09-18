@@ -12,6 +12,18 @@ export default class MyDocument extends Document {
           <title>Flash - Instant payment channels</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <script src={"/static/curl.min.js"} />
+          <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=UA-106570081-1"
+          />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments)};
+                        gtag('js', new Date());
+                        gtag('config', 'UA-106570081-1');`
+            }}
+          />
           <link rel="icon" type="image/png" href="/static/favicon.ico" />
           {styleTags}
         </Head>
