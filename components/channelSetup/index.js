@@ -1,5 +1,6 @@
 import styled from "styled-components"
 import { Layout, LeftContent, RightContent } from "../layout"
+import { isGL } from "../../libs/utils.js"
 
 export default class extends React.Component {
   state = {
@@ -65,7 +66,12 @@ export default class extends React.Component {
         <p
         >{`The demo channel will have 2,000 IOTA from the testnet deposited into it when it is opened. 
         You can also chat with your partner in the sidebar.`}</p>
-        <Button onClick={() => this.startChannel()}>Enter the Channel</Button>
+        <Button
+          active={!isGL()}
+          onClick={() => (!isGL() ? null : this.startChannel())}
+        >
+          {!isGL() ? `Enable WebGL to Continue` : `Enter the Channel`}
+        </Button>
       </AnimatedLeftBox>
     )
   }
@@ -97,7 +103,8 @@ const AnimatedLeftBox = styled.span`
 `
 const Button = styled.button`
   padding: 15px 20px;
-  background: linear-gradient(135deg, #ef7564, #f06263);
+  background: ${props =>
+    props.active ? "grey" : "linear-gradient(135deg, #ef7564, #f06263)"};
   border: none;
   color: white;
   font-weight: 600;

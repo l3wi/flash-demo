@@ -3,6 +3,23 @@ export const isClient =
   window.document &&
   window.document.createElement
 
+export const isGL = () => {
+  if (isClient) {
+    var canvas = document.createElement("canvas")
+    // Get WebGLRenderingContext from canvas element.
+    var gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
+    // Report the result.
+    if (gl && gl instanceof WebGLRenderingContext) {
+      return true
+    } else {
+      return false
+    }
+  } else {
+    return false
+  }
+}
+
 // GET from localStorage
 export const get = item => {
   return JSON.parse(localStorage.getItem(item))
