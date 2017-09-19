@@ -92,7 +92,7 @@ export default class extends React.Component {
           channel: "confirm",
           pendingTransfer: {
             close: true,
-            title: `Requesting to the Flash Channel`,
+            title: `Requesting to close the Flash Channel`,
             bundles: message.data.bundles
           }
         })
@@ -245,6 +245,19 @@ export default class extends React.Component {
           time: Date.now()
         })
         var state = await Channel.close()
+        console.log("Result: ", state)
+        if (state.message) {
+          this.setState({
+            channel: "main",
+            alert: true,
+            alertText: `Error when closing. Ask your partner to close`
+          })
+          return RTC.broadcastMessage({
+            cmd: "error",
+            error: `Error when closing.`
+          })
+        }
+
         this.setState({
           channel: "closed",
           flash: { ...this.state.flash, finalBundle: state[0][0].bundle }
@@ -291,6 +304,7 @@ export default class extends React.Component {
       transfer: "",
       title: `Waiting for peer to connect...`
     })
+    window.location.reload(false)
   }
 
   render() {

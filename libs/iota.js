@@ -62,22 +62,26 @@ export class Attach {
   }
 
   static async POWClosedBundle(bundles) {
-    console.log("attachAndPOWClosedBundle", bundles)
-    bundles = Attach.getBundles(bundles)
-    var trytesPerBundle = []
-    for (var bundle of bundles) {
-      var trytes = Attach.bundleToTrytes(bundle)
-      trytesPerBundle.push(trytes)
+    try {
+      console.log("attachAndPOWClosedBundle", bundles)
+      bundles = Attach.getBundles(bundles)
+      var trytesPerBundle = []
+      for (var bundle of bundles) {
+        var trytes = Attach.bundleToTrytes(bundle)
+        trytesPerBundle.push(trytes)
+      }
+      console.log("closing room with trytes", trytesPerBundle)
+      var results = []
+      for (var trytes of trytesPerBundle) {
+        console.log(trytes)
+        if (isWindow()) curl.overrideAttachToTangle(iota.api)
+        var result = await Attach.sendTrytes(trytes)
+        results.push(result)
+      }
+      return results
+    } catch (e) {
+      return e
     }
-    console.log("closing room with trytes", trytesPerBundle)
-    var results = []
-    for (var trytes of trytesPerBundle) {
-      console.log(trytes)
-      if (isWindow()) curl.overrideAttachToTangle(iota.api)
-      var result = await Attach.sendTrytes(trytes)
-      results.push(result)
-    }
-    return results
   }
 }
 
