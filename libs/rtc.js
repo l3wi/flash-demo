@@ -52,7 +52,7 @@ export default class RTC {
   }
 
   static connectToPeers(roomID) {
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < 1; i++) {
       var tryId = `${roomID}-${i}`
       if (tryId !== peer.id && typeof connections[tryId] === "undefined") {
         var conn = peer.connect(tryId, {
