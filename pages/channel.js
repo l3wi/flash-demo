@@ -554,46 +554,6 @@ export default class extends React.Component {
               </Form>
             </Right>
           </SingleBox>
-          {/* {setup && (
-            <Info>
-              <h2>What is Flash?</h2>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Curabitur sit amet dolor scelerisque, fringilla quam in, luctus
-                dui. Vivamus ac dapibus felis. Vivamus id sem in orci rhoncus
-                consectetur.
-              </p>
-              <p>
-                Donec eu sagittis metus. Duis bibendum dui in arcu ultricies, in
-                pharetra tellus vehicula. Donec fringilla rhoncus efficitur.
-                Fusce eu augue dignissim, pulvinar dolor ut, lacinia dui.
-                Vestibulum in eleifend tortor. Aliquam a eleifend libero. Nulla
-                finibus rutrum justo, nec tempor tellus cursus vel. Nulla
-                consectetur ante vitae nisl sodales, lacinia ullamcorper libero
-                vestibulum. Maecenas tempor leo et mi fermentum posuere.
-              </p>
-            </Info>
-          )}
-          {setup && (
-            <Info>
-              <h2>How does it work</h2>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Curabitur sit amet dolor scelerisque, fringilla quam in, luctus
-                dui. Vivamus ac dapibus felis. Vivamus id sem in orci rhoncus
-                consectetur.
-              </p>
-              <p>
-                Donec eu sagittis metus. Duis bibendum dui in arcu ultricies, in
-                pharetra tellus vehicula. Donec fringilla rhoncus efficitur.
-                Fusce eu augue dignissim, pulvinar dolor ut, lacinia dui.
-                Vestibulum in eleifend tortor. Aliquam a eleifend libero. Nulla
-                finibus rutrum justo, nec tempor tellus cursus vel. Nulla
-                consectetur ante vitae nisl sodales, lacinia ullamcorper libero
-                vestibulum. Maecenas tempor leo et mi fermentum posuere.
-              </p>
-            </Info>
-          )} */}
         </Layout>
       )
     }
@@ -701,7 +661,6 @@ const Right = styled.div`
     width: 100%;
     min-height: 20rem;
   }
-}
 `
 
 const Row = styled.div`
