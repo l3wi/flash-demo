@@ -379,7 +379,7 @@ export default class extends React.Component {
                     {flash.finalBundle ? (
                       <a
                         target={"_blank"}
-                        href={`https://tanglertestnet.codebuffet.co/search/?kind=bundle&hash=${flash.finalBundle}`}
+                        href={`https://testnet-explorer.tangle.works/#/bundle/${flash.finalBundle}`}
                       >
                         View Transaction
                       </a>
@@ -444,10 +444,10 @@ export default class extends React.Component {
                     <div>
                       <p>
                         {`In a normal Flash channel, you would deposit funds into
-                        the a multi-signature wallet before you begin transactions.`}
+                        the multi-signature address which is generated before you begin transactions.`}
                       </p>
                       <p>
-                        Multisig address for this channel:{" "}
+                        The Multisig address for this channel:{" "}
                         <span
                           style={{
                             maxWidth: "25rem",
@@ -459,7 +459,7 @@ export default class extends React.Component {
                         </span>{" "}
                       </p>
                       <h3
-                      >{`This demo does not require you to deposit IOTA.`}</h3>
+                      >{`The demo is automatically funded. Do not deposit IOTA.`}</h3>
                       <Row>
                         <Button
                           full

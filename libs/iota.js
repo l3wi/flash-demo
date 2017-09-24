@@ -3,9 +3,12 @@ import Presets from "./presets"
 require("isomorphic-fetch")
 
 export var iota = new IOTA({
-  provider: Presets.IOTA
+  provider:
+    Math.random() > 0.5
+      ? `https://testnet.tangle.works:443`
+      : `https://testnet2.tangle.works:443`
 })
-
+console.log(iota)
 export const fundChannel = async address => {
   var transfers = [{ value: 2000, address }]
 
