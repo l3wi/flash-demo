@@ -18,7 +18,7 @@ Hosted at https://flash.tangle.works
 ## Getting Started
 
 ```
-git clone https://github.com/l3wi/flashDemo.git
+git clone https://github.com/l3wi/flash-demo.git
 
 yarn
 
