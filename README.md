@@ -1,113 +1,19 @@
-# Flash POC
+# Flash RTC
 
-Flash is IOTA's approach to payment channels (TL;DR off-tangle transactions with on-Tangle settlement if users desire so). In order to showcase how Flash works and why it is quite powerful, we intend to develop a public demonstration website so that people can try it out themselves.
+IOTA Flash channels demo using webRTC for communication.
 
-## The Setup
+Hosted at https://flash.tangle.works
 
-The Proof of Concept will consist of a website, where users can go to to open up a new payment channel. The user will then be redirected to a unique page, where they get an address for funding a browser wallet. The user then makes a deposit to that address, once it's confirmed the user can now start sharing the link with a friend (only works with a single person atm) and then they can initiate the payment channel with each other via WebRTC.
+### Technology
 
-Once the payment channel is initiated, they can start sending funds between each other (think kind of ping pong). And then they can also go into high frequency trading mode, where they can basically deplet the funds between each other in real time to showcase how fast payments are processed.
+- [**Next.js**](https://github.com/zeit/next.js) v3.0
+- [**React**](https://facebook.github.io/react/) v15.6
+- [**Styled-components**](https://www.styled-components.com/) v2.1
+- [**Babel**](https://babeljs.io/) stage-2 preset
 
-Once they are done, they can settle in real time and both users then see their respective balance in the browser and can withdraw it to their walelts.
+## Things to do
 
-### Approach
-
-The Flash payment system uses a tree topology reduce the number of transactions to be attached. Usually each transfer would have to be attached to the tangle, requiring a large amount of PoW.
-
-This approach takes advantage of the fact that a signature can be used upto 3 times while remaining reasonably secure. This lets us build a tree, where the terminating roots are the individual transactions that will occur in the Flash channel.
-
-![Tree image](http://i.imgur.com/v90BcQ0.png)
-
-The number of transactions required to settle a Flash channel relates directly to the depth of the tree. The depth is determined by assesing the number of inidividual transactions that will occur offline within the Flash channel then applying `log(base3)x` to that number.
-
-For example: if you require a **60** transaction channel you'll require a tree with a depth **4**. As `log(base3)60 = 3.726` which we will round up to a depth of **4**.
-
-Each time you create a transaction you move left to right along the bottom of the tree. If a parent node has been used 3 times then the transaction will have to shift to the parent's sibling and generate a bundle for that node.
-
-The result of this approach is only needing to attach **4** transactions for upto **81** offline Flash transactions and for only **8** transactions you can upto **6561** Flash transactions.
-
-## How it works:
-
-Very very rough way the Flash system will work
-
-### Establish State
-
-Player 1 enters:
-
-- [x] Say how many transactions
-- [x] calculate the depth: `log(base3)x`
-- [x] Generate fresh Flash object w/ counter
-- [x] Create a multisig wallet address
-- [x] Waits for other user to join
-
-Player 2 enter:
-
-- [x] Establish RTC connection
-- [x] **Reconcile State** (Recieve state)
-- [x] Co-sign multisig wallet
-- [x] **Reconcile State** (Return Address)
-
-Player 1 & 2:
-
-- [ ] Send IOTA to the multisig address
-
-  - both peers send an equal amount, i.e 50 iota each = 100 iota in the wallet
-
-- [x] They also enter their settlement addresses
-
-  - this address is created outside the multisig wallet. It's made with a unique seed by each peer and kept secret from eachother.
-
-### Change State (make a transaction)
-
-Player 1 wants to change state:
-
-- [x] Initiate the transaction request w/ outputs
-
-  - The first output is the settlement address of the other user (here goes the amount of iota you want to send to the user, _times 2_).
-  - The second output is the remainder of the full balance, sent to the next address (from the tree, based on the multisig wallet)
-
-- [x] **Run the tree** to determine the terminating Root.
-
-- [x] Initiate new address generation for outputs
-
--**Two party address generation happens here**-
-
-- [x] Check to see if the signature for each parent in the tree has been used 3 times.
-- [x] If so move on to the parent's sibling and generate a new bundle for that item.
-- [x] Generate bundle root itself.
-- [x] Send to Player 2
-
--**Two party address generation happens here**-
-
-Player 2:
-
-- [ ] Accept the proposed transaction and sign the bundles
-- [x] Send bundle to Player 1
-
-Player 1:
-
-- [ ] Verify signed bundles
-
-### End Channel
-
-Player 1 or 2 ends the session
-
-- [x] Leaving user attaches the latest set of bundles to get all the money that has been spent.
-- [x] 50% of the settlement address is sent to peer 1 and the other 50% is sent to peer 2
-
-## Limitations
-
-1. Once tokens are spent you aren't allowed to reuse them
-
-  - This is to prevent double spends
-
-2. So the more transactions that occur the less tokens available left to send.
-
-3. Multisig arrangements require collateral (or trust).
-
-  - There needs to be an equal incentive for both users to work together, other wise one party can lock up the money forever.
-
-  - Currently, we fix this by making sure users both deposit an equal amount of iota.
+- Sorely needs a refactor in `channel.js`
 
 ## Getting Started
 
@@ -119,4 +25,6 @@ yarn
 yarn dev
 ```
 
-lewi
+----
+
+**Licence GPL-v3**
