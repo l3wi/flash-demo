@@ -27,4 +27,4 @@ yarn dev
 
 ----
 
-**Licence GPL-v3**
+**Licence MIT - Lewis Freiberg**
