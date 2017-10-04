@@ -14,6 +14,7 @@ Hosted at https://flash.tangle.works
 ## Things to do
 
 - Sorely needs a refactor in `channel.js`
+- Update IOTA related libs to 0.4.1
 
 ## Getting Started
 

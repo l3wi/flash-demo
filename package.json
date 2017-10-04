@@ -1,6 +1,14 @@
 {
   "name": "flash-demo",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "private": false,
+  "license": "MIT",
+  "authors": [
+    "Paul Handy <paul@iota.org>",
+    "Lewis Freiberg <lewis.freiberg@iota.org>",
+    "Peter Willemsen <>",
+    "Chris Dukakis <chris.dukakis@iota.org>"
+  ],
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
@@ -12,8 +20,8 @@
     "curl.lib.js": "^1.0.14",
     "date-fns": "^1.28.5",
     "eventemitter3": "^2.0.3",
-    "iota.flash.js": "git+https://github.com/iotaledger/iota.flash.js.git#master",
-    "iota.lib.js": "git+https://github.com/l3wi/iota.lib.js.git",
+    "iota.flash.js": "iotaledger/iota.flash.js",
+    "iota.lib.js": "l3wi/iota.lib.js",
     "isomorphic-fetch": "^2.2.1",
     "next": "^3.0.3",
     "next-routes": "^1.0.40",
@@ -21,7 +29,6 @@
     "peerjs": "^0.3.14",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
-    "shortid": "^2.2.8",
     "styled-components": "^2.1.2",
     "webrtc-adapter": "^4.2.2"
   }
