@@ -1,10 +1,7 @@
 import RTC, { events } from "./rtc"
-import Flash from "../git_modules/flash/lib/flash.js"
-import multisig from "../git_modules/flash/lib/multisig"
-import transfer from "../git_modules/flash/lib/transfer"
+import Flash, { multisig, transfer } from "iota.flash.js"
 import { Attach, iota } from "./iota"
 import Presets from "./presets"
-const IOTACrypto = require("iota.crypto.js")
 
 export default class Channel {
   // Security level
@@ -552,6 +549,13 @@ export default class Channel {
       await Channel.getNewBranch(toUse.multisig, digests)
     }
 
+    // if (toUse.generate != 0) {
+    //   // Tell the server to generate new addresses, attach to the multisig you give
+    //   await Channel.getNewBranch(toUse.multisig, toUse.generate)
+    //   // state was modified
+    //   let modifiedState = await store.get("state")
+    //   state.index = modifiedState.index
+    // }
     // Compose transfer
     const flash = state.flash
     let bundles
