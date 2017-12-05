@@ -12,18 +12,20 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
-    "postinstall": "git submodule update --init --recursive"
+    "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "iota.flash.js": "github:iotaledger/iota.flash.js",
+    
     "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-2": "^6.24.1",
     "curl.lib.js": "^1.0.14",
     "date-fns": "^1.28.5",
     "eventemitter3": "^2.0.3",
-    "iota.flash.js": "iotaledger/iota.flash.js",
     "iota.lib.js": "l3wi/iota.lib.js",
     "isomorphic-fetch": "^2.2.1",
-    "next": "^3.0.3",
+    "next": "^3.2.2",
     "next-routes": "^1.0.40",
     "peer": "^0.2.8",
     "peerjs": "^0.3.14",
