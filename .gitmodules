@@ -1,3 +1,0 @@
-[submodule "git_modules/flash"]
-	path = git_modules/flash
-	url = https://github.com/iotaledger/iota.flash.js
